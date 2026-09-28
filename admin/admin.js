@@ -222,22 +222,13 @@
       list({ title: "Social links", arr: content.site.socials, specs: [["label", "Label"], ["url", "URL"]], blank: { label: "New link", url: "" }, addText: "Add link" }),
     ],
     hero: () => [
-      el("h2", {}, "Landing (hero)"),
-      el("p", { class: "hint" }, "Video mode: moving the cursor left→right scrubs the video from its first frame to its last."),
+      el("h2", {}, "Landing"),
+      el("p", { class: "hint" }, "The full-screen character page. Video mode: moving the cursor left→right scrubs the video from its first frame to its last."),
       fields(content.hero, [
-        ["eyebrow", "Small line above name"], ["stat", "Highlight line"],
-        ["headlineTop", "Headline (white)"], ["headlineBottom", "Headline (orange)"],
-        ["subtitle", "Intro text", "textarea"],
+        ["headlineTop", "First name"], ["headlineBottom", "Last name"], ["tagline", "Small line under the name"],
         ["mediaType", "Background type", "select", ["image", "video"]],
         ["media", "Background image / video", "media", "image/*,video/mp4,video/webm"],
-        ["primaryCta.label", "Main button text"], ["primaryCta.href", "Main button link"],
-        ["secondaryCta.label", "Second button text"], ["secondaryCta.href", "Second button link"],
       ]),
-    ],
-    overview: () => [
-      el("h2", {}, "Overview strip"),
-      el("p", { class: "hint" }, "The row of numbered cards under the landing. Cards come from your sections automatically."),
-      fields(content.overview, [["eyebrow", "Small heading"], ["title", "Title"], ["text", "Text", "textarea"]]),
     ],
     contact: () => [
       el("h2", {}, "Contact"),
@@ -254,10 +245,12 @@
     };
     return [
       el("h2", {}, s.nav || s.title || "Section"),
-      el("p", { class: "hint" }, `Appears in the menu and as card ${String(i + 1).padStart(2, "0")} in the overview.`),
+      el("p", { class: "hint" }, `Its own page, reached from icon ${i + 2} in the side menu.`),
       fields(s, [
-        ["nav", "Menu name"], ["eyebrow", "Small heading"], ["title", "Section title"], ["summary", "Overview card text"],
-        ["intro", "Intro text", "textarea"], ["ctaLabel", "Button text (optional)"], ["ctaHref", "Button link"],
+        ["nav", "Menu name (icon tooltip)"], ["icon", "Menu icon", "select", Object.keys(window.HV_ICONS)],
+        ["eyebrow", "Small heading"], ["title", "Page title"],
+        ["intro", "Intro text", "textarea"], ["ctaLabel", "Link text (optional)"], ["ctaHref", "Link goes to"],
+        ["layout", "Entries shown as", "select", ["auto", "grid", "list"]],
       ], () => drawSide()),
       list({ title: "Entries", arr: (s.items ??= []), specs: ITEM_SPECS, blank: BLANK_ITEM, thumb: (it) => it.image, addText: "Add entry" }),
       el("div", { class: "danger-zone" },
@@ -276,7 +269,7 @@
     const taken = new Set(["hero", "contact", "top", ...content.sections.map((s) => s.id)]);
     let id = slug(name), n = 2;
     while (taken.has(id)) id = `${slug(name)}-${n++}`;
-    content.sections.push({ id, nav: name, eyebrow: name, title: name, summary: "", intro: "", ctaLabel: "", ctaHref: "#contact", items: [] });
+    content.sections.push({ id, nav: name, icon: "circle", eyebrow: name, title: name, intro: "", ctaLabel: "", ctaHref: "page.html?s=contact", layout: "auto", items: [] });
     view = "s" + (content.sections.length - 1);
     setDirty(true); draw();
   }
@@ -284,7 +277,7 @@
   function drawSide() {
     const btn = (key, text) => el("button", { class: view === key ? "active" : "", onclick: () => { view = key; draw(); } }, text);
     $("#side").replaceChildren(
-      el("h4", {}, "General"), btn("site", "Site & profile"), btn("hero", "Landing"), btn("overview", "Overview strip"),
+      el("h4", {}, "General"), btn("site", "Site & profile"), btn("hero", "Landing"),
       el("h4", {}, "Sections"), ...content.sections.map((s, i) => btn("s" + i, s.nav || s.title || "Section")),
       el("button", { class: "add", onclick: addSection }, "+ Add section"),
       el("h4", {}, "End"), btn("contact", "Contact"));
@@ -353,7 +346,9 @@
   $("#btn-save").addEventListener("click", save);
   $("#btn-preview").addEventListener("click", () => {
     store.set("hv-draft", JSON.stringify(exportContent()));
-    window.open("../?preview=1", "_blank");
+    const page = view === "contact" ? "page.html?s=contact&"
+      : /^s\d+$/.test(view) ? `page.html?s=${encodeURIComponent(content.sections[+view.slice(1)].id)}&` : "?";
+    window.open(`../${page}preview=1`, "_blank");
   });
   $("#btn-download").addEventListener("click", () => {
     const blob = new Blob([JSON.stringify(exportContent(), null, 2)], { type: "application/json" });

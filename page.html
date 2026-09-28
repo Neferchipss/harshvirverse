@@ -10,19 +10,17 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/css/site.css">
 </head>
-<body class="home">
+<body class="inner">
   <a class="mark" href="./" data-bind="site.initials">HW</a>
 
-  <main class="stage" id="stage">
-    <div class="stage-media" id="stage-media"></div>
-    <div class="stage-shade"></div>
-    <div class="stage-caption">
-      <h1><span data-bind="hero.headlineTop"></span> <span data-bind="hero.headlineBottom"></span></h1>
-      <p data-bind="hero.tagline"></p>
-    </div>
-  </main>
+  <main class="page" id="page"></main>
 
   <nav class="rail" id="rail" aria-label="Main"></nav>
+
+  <footer class="footer">
+    <span>© <span id="year"></span> <span data-bind="site.name"></span></span>
+    <span class="socials" id="socials"></span>
+  </footer>
 
   <script src="assets/js/icons.js"></script>
   <script src="assets/js/site.js"></script>

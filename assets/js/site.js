@@ -7,11 +7,20 @@
     return n;
   };
   const get = (obj, path) => path.split(".").reduce((o, k) => (o == null ? o : o[k]), obj);
-  const pad = (i) => String(i + 1).padStart(2, "0");
+  const params = new URLSearchParams(location.search);
+  const preview = params.has("preview");
+  const isHome = document.body.classList.contains("home");
+  const current = isHome ? "home" : params.get("s") || "";
 
-  // ?preview=1 reads a draft the admin panel saved in this browser
+  // Keep ?preview=1 on internal links so the admin draft follows you around
+  const href = (url) => {
+    if (!preview || /^(https?:|mailto:|tel:|#)/.test(url)) return url;
+    return url + (url.includes("?") ? "&" : "?") + "preview=1";
+  };
+  const pageUrl = (id) => href(`page.html?s=${encodeURIComponent(id)}`);
+
   async function loadContent() {
-    if (new URLSearchParams(location.search).has("preview")) {
+    if (preview) {
       try {
         const draft = localStorage.getItem("hv-draft");
         if (draft) return JSON.parse(draft);
@@ -21,136 +30,56 @@
     return res.json();
   }
 
-  function render(c) {
-    document.querySelectorAll("[data-bind]").forEach((n) => {
-      n.textContent = get(c, n.dataset.bind) ?? "";
-    });
-    document.title = `${c.site.name} — ${c.site.roles.slice(0, 2).join(" · ")}`;
+  function renderShared(c) {
+    document.querySelectorAll("[data-bind]").forEach((n) => { n.textContent = get(c, n.dataset.bind) ?? ""; });
+    document.querySelectorAll(".mark").forEach((a) => { a.href = href("./"); });
     $('meta[name="description"]').content = c.site.metaDescription || "";
 
-    const roles = c.site.roles.join(" × ");
-    $("#brand-roles").textContent = c.site.roles.join(" | ");
-    $("#hero-roles").textContent = roles;
-    $("#hero-card-roles").textContent = roles;
-
-    for (const [id, cta] of [["#cta-primary", c.hero.primaryCta], ["#cta-secondary", c.hero.secondaryCta]]) {
-      const a = $(id);
-      a.hidden = !cta?.label;
-      if (cta) { a.textContent = cta.label; a.href = cta.href || "#"; }
-    }
-
-    renderHeroMedia(c.hero);
-
-    const nav = $("#nav-links");
-    nav.replaceChildren();
-    const home = el("a", "active", "Home");
-    home.href = "#top";
-    nav.append(home);
-    for (const s of c.sections) {
-      const a = el("a", "", s.nav || s.title);
-      a.href = "#" + s.id;
-      nav.append(a);
-    }
-    const ca = el("a", "", "Contact");
-    ca.href = "#contact";
-    nav.append(ca);
-
-    const grid = $("#overview-grid");
-    grid.replaceChildren();
-    c.sections.forEach((s, i) => {
-      const a = el("a", "ov-card reveal");
-      a.href = "#" + s.id;
-      a.append(el("span", "num", pad(i)), el("h3", "", s.nav || s.title), el("p", "", s.summary || ""), el("span", "more", "Explore →"));
-      grid.append(a);
-    });
-
-    const wrap = $("#sections");
-    wrap.replaceChildren();
-    for (const s of c.sections) wrap.append(renderSection(s));
-
-    const lines = $("#contact-lines");
-    lines.replaceChildren();
-    if (c.contact.email) {
-      const a = el("a", "", c.contact.email);
-      a.href = "mailto:" + c.contact.email;
-      lines.append(a);
-    }
-    if (c.contact.phone) {
-      const a = el("a", "", c.contact.phone);
-      a.href = "tel:" + c.contact.phone.replace(/\s/g, "");
-      lines.append(a);
-    }
-    if (c.contact.location) lines.append(el("span", "", c.contact.location));
+    const rail = $("#rail");
+    const links = [
+      { id: "home", label: "Home", icon: "home", url: href("./") },
+      ...c.sections.map((s) => ({ id: s.id, label: s.nav || s.title, icon: s.icon, url: pageUrl(s.id) })),
+      { id: "contact", label: "Contact", icon: "mail", url: pageUrl("contact") },
+    ];
+    rail.replaceChildren(...links.map((l) => {
+      const a = el("a", l.id === current ? "active" : "");
+      a.href = l.url;
+      a.setAttribute("aria-label", l.label);
+      if (l.id === current) a.setAttribute("aria-current", "page");
+      a.append(window.hvIcon(l.icon), el("span", "tip", l.label));
+      return a;
+    }));
 
     const socials = $("#socials");
-    socials.replaceChildren();
-    for (const s of c.site.socials || []) {
-      if (!s.url) continue;
-      const a = el("a", "btn btn-ghost btn-sm", s.label);
-      a.href = s.url;
-      a.target = "_blank";
-      a.rel = "noopener";
-      socials.append(a);
+    if (socials) {
+      socials.replaceChildren(...(c.site.socials || []).filter((s) => s.url).map((s) => {
+        const a = el("a", "", s.label);
+        a.href = s.url; a.target = "_blank"; a.rel = "noopener";
+        return a;
+      }));
     }
-
-    $("#year").textContent = new Date().getFullYear();
+    const year = $("#year");
+    if (year) year.textContent = new Date().getFullYear();
   }
 
-  function renderSection(s) {
-    const sec = el("section", "block");
-    sec.id = s.id;
-    const head = el("div", "block-head reveal");
-    const left = el("div");
-    left.append(el("p", "eyebrow", s.eyebrow || s.nav), el("h2", "", s.title));
-    if (s.intro) left.append(el("p", "intro", s.intro));
-    head.append(left);
-    if (s.ctaLabel) {
-      const a = el("a", "btn btn-primary", s.ctaLabel);
-      a.href = s.ctaHref || "#contact";
-      head.append(a);
-    }
-    const cards = el("div", "cards");
-    (s.items || []).forEach((it) => {
-      const card = el(it.link ? "a" : "div", "card reveal");
-      if (it.link) { card.href = it.link; card.target = "_blank"; card.rel = "noopener"; }
-      const media = el("div", "card-media");
-      if (it.image) {
-        const img = el("img");
-        img.src = it.image;
-        img.alt = it.title || "";
-        img.loading = "lazy";
-        media.append(img);
-      } else {
-        media.classList.add("empty");
-        media.textContent = (it.title || "?").trim().charAt(0).toUpperCase();
-      }
-      const body = el("div", "card-body");
-      body.append(el("h3", "", it.title || ""));
-      if (it.subtitle) body.append(el("span", "card-sub", it.subtitle));
-      if (it.meta) body.append(el("span", "card-meta", it.meta));
-      if (it.description) body.append(el("p", "card-desc", it.description));
-      card.append(media, body);
-      cards.append(card);
-    });
-    sec.append(head, cards);
-    return sec;
+  /* ---------- landing ---------- */
+  function renderHome(c) {
+    const name = [c.hero.headlineTop, c.hero.headlineBottom].filter(Boolean).join(" ");
+    document.title = name || c.site.name;
+    heroMedia(c.hero);
   }
 
-  /* Hero: cursor-reactive media.
-     Video: cursor X scrubs the clip (left edge = first frame, right edge = last frame),
+  /* Cursor-reactive character.
+     Video: cursor X scrubs the clip (left edge = first frame, right edge = last),
      so a "looking left → right" clip makes him follow the cursor.
      Image: subtle parallax until the video exists. */
-  function renderHeroMedia(h) {
-    const box = $("#hero-media");
-    box.replaceChildren();
+  function heroMedia(h) {
+    const box = $("#stage-media");
     if (!h.media) return;
     const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
-    let target = 0.5, current = 0.5;
-
-    const hero = $("#hero");
-    const onMove = (x) => { target = Math.min(1, Math.max(0, x / innerWidth)); };
-    hero.addEventListener("pointermove", (e) => onMove(e.clientX));
-    hero.addEventListener("pointerleave", () => { target = 0.5; });
+    let target = 0.5, cur = 0.5, ty = 0.5;
+    addEventListener("pointermove", (e) => { target = e.clientX / innerWidth; ty = e.clientY / innerHeight; });
+    document.addEventListener("pointerleave", () => { target = 0.5; ty = 0.5; });
 
     if (h.mediaType === "video") {
       const v = el("video");
@@ -161,10 +90,10 @@
       v.addEventListener("seeked", () => { seeking = false; });
       v.addEventListener("loadedmetadata", () => { v.currentTime = v.duration / 2; });
       const tick = () => {
-        current += (target - current) * 0.12;
-        if (!reduce && v.duration && !seeking && Math.abs(v.currentTime - current * v.duration) > 1 / 60) {
+        cur += (target - cur) * 0.12;
+        if (!reduce && v.duration && !seeking && Math.abs(v.currentTime - cur * v.duration) > 1 / 60) {
           seeking = true;
-          v.currentTime = current * (v.duration - 0.05);
+          v.currentTime = Math.min(1, Math.max(0, cur)) * (v.duration - 0.05);
         }
         requestAnimationFrame(tick);
       };
@@ -175,48 +104,88 @@
       img.alt = "";
       box.append(img);
       if (reduce) return;
-      let ty = 0.5;
-      hero.addEventListener("pointermove", (e) => { ty = e.clientY / innerHeight; });
       const tick = () => {
-        current += (target - current) * 0.08;
-        img.style.transform = `scale(1.08) translate(${(current - 0.5) * -24}px, ${(ty - 0.5) * -14}px)`;
+        cur += (target - cur) * 0.06;
+        img.style.transform = `scale(1.06) translate(${(cur - 0.5) * -22}px, ${(ty - 0.5) * -12}px)`;
         requestAnimationFrame(tick);
       };
       requestAnimationFrame(tick);
     }
   }
 
-  function wireUi() {
-    const nav = $(".nav");
-    const toggle = $(".nav-toggle");
-    toggle.addEventListener("click", () => {
-      const open = nav.classList.toggle("open");
-      toggle.setAttribute("aria-expanded", open);
-    });
-    $("#nav-links").addEventListener("click", (e) => {
-      if (e.target.tagName === "A") nav.classList.remove("open");
-    });
+  /* ---------- inner pages ---------- */
+  function head(eyebrow, title, intro) {
+    const h = el("header", "page-head");
+    if (eyebrow) h.append(el("p", "eyebrow", eyebrow));
+    h.append(el("h1", "", title || ""));
+    if (intro) h.append(el("p", "intro", intro));
+    return h;
+  }
 
-    const io = new IntersectionObserver((entries) => {
-      entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } });
-    }, { threshold: 0.12 });
-    document.querySelectorAll(".reveal").forEach((n) => io.observe(n));
+  function renderSection(c, s) {
+    document.title = `${s.nav || s.title} — ${c.site.name}`;
+    const h = head(s.eyebrow, s.title, s.intro);
+    if (s.ctaLabel) {
+      const a = el("a", "link-cta", s.ctaLabel);
+      a.href = href(s.ctaHref || "page.html?s=contact");
+      h.append(a);
+    }
+    const items = s.items || [];
+    // layout: "grid" | "list" | anything else = grid when entries have images
+    const grid = s.layout === "grid" || (s.layout !== "list" && items.some((it) => it.image));
+    const wrap = el("div", grid ? "tiles" : "rows");
+    for (const it of items) {
+      const node = el(it.link ? "a" : "div", grid ? "tile" : "row");
+      if (it.link) { node.href = it.link; node.target = "_blank"; node.rel = "noopener"; }
+      if (grid) {
+        const media = el("div", "tile-media");
+        if (it.image) {
+          const img = el("img");
+          img.src = it.image; img.alt = it.title || ""; img.loading = "lazy";
+          media.append(img);
+        } else {
+          media.classList.add("empty");
+          media.append(window.hvIcon("image"));
+        }
+        node.append(media, el("h3", "", it.title || ""));
+        const sub = [it.subtitle, it.meta].filter(Boolean).join(" · ");
+        if (sub) node.append(el("p", "sub", sub));
+        if (it.description) node.append(el("p", "desc", it.description));
+      } else {
+        node.append(el("h3", "", it.title || ""), el("span", "sub", it.subtitle || ""), el("span", "meta", it.meta || ""));
+        if (it.description) node.append(el("p", "desc", it.description));
+      }
+      wrap.append(node);
+    }
+    $("#page").replaceChildren(h, wrap);
+  }
 
-    const links = [...document.querySelectorAll("#nav-links a")];
-    const spy = new IntersectionObserver((entries) => {
-      entries.forEach((e) => {
-        if (!e.isIntersecting) return;
-        const id = e.target.id === "hero" ? "top" : e.target.id;
-        links.forEach((a) => a.classList.toggle("active", a.getAttribute("href") === "#" + id));
-      });
-    }, { rootMargin: "-45% 0px -50% 0px" });
-    document.querySelectorAll("#hero, .block, #contact").forEach((s) => spy.observe(s));
+  function renderContact(c) {
+    const k = c.contact;
+    document.title = `Contact — ${c.site.name}`;
+    const lines = el("div", "contact-lines");
+    if (k.email) { const a = el("a", "", k.email); a.href = "mailto:" + k.email; lines.append(a); }
+    if (k.phone) { const a = el("a", "", k.phone); a.href = "tel:" + k.phone.replace(/\s/g, ""); lines.append(a); }
+    if (k.location) lines.append(el("span", "", k.location));
+    $("#page").replaceChildren(head(k.eyebrow, k.title, k.text), lines);
+  }
+
+  function renderPage(c) {
+    if (current === "contact") return renderContact(c);
+    const s = c.sections.find((x) => x.id === current);
+    if (s) return renderSection(c, s);
+    const back = el("a", "link-cta", "Back home");
+    back.href = href("./");
+    $("#page").replaceChildren(head("", "Page not found", "That page doesn't exist (anymore)."), back);
   }
 
   loadContent()
-    .then((c) => { render(c); wireUi(); })
+    .then((c) => {
+      renderShared(c);
+      isHome ? renderHome(c) : renderPage(c);
+    })
     .catch((err) => {
       console.error(err);
-      document.body.insertAdjacentHTML("afterbegin", '<p style="padding:100px 24px;color:#f07a3a">Could not load content.</p>');
+      document.body.insertAdjacentHTML("beforeend", '<p class="missing" style="position:fixed;inset:40% 0 auto;text-align:center">Could not load content.</p>');
     });
 })();

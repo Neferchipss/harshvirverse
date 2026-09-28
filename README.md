@@ -2,7 +2,9 @@
 
 Portfolio site for Harshvir Wankhade — static, hosted on GitHub Pages. Placeholder design.
 
-- `index.html`, `assets/` — the site. Everything it shows comes from `content/content.json`.
+- `index.html` — full-screen landing (the character) with an icon rail on the right.
+- `page.html?s=<section id>` — one clean page per menu option (`?s=contact` for contact). New sections added in the admin get a page automatically.
+- Everything the site shows comes from `content/content.json`.
 - `admin/` — content editor. Open `/admin/`, sign in with a fine-grained GitHub token
   (this repo only, **Contents: Read and write**), edit, then **Save & publish**. The site updates in ~1 minute.
   Uploaded images/videos go to `assets/uploads/`.
