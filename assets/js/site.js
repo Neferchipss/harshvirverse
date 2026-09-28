@@ -218,6 +218,7 @@
       return best;
     };
     const target = (tx, ty) => targets(tx, ty)[0];
+    const colOf = (f) => cols.findIndex((c) => f >= Math.min(...c) - 1 && f <= Math.max(...c) + 1);
 
     let head = target(0.5, 0.5), from = head, fadeT = 1, last = performance.now();
     const tick = (now) => {
@@ -237,7 +238,10 @@
       const [start, want] = route(tx, ty);
       head = start;                          // hop to the twin frame (same pose)
       const gap = want - head;
-      if (Math.abs(gap) > jump) {
+      // Separate clips per column (r.linked === false): no footage between
+      // columns, so switching column is always a crossfade
+      const switched = r.linked === false && colOf(want) !== colOf(head);
+      if (switched || Math.abs(gap) > jump) {
         from = head; head = want; fadeT = 0;
       } else {
         // ease in, capped travel speed: a rig being dragged through its keys

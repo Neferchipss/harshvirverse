@@ -31,6 +31,9 @@ svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width:
   font-family: var(--display); font-weight: 800; font-stretch: 125%; font-size: 20px; letter-spacing: -.02em;
 }
 
+/* Inner pages: monogram scrolls away instead of floating over content */
+.inner .mark { position: absolute; }
+
 /* Icon rail */
 .rail {
   position: fixed; right: 20px; top: 50%; transform: translateY(-50%); z-index: 30;
@@ -72,7 +75,8 @@ svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width:
 .home.rig .stage-caption { left: auto; text-align: right; max-width: 52vw; }
 .home.rig .stage-caption p { justify-content: flex-end; }
 @media (max-width: 700px) {
-  .home.rig .stage-caption { left: var(--gutter); max-width: none; }
+  .home.rig .stage-caption { left: var(--gutter); max-width: none; text-align: left; }
+  .home.rig .stage-caption p { justify-content: flex-start; }
 }
 .stage-shade {
   position: absolute; inset: 0; pointer-events: none;
@@ -515,9 +519,11 @@ body.leaving { opacity: 0; }
     top: auto; bottom: 14px; right: 50%; transform: translateX(50%);
     flex-direction: row; gap: 0; padding: 6px; max-width: calc(100vw - 24px);
   }
-  .rail a { width: 38px; height: 38px; }
+  .rail a { width: 42px; height: 42px; }
+  .rail a svg { width: 22px; height: 22px; }
   .rail a.active::after { right: auto; bottom: -3px; }
   .rail .tip { display: none; }
+  .obj-wrap { width: 112px; top: 10px; right: 10px; opacity: 1; }
   .stage-caption { bottom: 86px; right: var(--gutter); }
   .roster-row { grid-template-columns: 1fr; }
   .roster-row::before { padding-top: 0; }
@@ -548,13 +554,12 @@ body.leaving { opacity: 0; }
   .marquee-track { flex-wrap: wrap; width: auto; }
 }
 
-/* Landing: bigger icon rail (desktop) */
+/* Bigger icon rail (desktop, all pages) */
 @media (min-width: 701px) {
-  .home .rail { right: 24px; gap: 6px; padding: 10px; }
-  .home .rail a { width: 54px; height: 54px; }
-  .home .rail a svg { width: 26px; height: 26px; }
-  .home .rail .tip { font-size: 13px; }
-}
-@media (min-width: 701px) {
+  :root { --rail-w: 100px; }
+  .rail { right: 24px; gap: 6px; padding: 10px; }
+  .rail a { width: 54px; height: 54px; }
+  .rail a svg { width: 26px; height: 26px; }
+  .rail .tip { font-size: 13px; }
   .home .stage-caption { right: 132px; }
 }
