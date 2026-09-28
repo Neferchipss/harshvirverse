@@ -5,6 +5,7 @@
   --faint: #ffffff14;
   --accent: #f07a3a;
   --rig: #e6b93c;
+  --axis-x: #ff3352;
   --rail-w: 76px;
   --gutter: clamp(20px, 5vw, 72px);
   --font: "Inter Tight", "Inter", system-ui, sans-serif;
@@ -469,15 +470,15 @@ select.blank option { background: var(--bg); color: var(--text); font-size: 16px
 .rig-target::before { opacity: 0; }
 .rig-target svg {
   position: absolute; left: -24px; top: -24px; width: 48px; height: 48px;
-  stroke: var(--rig); stroke-width: 1.6; fill: none; overflow: visible;
+  stroke: var(--axis-x); stroke-width: 2.2; fill: none; overflow: visible;
   transition: transform .25s cubic-bezier(.2,.7,.2,1), opacity .2s;
 }
-.rig-target svg .core { fill: var(--rig); stroke: none; }
+.rig-target svg .core { fill: var(--axis-x); stroke: none; }
 .rig-target b, .rig-target i {
   position: absolute; left: 22px; white-space: nowrap; font: 500 10px/1.2 ui-monospace, "Cascadia Mono", Consolas, monospace;
   letter-spacing: .02em; transition: opacity .2s;
 }
-.rig-target b { top: 12px; color: var(--rig); }
+.rig-target b { top: 12px; color: var(--axis-x); }
 .rig-target i { top: 25px; color: #ffffff80; font-style: normal; }
 .rig-target.hover svg { transform: scale(.6); opacity: 0; }
 .rig-target.hover b, .rig-target.hover i, .rig-target.gone svg, .rig-target.gone b, .rig-target.gone i { opacity: 0; }

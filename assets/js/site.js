@@ -775,8 +775,8 @@
     if (rig) {
       ring.classList.add("rig-target");
       ring.insertAdjacentHTML("beforeend",
-        '<svg viewBox="-24 -24 48 48" aria-hidden="true"><circle r="13"/><circle class="core" r="2.2"/>' +
-        '<path d="M0-22v5M0 17v5M-22 0h5M17 0h5"/></svg><b>CTRL_eye.target</b><i></i>');
+        '<svg viewBox="-24 -24 48 48" aria-hidden="true"><circle class="core" r="2.4"/>' +
+        '<path d="M-7 0H-21M-15-6L-21 0-15 6M7 0H21M15-6L21 0 15 6"/></svg><b>CTRL_head · X lock</b><i></i>');
       coords = ring.querySelector("i");
       const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
       svg.setAttribute("class", "rig-line");
@@ -796,7 +796,7 @@
           line.setAttribute("x2", x); line.setAttribute("y2", y);
         }
         // Blender-style readout: X/Y in metres from screen centre
-        coords.textContent = `X ${((x / innerWidth - 0.5) * 2).toFixed(2)}  Z ${((0.5 - y / innerHeight) * 2).toFixed(2)}`;
+        coords.textContent = `X ${((x / innerWidth - 0.5) * 2).toFixed(2)}`;
       }
       requestAnimationFrame(tick);
     };
