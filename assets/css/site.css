@@ -72,13 +72,6 @@ svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width:
 .stage-media canvas { display: block; transform: none; }
 /* Rig landing: he stands left in the viewport, the name takes the empty grid on the right */
 .home.rig .mark { display: none; }
-.home.rig .stage-shade { background: linear-gradient(0deg, #0b0c0ec0 0%, transparent 34%); }
-.home.rig .stage-caption { left: auto; text-align: right; max-width: 52vw; }
-.home.rig .stage-caption p { justify-content: flex-end; }
-@media (max-width: 700px) {
-  .home.rig .stage-caption { left: var(--gutter); max-width: none; text-align: left; }
-  .home.rig .stage-caption p { justify-content: flex-start; }
-}
 .stage-shade {
   position: absolute; inset: 0; pointer-events: none;
   background:
@@ -102,6 +95,47 @@ svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width:
   font-size: clamp(12px, 1.25vw, 19px); letter-spacing: .14em; text-transform: uppercase;
 }
 .stage-caption p .x { color: var(--accent); font-weight: 400; }
+
+/* Rig landing: the name is a selected Blender text object in the viewport —
+   solid-shaded grey letters, orange active-object outline, origin dot, and
+   a small viewport name label carrying the roles. */
+.home.rig { --active: #ffa033; }
+.home.rig .stage-shade { background: none; }
+.home.rig .stage-caption {
+  /* origin sits on the scene's red X axis line (16.5% up from the frame bottom) */
+  left: auto; right: 132px; bottom: 16.5vh;
+  width: max-content; max-width: calc(100vw - 180px); text-align: left;
+}
+.home.rig .stage-caption h1 {
+  position: relative; width: max-content;
+  font-size: clamp(36px, 5.4vw, 104px); line-height: .9; letter-spacing: 0;
+  color: #c8c9cc;
+  -webkit-text-stroke: 5px var(--active); paint-order: stroke fill;
+}
+@supports not (paint-order: stroke) {
+  .home.rig .stage-caption h1 {
+    -webkit-text-stroke: 0;
+    text-shadow: 2px 0 var(--active), -2px 0 var(--active), 0 2px var(--active), 0 -2px var(--active),
+      1.5px 1.5px var(--active), -1.5px 1.5px var(--active), 1.5px -1.5px var(--active), -1.5px -1.5px var(--active);
+  }
+}
+/* object origin */
+.home.rig .stage-caption h1::after {
+  content: ""; position: absolute; left: -6px; bottom: -4px; width: 9px; height: 9px; border-radius: 50%;
+  background: var(--active); box-shadow: 0 0 0 1.5px #1b1b1d;
+}
+.home.rig .stage-caption p {
+  position: absolute; left: 0; top: 100%; width: max-content;
+  justify-content: flex-start; gap: 4px 8px; margin-top: 14px;
+  font: 500 13px/1.4 var(--font); letter-spacing: 0; text-transform: none; color: #e8e8e8;
+  text-shadow: 0 1px 2px #000a;
+}
+.home.rig .stage-caption p::before { content: "Text.001"; color: var(--active); margin-right: 6px; }
+.home.rig .stage-caption p .x { color: #ffffff66; }
+@media (max-width: 700px) {
+  .home.rig .stage-caption { left: var(--gutter); right: var(--gutter); bottom: 132px; max-width: none; }
+  .home.rig .stage-caption h1 { -webkit-text-stroke-width: 4px; }
+}
 
 /* Inner pages */
 .page {
