@@ -3,7 +3,7 @@
 import * as THREE from "three";
 import { TeapotGeometry } from "three/addons/geometries/TeapotGeometry.js";
 
-const ACCENT = 0xf07a3a;
+const ACCENT = 0xd70202;
 const DEFAULTS = {
   universities: "university", industry: "gear", workshops: "easel", portfolio: "teapot",
   classes: "bulb", projects: "rocket", contact: "plane",
@@ -12,7 +12,7 @@ const DEFAULTS = {
 const mat = {
   main: new THREE.LineBasicMaterial({ color: ACCENT, transparent: true, opacity: 0.9 }),
   soft: new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.22 }),
-  glow: new THREE.LineBasicMaterial({ color: 0xffc38f, transparent: true, opacity: 1 }),
+  glow: new THREE.LineBasicMaterial({ color: 0xff6b5e, transparent: true, opacity: 1 }),
 };
 const edges = (g, m = mat.main, angle = 20) => new THREE.LineSegments(new THREE.EdgesGeometry(g, angle), m);
 const wire = (g, m = mat.soft) => new THREE.LineSegments(new THREE.WireframeGeometry(g), m);

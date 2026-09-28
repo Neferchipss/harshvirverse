@@ -5,7 +5,7 @@
   --line: #262e38;
   --text: #e9edf2;
   --muted: #9aa4b0;
-  --accent: #f07a3a;
+  --accent: #d70202;
   --danger: #ff5d5d;
   --ok: #4fd18b;
 }
@@ -33,7 +33,7 @@ button, input, textarea, select { font: inherit; color: inherit; }
 }
 .btn:hover { border-color: var(--accent); }
 .btn:disabled { opacity: .5; cursor: wait; }
-.btn-primary { background: var(--accent); border-color: var(--accent); color: #140a04; font-weight: 600; }
+.btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
 .btn-link { background: none; border-color: transparent; color: var(--muted); }
 .btn-danger { color: var(--danger); }
 .btn-danger:hover { border-color: var(--danger); }
