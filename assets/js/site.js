@@ -140,7 +140,9 @@
   function rigHero(box, h) {
     const r = h.rig;
     const fps = r.fps || 15, n = r.frames;
-    const cols = r.columns.map((c) => c.map((s) => s * fps));
+    const sweep = r.sweep && r.sweep.map((s) => s * fps);
+    const cols = (r.columns || []).map((c) => c.map((s) => s * fps));
+    const rail = $("#rail");
     const speed = (r.speed || 5) * fps;      // frames of footage per real second
     const jump = (r.jump || 5) * fps;        // beyond this distance: crossfade
     const canvas = el("canvas");
@@ -194,6 +196,8 @@
     const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
     // Frames that show the requested pose (one per sweep of that column)
     const targets = (tx, ty) => {
+      // Sweep mode: one left → right turn, cursor X only
+      if (sweep) return [clamp(sweep[0] + (sweep[1] - sweep[0]) * clamp(tx, 0, 1), 0, n - 1)];
       const [top, bottom, top2] = cols[clamp(Math.floor(tx * cols.length), 0, cols.length - 1)];
       const y = clamp(ty, 0, 1);
       const out = [top + (bottom - top) * y];
@@ -220,13 +224,20 @@
     const target = (tx, ty) => targets(tx, ty)[0];
     const colOf = (f) => cols.findIndex((c) => f >= Math.min(...c) - 1 && f <= Math.max(...c) + 1);
 
-    let head = target(0.5, 0.5), from = head, fadeT = 1, last = performance.now();
+    let head = target(0.5, 0.5), from = head, fadeT = 1, last = performance.now(), hold = [0.5, 0.5];
     const tick = (now) => {
       const dt = Math.min(64, now - last) / 1000;
       last = now;
       let tx, ty;
-      if (pointer.moved && !document.hidden) {
-        tx = pointer.x / innerWidth;
+      if (rail && rail.matches(":hover")) {
+        // Choosing a menu item: the character holds still
+        tx = hold[0]; ty = hold[1];
+      } else if (pointer.moved && !document.hidden) {
+        // The rail isn't part of the interactive area: map X across the
+        // space to its left (full width when it's the phone bottom bar)
+        const rb = rail && rail.getBoundingClientRect();
+        const w = rb && rb.height > rb.width ? rb.left : innerWidth;
+        tx = pointer.x / w;
         ty = pointer.y / innerHeight;
       } else {
         // Idle / touch: drift slowly between the columns
@@ -235,6 +246,7 @@
         ty = 0.5 + Math.sin(t * 0.61) * 0.4;
       }
       if (reduceMotion) { tx = 0.5; ty = 0.5; }
+      hold = [tx, ty];
       const [start, want] = route(tx, ty);
       head = start;                          // hop to the twin frame (same pose)
       const gap = want - head;
@@ -790,7 +802,7 @@
     };
     requestAnimationFrame(tick);
     document.addEventListener("pointerover", (e) => {
-      const t = e.target.closest("a, button, select, input, [data-cursor]");
+      const t = e.target.closest("a, button, select, input, [data-cursor], #rail");
       ring.classList.toggle("hover", Boolean(t));
       const text = t?.closest("[data-cursor]")?.dataset.cursor || "";
       label.textContent = text;
