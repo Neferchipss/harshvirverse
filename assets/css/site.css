@@ -635,19 +635,19 @@ body.leaving { opacity: 0; }
 .boot-progress { position: absolute; left: 0; top: -1px; height: 2px; width: 0; background: #ffa033; transition: width .2s linear; }
 @media (prefers-reduced-motion: reduce) { .boot-tiles b.active::after { animation: none; } }
 
-/* Landing rail (desktop): bare white icons beside a thin vertical rule */
+/* Icon rail (desktop, all pages): bare white icons beside a thin vertical rule */
 @media (min-width: 701px) {
-  .home .rail {
+  .rail {
     right: 28px; gap: 12px; padding: 18px 0 18px 26px;
     background: none; border: 0; border-left: 1px solid #ffffffb3; border-radius: 0;
     backdrop-filter: none; -webkit-backdrop-filter: none;
   }
-  .home .rail a { color: #fff; opacity: .92; }
-  .home .rail a:hover, .home .rail a:focus-visible { background: none; opacity: 1; transform: scale(1.08); }
-  .home .rail a { transition: opacity .2s, transform .2s; }
-  .home .rail a.active { color: #fff; opacity: 1; }
-  .home .rail a.active::after { background: #fff; right: -8px; width: 4px; height: 4px; }
-  .home .rail a svg { stroke-width: 1.4; filter: drop-shadow(0 1px 3px #0006); }
+  .rail a { color: #fff; opacity: .92; }
+  .rail a:hover, .rail a:focus-visible { background: none; opacity: 1; transform: scale(1.08); }
+  .rail a { transition: opacity .2s, transform .2s; }
+  .rail a.active { color: #fff; opacity: 1; }
+  .rail a.active::after { background: #fff; right: -8px; width: 4px; height: 4px; }
+  .rail a svg { stroke-width: 1.4; filter: drop-shadow(0 1px 3px #0006); }
 }
 
 /* Media: no drag-out, no long-press save sheet (iOS/Android), no selection highlight */
