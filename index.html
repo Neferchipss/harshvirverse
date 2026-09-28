@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Harshvir Wankhade — 3D Artist · Educator</title>
+  <meta name="description" content="Harshvir Wankhade — 3D artist, educator and industry professional.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/site.css">
+</head>
+<body>
+  <header class="nav" id="top">
+    <a class="brand" href="#top">
+      <span class="brand-mark" data-bind="site.initials">HW</span>
+      <span class="brand-text">
+        <strong data-bind="site.name">Harshvir Wankhade</strong>
+        <small id="brand-roles"></small>
+      </span>
+    </a>
+    <button class="nav-toggle" aria-label="Menu" aria-expanded="false">
+      <span></span><span></span>
+    </button>
+    <nav class="nav-links" id="nav-links"></nav>
+    <a class="btn btn-ghost btn-sm nav-cta" href="#contact">Work with me</a>
+  </header>
+
+  <main>
+    <section class="hero" id="hero">
+      <div class="hero-media" id="hero-media"></div>
+      <div class="hero-shade"></div>
+      <div class="hero-content">
+        <p class="eyebrow" data-bind="hero.eyebrow"></p>
+        <h1>
+          <span data-bind="hero.headlineTop"></span>
+          <span class="accent" data-bind="hero.headlineBottom"></span>
+        </h1>
+        <p class="hero-roles" id="hero-roles"></p>
+        <p class="hero-sub" data-bind="hero.subtitle"></p>
+        <div class="hero-ctas">
+          <a class="btn btn-primary" id="cta-primary" href="#">Explore</a>
+          <a class="btn btn-ghost" id="cta-secondary" href="#">Contact</a>
+        </div>
+      </div>
+      <aside class="hero-card">
+        <strong data-bind="site.name"></strong>
+        <span id="hero-card-roles"></span>
+        <em data-bind="hero.stat"></em>
+      </aside>
+    </section>
+
+    <section class="overview">
+      <div class="overview-head">
+        <p class="eyebrow" data-bind="overview.eyebrow"></p>
+        <h2 data-bind="overview.title"></h2>
+        <p data-bind="overview.text"></p>
+      </div>
+      <div class="overview-grid" id="overview-grid"></div>
+    </section>
+
+    <div id="sections"></div>
+
+    <section class="contact" id="contact">
+      <div class="contact-inner">
+        <p class="eyebrow" data-bind="contact.eyebrow"></p>
+        <h2 data-bind="contact.title"></h2>
+        <p data-bind="contact.text"></p>
+        <div class="contact-lines" id="contact-lines"></div>
+        <div class="socials" id="socials"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <span>© <span id="year"></span> <span data-bind="site.name"></span></span>
+    <span>Education × Industry × Future</span>
+  </footer>
+
+  <script src="assets/js/site.js"></script>
+</body>
+</html>

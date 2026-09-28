@@ -1,0 +1,107 @@
+:root {
+  --bg: #0a0c0f;
+  --bg-2: #101419;
+  --panel: #151a21;
+  --line: #262e38;
+  --text: #e9edf2;
+  --muted: #9aa4b0;
+  --accent: #f07a3a;
+  --danger: #ff5d5d;
+  --ok: #4fd18b;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.5 "Inter", system-ui, sans-serif; }
+button, input, textarea, select { font: inherit; color: inherit; }
+[hidden] { display: none !important; }
+
+.bar {
+  position: sticky; top: 0; z-index: 10;
+  display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+  padding: 12px 20px; background: #0a0c0ff2; border-bottom: 1px solid var(--line);
+}
+.logo { font: 700 22px/1 "Rajdhani", sans-serif; }
+.logo span { color: var(--accent); font-weight: 600; letter-spacing: .1em; text-transform: uppercase; font-size: 14px; }
+.status { color: var(--muted); font-size: 13px; margin-right: auto; }
+.status.dirty { color: var(--accent); }
+.status.ok { color: var(--ok); }
+.status.err { color: var(--danger); }
+.bar-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.btn {
+  padding: 9px 16px; border-radius: 8px; border: 1px solid var(--line);
+  background: var(--panel); cursor: pointer; font-weight: 500;
+}
+.btn:hover { border-color: var(--accent); }
+.btn:disabled { opacity: .5; cursor: wait; }
+.btn-primary { background: var(--accent); border-color: var(--accent); color: #140a04; font-weight: 600; }
+.btn-link { background: none; border-color: transparent; color: var(--muted); }
+.btn-danger { color: var(--danger); }
+.btn-danger:hover { border-color: var(--danger); }
+.btn-sm { padding: 5px 10px; font-size: 12px; }
+
+/* Login */
+.login { min-height: calc(100vh - 60px); display: grid; place-items: center; padding: 24px 16px; }
+.login-card { width: min(440px, 100%); display: flex; flex-direction: column; gap: 14px; }
+.login-card h1 { margin: 0; font: 700 34px/1 "Rajdhani", sans-serif; text-transform: uppercase; }
+.login-card p { margin: 0; color: var(--muted); }
+.login-card details { color: var(--muted); }
+.login-card details[open] { display: flex; flex-direction: column; gap: 10px; }
+.login-card summary { cursor: pointer; }
+.help ol { margin: 8px 0 0; padding-left: 20px; }
+.err { color: var(--danger) !important; min-height: 1em; }
+
+label { display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: var(--muted); letter-spacing: .03em; }
+input, textarea, select {
+  width: 100%; padding: 10px 12px; border-radius: 8px;
+  background: var(--bg); border: 1px solid var(--line); font-size: 14px;
+}
+input:focus, textarea:focus, select:focus { outline: none; border-color: var(--accent); }
+textarea { min-height: 80px; resize: vertical; }
+
+/* App */
+.app { display: grid; grid-template-columns: 230px 1fr; min-height: calc(100vh - 60px); }
+.side { border-right: 1px solid var(--line); padding: 16px 10px; display: flex; flex-direction: column; gap: 2px; background: var(--bg-2); }
+.side h4 { margin: 16px 10px 6px; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.side button {
+  text-align: left; padding: 9px 12px; border-radius: 8px; border: 0; background: none; cursor: pointer; color: var(--muted);
+}
+.side button:hover { background: var(--panel); color: var(--text); }
+.side button.active { background: var(--panel); color: var(--text); box-shadow: inset 2px 0 var(--accent); }
+.side .add { color: var(--accent); }
+
+.editor { padding: 28px clamp(16px, 4vw, 48px) 80px; max-width: 980px; width: 100%; }
+.editor h2 { margin: 0 0 4px; font: 700 30px/1.1 "Rajdhani", sans-serif; text-transform: uppercase; }
+.editor .hint { color: var(--muted); margin: 0 0 24px; }
+.fields { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+.fields .wide { grid-column: 1 / -1; }
+.group { border: 1px solid var(--line); border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.group > legend { padding: 0 6px; color: var(--muted); font-size: 12px; }
+
+.list-head { display: flex; align-items: center; justify-content: space-between; margin: 32px 0 12px; gap: 12px; }
+.list-head h3 { margin: 0; font: 700 20px/1 "Rajdhani", sans-serif; text-transform: uppercase; }
+.items { display: flex; flex-direction: column; gap: 12px; }
+.item { border: 1px solid var(--line); border-radius: 10px; background: var(--panel); }
+.item-head { display: flex; align-items: center; gap: 10px; padding: 10px 12px; cursor: pointer; }
+.item-head .thumb { width: 44px; height: 32px; border-radius: 4px; background: var(--bg) center / cover; flex: none; }
+.item-head .title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.item-head .ctrl { display: flex; gap: 4px; }
+.item-body { padding: 4px 12px 16px; border-top: 1px solid var(--line); }
+.item:not(.open) .item-body { display: none; }
+
+.media-field { display: flex; gap: 10px; align-items: flex-end; }
+.media-field label { flex: 1; }
+.media-preview { width: 100%; max-height: 180px; object-fit: contain; border-radius: 8px; background: var(--bg); margin-top: 8px; }
+.danger-zone { margin-top: 40px; padding-top: 20px; border-top: 1px dashed var(--line); }
+
+.toast {
+  position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+  background: var(--panel); border: 1px solid var(--line); padding: 12px 18px; border-radius: 10px; z-index: 20;
+  max-width: calc(100vw - 32px);
+}
+
+@media (max-width: 760px) {
+  .app { grid-template-columns: 1fr; }
+  .side { flex-direction: row; overflow-x: auto; border-right: 0; border-bottom: 1px solid var(--line); padding: 8px; }
+  .side h4 { display: none; }
+  .side button { white-space: nowrap; }
+}

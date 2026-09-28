@@ -1,0 +1,126 @@
+{
+  "site": {
+    "name": "Harshvir Wankhade",
+    "initials": "HW",
+    "roles": ["3D Artist", "Educator", "Industry Professional"],
+    "metaDescription": "Harshvir Wankhade — 3D artist, educator and industry professional. Teaching, workshops, mentorship, portfolio and projects.",
+    "email": "hello@example.com",
+    "socials": [
+      { "label": "ArtStation", "url": "https://www.artstation.com/" },
+      { "label": "LinkedIn", "url": "https://www.linkedin.com/" },
+      { "label": "Instagram", "url": "https://www.instagram.com/" }
+    ]
+  },
+  "hero": {
+    "eyebrow": "Creative Education × Professional Production × Real World Impact",
+    "headlineTop": "Harshvir",
+    "headlineBottom": "Wankhade",
+    "subtitle": "Building industry-ready 3D artists, creating professional visual experiences, and connecting academia with real-world production workflows.",
+    "mediaType": "image",
+    "media": "assets/img/hero-placeholder.jpg",
+    "stat": "11+ Years of Teaching & Industry Experience",
+    "primaryCta": { "label": "Explore my work", "href": "#portfolio" },
+    "secondaryCta": { "label": "Work with me", "href": "#contact" }
+  },
+  "overview": {
+    "eyebrow": "My professional world",
+    "title": "Where 3D meets industry & education",
+    "text": "A unified ecosystem of teaching, mentoring, workshops, portfolio and professional services — built to create real opportunities."
+  },
+  "sections": [
+    {
+      "id": "universities",
+      "nav": "Universities",
+      "eyebrow": "Universities",
+      "title": "From classroom to industry",
+      "summary": "Teaching the next generation of 3D artists.",
+      "intro": "Teaching, mentoring and developing industry-oriented 3D skills across higher education.",
+      "ctaLabel": "Invite me to teach",
+      "ctaHref": "#contact",
+      "items": [
+        { "title": "University Name", "subtitle": "Department / Course", "meta": "Year / Period", "description": "", "image": "", "link": "" },
+        { "title": "University Name", "subtitle": "Department / Course", "meta": "Year / Period", "description": "", "image": "", "link": "" },
+        { "title": "University Name", "subtitle": "Department / Course", "meta": "Year / Period", "description": "", "image": "", "link": "" }
+      ]
+    },
+    {
+      "id": "industry",
+      "nav": "Industry",
+      "eyebrow": "Industry experience",
+      "title": "From industry production to classroom",
+      "summary": "Production experience across professional visual media.",
+      "intro": "Studios, productions and professional pipelines I've worked in.",
+      "ctaLabel": "",
+      "ctaHref": "",
+      "items": [
+        { "title": "Studio / Company", "subtitle": "Role", "meta": "Years", "description": "What I worked on and shipped.", "image": "", "link": "" },
+        { "title": "Studio / Company", "subtitle": "Role", "meta": "Years", "description": "What I worked on and shipped.", "image": "", "link": "" }
+      ]
+    },
+    {
+      "id": "workshops",
+      "nav": "Workshops",
+      "eyebrow": "Workshops",
+      "title": "Industry-driven workshops",
+      "summary": "Workshops designed for university students.",
+      "intro": "Hands-on sessions built around real production workflows.",
+      "ctaLabel": "Invite me to your university",
+      "ctaHref": "#contact",
+      "items": [
+        { "title": "Workshop title", "subtitle": "Institution", "meta": "Date", "description": "Short description of the workshop.", "image": "", "link": "" },
+        { "title": "Workshop title", "subtitle": "Institution", "meta": "Date", "description": "Short description of the workshop.", "image": "", "link": "" }
+      ]
+    },
+    {
+      "id": "portfolio",
+      "nav": "Portfolio",
+      "eyebrow": "Portfolio",
+      "title": "Selected work",
+      "summary": "Selected work across 3D, assets, environments and more.",
+      "intro": "Characters, game assets, environments and more.",
+      "ctaLabel": "",
+      "ctaHref": "",
+      "items": [
+        { "title": "Artwork title", "subtitle": "Game asset", "meta": "2026", "description": "", "image": "", "link": "" },
+        { "title": "Artwork title", "subtitle": "Environment", "meta": "2026", "description": "", "image": "", "link": "" },
+        { "title": "Artwork title", "subtitle": "Character", "meta": "2025", "description": "", "image": "", "link": "" },
+        { "title": "Artwork title", "subtitle": "Prop", "meta": "2025", "description": "", "image": "", "link": "" }
+      ]
+    },
+    {
+      "id": "classes",
+      "nav": "1:1 Classes",
+      "eyebrow": "1:1 Mentorship",
+      "title": "Personalised online guidance",
+      "summary": "Personalised online guidance for serious 3D learners.",
+      "intro": "One-on-one sessions tailored to where you are and where you want to go.",
+      "ctaLabel": "Book a session",
+      "ctaHref": "#contact",
+      "items": [
+        { "title": "Portfolio review", "subtitle": "60 min", "meta": "Price on request", "description": "Honest, detailed feedback on your portfolio.", "image": "", "link": "" },
+        { "title": "Mentorship track", "subtitle": "Monthly", "meta": "Price on request", "description": "Ongoing guidance towards an industry-ready portfolio.", "image": "", "link": "" }
+      ]
+    },
+    {
+      "id": "projects",
+      "nav": "Projects",
+      "eyebrow": "Projects",
+      "title": "Collaborations",
+      "summary": "Available for selected personal and industry collaborations.",
+      "intro": "Personal and industry projects — and what I'm open to next.",
+      "ctaLabel": "Start a project",
+      "ctaHref": "#contact",
+      "items": [
+        { "title": "Project title", "subtitle": "Client / Personal", "meta": "Status", "description": "Short description of the project.", "image": "", "link": "" }
+      ]
+    }
+  ],
+  "contact": {
+    "eyebrow": "Contact",
+    "title": "Let's work together",
+    "text": "Universities, studios, students — reach out for teaching, workshops, mentorship or projects.",
+    "email": "hello@example.com",
+    "phone": "",
+    "location": "India"
+  }
+}

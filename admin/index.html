@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Site Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+  <header class="bar">
+    <strong class="logo">HW <span>Admin</span></strong>
+    <span class="status" id="status"></span>
+    <div class="bar-actions" id="bar-actions" hidden>
+      <button class="btn" id="btn-preview" title="Open the site with your unsaved changes">Preview</button>
+      <button class="btn" id="btn-download" title="Download content.json as a backup">Backup</button>
+      <button class="btn btn-primary" id="btn-save">Save &amp; publish</button>
+      <button class="btn btn-link" id="btn-logout">Log out</button>
+    </div>
+  </header>
+
+  <section class="login" id="login">
+    <div class="login-card">
+      <h1>Sign in</h1>
+      <p>Paste your GitHub access token. It stays in this browser only and is used to save changes straight to the website's repository.</p>
+      <label>Access token<input type="password" id="token" autocomplete="off" placeholder="github_pat_…"></label>
+      <details>
+        <summary>Repository settings</summary>
+        <label>Owner<input id="owner"></label>
+        <label>Repository<input id="repo"></label>
+        <label>Branch<input id="branch" value="main"></label>
+      </details>
+      <button class="btn btn-primary" id="btn-login">Sign in</button>
+      <button class="btn btn-link" id="btn-offline">Just try it (changes are not published)</button>
+      <details class="help">
+        <summary>How do I get a token?</summary>
+        <ol>
+          <li>GitHub → Settings → Developer settings → <b>Fine-grained tokens</b> → Generate new token.</li>
+          <li>Repository access: <b>Only select repositories</b> → pick this site's repo.</li>
+          <li>Permissions → Repository → <b>Contents: Read and write</b>.</li>
+          <li>Generate, copy, paste it above. Keep it private.</li>
+        </ol>
+      </details>
+      <p class="err" id="login-err"></p>
+    </div>
+  </section>
+
+  <div class="app" id="app" hidden>
+    <nav class="side" id="side"></nav>
+    <main class="editor" id="editor"></main>
+  </div>
+
+  <script src="admin.js"></script>
+</body>
+</html>
