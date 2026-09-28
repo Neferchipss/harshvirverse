@@ -128,15 +128,19 @@
   }
 
   /* "Rig" hero: the character is posed by the cursor like a rigged model.
-     One clip traces a snake through three columns (look left / centre /
-     right, each sweeping up ↔ down, joined by turns). Cursor X picks the
-     column, cursor Y the height; the playhead then travels through the real
-     in-between frames at a capped speed, so every move is interpolated by
-     actual footage. Only very long jumps take a quick crossfade instead. */
+     One clip visits three columns (look left / centre / right). In each he
+     pitches top → bottom → top, and the turns between columns happen at the
+     top. Cursor X picks the column, cursor Y the height; the playhead then
+     travels through the real in-between frames at a capped speed, so every
+     move is interpolated by actual footage.
+     Every pose inside a column exists twice (down-sweep and up-sweep), so
+     before travelling the playhead may hop to its twin — invisible, same
+     pose — to take the shorter route: up, across the top, and down.
+     Columns: [topSec, bottomSec, topAgainSec] (or [topSec, bottomSec]). */
   function rigHero(box, h) {
     const r = h.rig;
     const fps = r.fps || 15, n = r.frames;
-    const cols = r.columns.map(([top, bottom]) => [top * fps, bottom * fps]);
+    const cols = r.columns.map((c) => c.map((s) => s * fps));
     const speed = (r.speed || 5) * fps;      // frames of footage per real second
     const jump = (r.jump || 5) * fps;        // beyond this distance: crossfade
     const canvas = el("canvas");
@@ -188,10 +192,32 @@
       return true;
     };
     const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
-    const target = (tx, ty) => {
-      const [top, bottom] = cols[clamp(Math.floor(tx * cols.length), 0, cols.length - 1)];
-      return clamp(top + (bottom - top) * clamp(ty, 0, 1), 0, n - 1);
+    // Frames that show the requested pose (one per sweep of that column)
+    const targets = (tx, ty) => {
+      const [top, bottom, top2] = cols[clamp(Math.floor(tx * cols.length), 0, cols.length - 1)];
+      const y = clamp(ty, 0, 1);
+      const out = [top + (bottom - top) * y];
+      if (top2 != null) out.push(top2 - (top2 - bottom) * y);
+      return out.map((f) => clamp(f, 0, n - 1));
     };
+    // Frames showing the same pose as f (itself, plus its twin in the other sweep)
+    const twins = (f) => {
+      const out = [f];
+      for (const [top, bottom, top2] of cols) {
+        if (top2 == null) continue;
+        if (f >= top && f <= bottom) out.push(top2 - (top2 - bottom) * ((f - top) / (bottom - top)));
+        else if (f > bottom && f <= top2) out.push(top + (bottom - top) * ((top2 - f) / (top2 - bottom)));
+      }
+      return out;
+    };
+    const route = (tx, ty) => {
+      let best = null;
+      for (const s of twins(head)) for (const t of targets(tx, ty)) {
+        if (!best || Math.abs(t - s) < Math.abs(best[1] - best[0])) best = [s, t];
+      }
+      return best;
+    };
+    const target = (tx, ty) => targets(tx, ty)[0];
 
     let head = target(0.5, 0.5), from = head, fadeT = 1, last = performance.now();
     const tick = (now) => {
@@ -208,7 +234,8 @@
         ty = 0.5 + Math.sin(t * 0.61) * 0.4;
       }
       if (reduceMotion) { tx = 0.5; ty = 0.5; }
-      const want = target(tx, ty);
+      const [start, want] = route(tx, ty);
+      head = start;                          // hop to the twin frame (same pose)
       const gap = want - head;
       if (Math.abs(gap) > jump) {
         from = head; head = want; fadeT = 0;
