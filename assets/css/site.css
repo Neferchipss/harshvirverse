@@ -602,3 +602,35 @@ body.leaving { opacity: 0; }
   .rail .tip { font-size: 13px; }
   .home .stage-caption { right: 132px; }
 }
+
+/* Landing loader: a Cycles-style tile render that reveals the viewport */
+.boot { position: fixed; inset: 0; z-index: 90; pointer-events: auto; transition: opacity .5s ease; }
+.boot.done { opacity: 0; pointer-events: none; transition-delay: .25s; }
+.boot-tiles { position: absolute; inset: 0 0 26px; display: grid; }
+.boot-tiles:empty { background: #1d1e21; }
+.boot-tiles b {
+  position: relative; background: #1d1e21; transition: opacity .35s ease;
+  box-shadow: inset 0 0 0 .5px #ffffff08;
+}
+.boot-tiles b.on { opacity: 0; }
+.boot-tiles b.active { background: #1d1e21e6; }
+.boot-tiles b.active::before, .boot-tiles b.active::after {
+  content: ""; position: absolute; inset: 3px; pointer-events: none;
+  border: 1.5px solid #ffa033;
+  -webkit-mask: linear-gradient(#000 0 0) top left / 12px 12px no-repeat, linear-gradient(#000 0 0) top right / 12px 12px no-repeat,
+                linear-gradient(#000 0 0) bottom left / 12px 12px no-repeat, linear-gradient(#000 0 0) bottom right / 12px 12px no-repeat;
+          mask: linear-gradient(#000 0 0) top left / 12px 12px no-repeat, linear-gradient(#000 0 0) top right / 12px 12px no-repeat,
+                linear-gradient(#000 0 0) bottom left / 12px 12px no-repeat, linear-gradient(#000 0 0) bottom right / 12px 12px no-repeat;
+}
+.boot-tiles b.active::after { border: 0; background: linear-gradient(90deg, #ffffff06, #ffffff14, #ffffff06); background-size: 200% 100%; animation: bootscan 1s linear infinite; }
+@keyframes bootscan { to { background-position: -200% 0; } }
+.boot-bar {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 26px; padding: 0 12px;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  background: #232427; border-top: 1px solid #ffffff12;
+  font: 500 11px/1 ui-monospace, "Cascadia Mono", Consolas, monospace; color: #c9c9cc; white-space: nowrap; overflow: hidden;
+}
+.boot-l { overflow: hidden; text-overflow: ellipsis; }
+.boot-r { color: #ffa033; }
+.boot-progress { position: absolute; left: 0; top: -1px; height: 2px; width: 0; background: #ffa033; transition: width .2s linear; }
+@media (prefers-reduced-motion: reduce) { .boot-tiles b.active::after { animation: none; } }

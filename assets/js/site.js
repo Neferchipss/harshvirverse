@@ -89,6 +89,7 @@
   function heroMedia(h) {
     const box = $("#stage-media");
     if (h.mediaType === "rig" && h.rig) return rigHero(box, h);
+    $("#boot")?.remove();
     if (!h.media) return;
     let cur = 0.5;
     const tx = () => (document.hidden ? 0.5 : pointer.x / innerWidth);
@@ -125,6 +126,58 @@
       };
       requestAnimationFrame(tick);
     }
+  }
+
+  /* Landing loader: a Cycles-style tile render. Dark tiles clear from the
+     centre outward (orange brackets on the tiles "rendering"), revealing the
+     live viewport underneath while the rig frames download. Progress follows
+     the real downloads, but runs at least minDur (anticipation) and never
+     longer than maxDur (nobody waits on a slow connection — the rig copes). */
+  function bootLoader(progress, label, mem) {
+    const boot = $("#boot");
+    if (!boot) return;
+    let again = false;
+    try { again = sessionStorage.getItem("hv-booted") === "1"; sessionStorage.setItem("hv-booted", "1"); } catch (_) {}
+    const minDur = reduceMotion ? 0 : again ? 600 : 1800, maxDur = 8000;
+    const grid = $(".boot-tiles", boot), left = $(".boot-l", boot), right = $(".boot-r", boot), bar = $(".boot-progress", boot);
+    const size = innerWidth < 700 ? 78 : 112;
+    const cols = Math.ceil(innerWidth / size), rows = Math.ceil((innerHeight - 26) / size);
+    grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+    grid.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
+    const tiles = [];
+    for (let y = 0; y < rows; y++) for (let x = 0; x < cols; x++) {
+      const b = el("b");
+      grid.append(b);
+      tiles.push({ b, d: Math.hypot((x + 0.5) / cols - 0.5, ((y + 0.5) / rows - 0.5) * (rows / cols)) });
+    }
+    const order = [...tiles].sort((a, b) => a.d - b.d);
+    const t0 = performance.now();
+    let shown = 0, revealed = 0, finished = false, last = t0;
+    const tick = (now) => {
+      const t = now - t0;
+      const target = t >= maxDur ? 1 : Math.min(progress(), minDur ? t / minDur : 1);
+      // time-based easing, so throttled/slow tabs don't crawl
+      shown += (target - shown) * Math.min(1, ((now - last) / 1000) * 7);
+      last = now;
+      if (target >= 1 && shown > 0.995) shown = 1;
+      const want = Math.floor(shown * order.length);
+      while (revealed < want) order[revealed++].b.className = "on";
+      order.slice(revealed, revealed + 3).forEach((o) => { o.b.className = "active"; });
+      const sec = t / 1000;
+      const time = `${String(Math.floor(sec / 60)).padStart(2, "0")}:${(sec % 60).toFixed(2).padStart(5, "0")}`;
+      left.textContent = `Fra:1 | Time:${time} | Mem:${mem().toFixed(1)}M | Harshvir Wankhade | ${shown >= 1 ? "Finished" : label()}`;
+      right.textContent = `${Math.round(shown * 100)}%`;
+      bar.style.width = `${shown * 100}%`;
+      if (shown >= 1 && !finished) {
+        finished = true;
+        boot.addEventListener("transitionend", () => boot.remove(), { once: true });
+        boot.classList.add("done");                    // fades after a short beat (CSS delay)
+        setTimeout(() => boot.remove(), 1500);         // fallback
+        return;
+      }
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
   }
 
   /* "Rig" hero: the character is posed by the cursor like a rigged model.
@@ -188,6 +241,9 @@
       f.img.src = `${base}f_${String(i).padStart(3, "0")}.${r.ext || "webp"}`;
     };
     for (let k = 0; k < 6; k++) fetchNext();
+    // Mem = decoded size of the frames loaded so far, like Blender's render readout
+    bootLoader(() => loaded / n, () => `Loading rig ${loaded}/${n}`,
+      () => frames.reduce((a, f) => a + (f.ok ? f.img.naturalWidth * f.img.naturalHeight * 4 : 0), 0) / 1048576);
     // Nearest frame that's ready (so the head never sticks while loading)
     const nearest = (i) => {
       for (let d = 0; d < n; d++) {
@@ -909,6 +965,7 @@
     })
     .catch((err) => {
       console.error(err);
+      $("#boot")?.remove();
       document.body.insertAdjacentHTML("beforeend", '<p class="missing" style="position:fixed;inset:40% 0 auto;text-align:center">Could not load content.</p>');
     });
 })();
