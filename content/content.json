@@ -21,9 +21,9 @@
     "headlineBottom": "Wankhade",
     "tagline": "3D Artist × Educator × Industry Professional",
     "mediaType": "rig",
-    "media": "assets/hero/sweep-1/f_034.webp",
+    "media": "assets/hero/sweep-2/f_034.webp",
     "rig": {
-      "path": "assets/hero/sweep-1/",
+      "path": "assets/hero/sweep-2/",
       "frames": 62,
       "fps": 15,
       "ext": "webp",
