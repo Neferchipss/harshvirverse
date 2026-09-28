@@ -16,7 +16,7 @@
   const finePointer = matchMedia("(hover: hover) and (pointer: fine)").matches;
   const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const pointer = { x: innerWidth / 2, y: innerHeight / 2 };
-  addEventListener("pointermove", (e) => { pointer.x = e.clientX; pointer.y = e.clientY; }, { passive: true });
+  addEventListener("pointermove", (e) => { pointer.x = e.clientX; pointer.y = e.clientY; pointer.moved = true; }, { passive: true });
 
   // Keep ?preview=1 on internal links so the admin draft follows you around
   const href = (url) => {
@@ -88,6 +88,7 @@
      Image: subtle parallax until the video exists. */
   function heroMedia(h) {
     const box = $("#stage-media");
+    if (h.mediaType === "rig" && h.rig) return rigHero(box, h);
     if (!h.media) return;
     let cur = 0.5;
     const tx = () => (document.hidden ? 0.5 : pointer.x / innerWidth);
@@ -124,6 +125,109 @@
       };
       requestAnimationFrame(tick);
     }
+  }
+
+  /* "Rig" hero: the character is posed by the cursor like a rigged model.
+     One clip traces a snake through three columns (look left / centre /
+     right, each sweeping up ↔ down, joined by turns). Cursor X picks the
+     column, cursor Y the height; the playhead then travels through the real
+     in-between frames at a capped speed, so every move is interpolated by
+     actual footage. Only very long jumps take a quick crossfade instead. */
+  function rigHero(box, h) {
+    const r = h.rig;
+    const fps = r.fps || 15, n = r.frames;
+    const cols = r.columns.map(([top, bottom]) => [top * fps, bottom * fps]);
+    const speed = (r.speed || 5) * fps;      // frames of footage per real second
+    const jump = (r.jump || 5) * fps;        // beyond this distance: crossfade
+    const canvas = el("canvas");
+    const ctx = canvas.getContext("2d");
+    box.append(canvas);
+    document.body.classList.add("rig");
+
+    const poster = new Image();
+    poster.src = h.media;
+    const frames = Array.from({ length: n }, (_, i) => {
+      const img = new Image();
+      img.decoding = "async";
+      img.src = `${r.path}f_${String(i).padStart(3, "0")}.${r.ext || "webp"}`;
+      return img;
+    });
+
+    // object-fit: cover, anchored by r.focus so he never gets cropped away
+    let fit = null;
+    const size = () => {
+      const dpr = Math.min(devicePixelRatio || 1, 2);
+      canvas.width = innerWidth * dpr;
+      canvas.height = innerHeight * dpr;
+      fit = null;
+    };
+    const cover = (img) => {
+      const iw = img.naturalWidth, ih = img.naturalHeight;
+      if (fit && fit.iw === iw && fit.ih === ih) return fit;
+      const s = Math.max(canvas.width / iw, canvas.height / ih);
+      const [fx, fy] = r.focus || [0.5, 0.5];
+      const w = iw * s, hgt = ih * s;
+      fit = { x: (canvas.width - w) * fx, y: (canvas.height - hgt) * fy, w, h: hgt, iw, ih };
+      return fit;
+    };
+    // Screen position of the eyes (for the cursor's "look-at" line)
+    const eyes = () => {
+      if (!fit || !r.eye) return null;
+      const dpr = canvas.width / innerWidth;
+      return { x: (fit.x + r.eye[0] * fit.w) / dpr, y: (fit.y + r.eye[1] * fit.h) / dpr };
+    };
+    size();
+    addEventListener("resize", size);
+
+    const ready = (img) => img && img.complete && img.naturalWidth;
+    const draw = (img, alpha) => {
+      if (!ready(img)) return false;
+      const f = cover(img);
+      ctx.globalAlpha = alpha;
+      ctx.drawImage(img, f.x, f.y, f.w, f.h);
+      return true;
+    };
+    const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+    const target = (tx, ty) => {
+      const [top, bottom] = cols[clamp(Math.floor(tx * cols.length), 0, cols.length - 1)];
+      return clamp(top + (bottom - top) * clamp(ty, 0, 1), 0, n - 1);
+    };
+
+    let head = target(0.5, 0.5), from = head, fadeT = 1, last = performance.now();
+    const tick = (now) => {
+      const dt = Math.min(64, now - last) / 1000;
+      last = now;
+      let tx, ty;
+      if (pointer.moved && !document.hidden) {
+        tx = pointer.x / innerWidth;
+        ty = pointer.y / innerHeight;
+      } else {
+        // Idle / touch: drift slowly between the columns
+        const t = now / 1000;
+        tx = 0.5 + Math.sin(t * 0.23) * 0.45;
+        ty = 0.5 + Math.sin(t * 0.61) * 0.4;
+      }
+      if (reduceMotion) { tx = 0.5; ty = 0.5; }
+      const want = target(tx, ty);
+      const gap = want - head;
+      if (Math.abs(gap) > jump) {
+        from = head; head = want; fadeT = 0;
+      } else {
+        // ease in, capped travel speed: a rig being dragged through its keys
+        head += clamp(gap * Math.min(1, dt * 9), -speed * dt, speed * dt);
+      }
+      fadeT = Math.min(1, fadeT + dt / 0.22);
+
+      const cur = frames[Math.round(head)];
+      if (fadeT < 1) {
+        if (!draw(frames[Math.round(from)], 1)) draw(poster, 1);
+        draw(cur, fadeT);
+      } else if (!draw(cur, 1)) draw(poster, 1);
+      window.hvRigEyes = eyes();
+      window.hvRigState = { head, want, fadeT };
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
   }
 
   /* =========================================================
@@ -621,11 +725,36 @@
     const label = el("span");
     ring.append(label);
     document.body.append(ring);
+    // On the rig landing the cursor becomes the eye-target control,
+    // tied to his eyes by a dashed "look-at" line like a Blender constraint
+    const rig = document.body.classList.contains("rig");
+    let line = null, coords = null;
+    if (rig) {
+      ring.classList.add("rig-target");
+      ring.insertAdjacentHTML("beforeend",
+        '<svg viewBox="-24 -24 48 48" aria-hidden="true"><circle r="13"/><circle class="core" r="2.2"/>' +
+        '<path d="M0-22v5M0 17v5M-22 0h5M17 0h5"/></svg><b>CTRL_eye.target</b><i></i>');
+      coords = ring.querySelector("i");
+      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      svg.setAttribute("class", "rig-line");
+      line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+      svg.append(line);
+      document.body.append(svg);
+    }
     let x = pointer.x, y = pointer.y;
     const tick = () => {
       x += (pointer.x - x) * 0.2;
       y += (pointer.y - y) * 0.2;
       ring.style.transform = `translate(${x}px, ${y}px)`;
+      if (rig) {
+        const e = window.hvRigEyes;
+        if (e) {
+          line.setAttribute("x1", e.x); line.setAttribute("y1", e.y);
+          line.setAttribute("x2", x); line.setAttribute("y2", y);
+        }
+        // Blender-style readout: X/Y in metres from screen centre
+        coords.textContent = `X ${((x / innerWidth - 0.5) * 2).toFixed(2)}  Z ${((0.5 - y / innerHeight) * 2).toFixed(2)}`;
+      }
       requestAnimationFrame(tick);
     };
     requestAnimationFrame(tick);

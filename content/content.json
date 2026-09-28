@@ -2,19 +2,56 @@
   "site": {
     "name": "Harshvir Wankhade",
     "initials": "HW",
-    "roles": ["3D Artist", "Educator", "Industry Professional"],
+    "roles": [
+      "3D Artist",
+      "Educator",
+      "Industry Professional"
+    ],
     "metaDescription": "Harshvir Wankhade — 3D artist and educator in Mumbai. Seven+ years across 3D animation, modelling, texturing and motion graphics; lecturer at leading art & design schools.",
     "email": "official.harshvirwankhade@gmail.com",
     "socials": [
-      { "label": "Vimeo", "url": "https://vimeo.com/843414694" }
+      {
+        "label": "Vimeo",
+        "url": "https://vimeo.com/843414694"
+      }
     ]
   },
   "hero": {
     "headlineTop": "Harshvir",
     "headlineBottom": "Wankhade",
     "tagline": "3D Artist × Educator × Industry Professional",
-    "mediaType": "image",
-    "media": "assets/img/hero-placeholder.jpg"
+    "mediaType": "rig",
+    "media": "assets/hero/rig/f_000.webp",
+    "rig": {
+      "path": "assets/hero/rig/",
+      "frames": 196,
+      "fps": 15,
+      "ext": "webp",
+      "columns": [
+        [
+          1.5,
+          4.3
+        ],
+        [
+          8.3,
+          5.3
+        ],
+        [
+          10.0,
+          12.9
+        ]
+      ],
+      "speed": 6,
+      "jump": 5,
+      "focus": [
+        0.25,
+        0.3
+      ],
+      "eye": [
+        0.31,
+        0.48
+      ]
+    }
   },
   "sections": [
     {
@@ -29,18 +66,84 @@
       "ctaLabel": "Invite me to teach",
       "ctaHref": "page.html?s=contact",
       "items": [
-        { "title": "Tata Institute of Social Sciences (TISS)", "subtitle": "Lecturer", "meta": "Present", "tag": "", "description": "", "image": "", "link": "",
-          "campus": "assets/uploads/campus-tiss.jpg", "campusCaption": "TISS campus, Mumbai", "campusCredit": "Virani q · CC BY-SA 4.0", "campusCreditUrl": "https://commons.wikimedia.org/wiki/File:TISS_.jpg" },
-        { "title": "École Intuit Lab", "subtitle": "Lecturer", "meta": "2023 — Present", "tag": "", "description": "", "image": "", "link": "",
-          "campus": "", "campusCaption": "", "campusCredit": "", "campusCreditUrl": "" },
-        { "title": "Sir J.J. School of Art, Mumbai", "subtitle": "Lecturer", "meta": "2026", "tag": "", "description": "", "image": "", "link": "",
-          "campus": "assets/uploads/campus-sirjj.jpg", "campusCaption": "Sir J.J. School of Art, Mumbai", "campusCredit": "DesiBoy101 · CC BY 4.0", "campusCreditUrl": "https://commons.wikimedia.org/wiki/File:Building_of_Sir_J._J._School_of_Art,_Mumbai.jpg" },
-        { "title": "Amity University", "subtitle": "Lecturer", "meta": "2023 — 2025", "tag": "", "description": "", "image": "", "link": "",
-          "campus": "", "campusCaption": "", "campusCredit": "", "campusCreditUrl": "" },
-        { "title": "National School of Design (NSD)", "subtitle": "Lecturer", "meta": "2024 — 2025", "tag": "", "description": "", "image": "", "link": "",
-          "campus": "", "campusCaption": "", "campusCredit": "", "campusCreditUrl": "" },
-        { "title": "Symbiosis School of Art & Design", "subtitle": "External Jury", "meta": "2025", "tag": "", "description": "", "image": "", "link": "",
-          "campus": "assets/uploads/campus-symbiosis.jpg", "campusCaption": "Symbiosis International University, S. B. Road campus", "campusCredit": "DesiBoy101 · CC BY 4.0", "campusCreditUrl": "https://commons.wikimedia.org/wiki/File:Symbiosis_International_University,_S._B._Road_campus.jpg" }
+        {
+          "title": "Tata Institute of Social Sciences (TISS)",
+          "subtitle": "Lecturer",
+          "meta": "Present",
+          "tag": "",
+          "description": "",
+          "image": "",
+          "link": "",
+          "campus": "assets/uploads/campus-tiss.jpg",
+          "campusCaption": "TISS campus, Mumbai",
+          "campusCredit": "Virani q · CC BY-SA 4.0",
+          "campusCreditUrl": "https://commons.wikimedia.org/wiki/File:TISS_.jpg"
+        },
+        {
+          "title": "École Intuit Lab",
+          "subtitle": "Lecturer",
+          "meta": "2023 — Present",
+          "tag": "",
+          "description": "",
+          "image": "",
+          "link": "",
+          "campus": "",
+          "campusCaption": "",
+          "campusCredit": "",
+          "campusCreditUrl": ""
+        },
+        {
+          "title": "Sir J.J. School of Art, Mumbai",
+          "subtitle": "Lecturer",
+          "meta": "2026",
+          "tag": "",
+          "description": "",
+          "image": "",
+          "link": "",
+          "campus": "assets/uploads/campus-sirjj.jpg",
+          "campusCaption": "Sir J.J. School of Art, Mumbai",
+          "campusCredit": "DesiBoy101 · CC BY 4.0",
+          "campusCreditUrl": "https://commons.wikimedia.org/wiki/File:Building_of_Sir_J._J._School_of_Art,_Mumbai.jpg"
+        },
+        {
+          "title": "Amity University",
+          "subtitle": "Lecturer",
+          "meta": "2023 — 2025",
+          "tag": "",
+          "description": "",
+          "image": "",
+          "link": "",
+          "campus": "",
+          "campusCaption": "",
+          "campusCredit": "",
+          "campusCreditUrl": ""
+        },
+        {
+          "title": "National School of Design (NSD)",
+          "subtitle": "Lecturer",
+          "meta": "2024 — 2025",
+          "tag": "",
+          "description": "",
+          "image": "",
+          "link": "",
+          "campus": "",
+          "campusCaption": "",
+          "campusCredit": "",
+          "campusCreditUrl": ""
+        },
+        {
+          "title": "Symbiosis School of Art & Design",
+          "subtitle": "External Jury",
+          "meta": "2025",
+          "tag": "",
+          "description": "",
+          "image": "",
+          "link": "",
+          "campus": "assets/uploads/campus-symbiosis.jpg",
+          "campusCaption": "Symbiosis International University, S. B. Road campus",
+          "campusCredit": "DesiBoy101 · CC BY 4.0",
+          "campusCreditUrl": "https://commons.wikimedia.org/wiki/File:Symbiosis_International_University,_S._B._Road_campus.jpg"
+        }
       ]
     },
     {
@@ -55,10 +158,42 @@
       "ctaLabel": "",
       "ctaHref": "",
       "items": [
-        { "title": "GapBox", "subtitle": "Senior 3D Artist", "meta": "2023", "tag": "Advertising", "description": "3D assets and animation for advertising campaigns across print, digital and video.", "image": "", "link": "" },
-        { "title": "B62 Studios", "subtitle": "3D Artist", "meta": "2023", "tag": "Animation & real-time", "description": "Models, textures and materials; rigging and animation with the animation team; asset optimisation for real-time.", "image": "", "link": "" },
-        { "title": "Balaji Defence Engineering Solutions", "subtitle": "3D Artist", "meta": "2021 — 2023", "tag": "Defence engineering", "description": "Technically accurate renders and animations built with engineers — materials, lighting and client-facing visuals.", "image": "", "link": "" },
-        { "title": "KARCO", "subtitle": "3D Artist", "meta": "2019 — 2021", "tag": "Maritime training", "description": "3D visuals for maritime training, built with subject-matter experts for technical accuracy.", "image": "", "link": "" }
+        {
+          "title": "GapBox",
+          "subtitle": "Senior 3D Artist",
+          "meta": "2023",
+          "tag": "Advertising",
+          "description": "3D assets and animation for advertising campaigns across print, digital and video.",
+          "image": "",
+          "link": ""
+        },
+        {
+          "title": "B62 Studios",
+          "subtitle": "3D Artist",
+          "meta": "2023",
+          "tag": "Animation & real-time",
+          "description": "Models, textures and materials; rigging and animation with the animation team; asset optimisation for real-time.",
+          "image": "",
+          "link": ""
+        },
+        {
+          "title": "Balaji Defence Engineering Solutions",
+          "subtitle": "3D Artist",
+          "meta": "2021 — 2023",
+          "tag": "Defence engineering",
+          "description": "Technically accurate renders and animations built with engineers — materials, lighting and client-facing visuals.",
+          "image": "",
+          "link": ""
+        },
+        {
+          "title": "KARCO",
+          "subtitle": "3D Artist",
+          "meta": "2019 — 2021",
+          "tag": "Maritime training",
+          "description": "3D visuals for maritime training, built with subject-matter experts for technical accuracy.",
+          "image": "",
+          "link": ""
+        }
       ]
     },
     {
@@ -73,8 +208,24 @@
       "ctaLabel": "Invite me to your university",
       "ctaHref": "page.html?s=contact",
       "items": [
-        { "title": "Workshop title", "subtitle": "Institution", "meta": "Date", "tag": "", "description": "Short description of the workshop.", "image": "", "link": "" },
-        { "title": "Workshop title", "subtitle": "Institution", "meta": "Date", "tag": "", "description": "Short description of the workshop.", "image": "", "link": "" }
+        {
+          "title": "Workshop title",
+          "subtitle": "Institution",
+          "meta": "Date",
+          "tag": "",
+          "description": "Short description of the workshop.",
+          "image": "",
+          "link": ""
+        },
+        {
+          "title": "Workshop title",
+          "subtitle": "Institution",
+          "meta": "Date",
+          "tag": "",
+          "description": "Short description of the workshop.",
+          "image": "",
+          "link": ""
+        }
       ]
     },
     {
@@ -89,9 +240,33 @@
       "ctaLabel": "",
       "ctaHref": "",
       "items": [
-        { "title": "Portfolio reel", "subtitle": "3D Animation", "meta": "Vimeo", "tag": "", "description": "", "image": "assets/uploads/portfolio-showreel.jpg", "link": "https://vimeo.com/843414694" },
-        { "title": "Mr. India meets Google Pixel — The Rental", "subtitle": "Advertisement", "meta": "Google India", "tag": "", "description": "", "image": "assets/uploads/google-pixel-jqyFJhCmwRc.jpg", "link": "https://www.youtube.com/watch?v=jqyFJhCmwRc" },
-        { "title": "Mr. India meets Google Pixel — The Reunion", "subtitle": "Advertisement", "meta": "Google India", "tag": "", "description": "", "image": "assets/uploads/google-pixel-1d7VeJx8_QY.jpg", "link": "https://www.youtube.com/watch?v=1d7VeJx8_QY" }
+        {
+          "title": "Portfolio reel",
+          "subtitle": "3D Animation",
+          "meta": "Vimeo",
+          "tag": "",
+          "description": "",
+          "image": "assets/uploads/portfolio-showreel.jpg",
+          "link": "https://vimeo.com/843414694"
+        },
+        {
+          "title": "Mr. India meets Google Pixel — The Rental",
+          "subtitle": "Advertisement",
+          "meta": "Google India",
+          "tag": "",
+          "description": "",
+          "image": "assets/uploads/google-pixel-jqyFJhCmwRc.jpg",
+          "link": "https://www.youtube.com/watch?v=jqyFJhCmwRc"
+        },
+        {
+          "title": "Mr. India meets Google Pixel — The Reunion",
+          "subtitle": "Advertisement",
+          "meta": "Google India",
+          "tag": "",
+          "description": "",
+          "image": "assets/uploads/google-pixel-1d7VeJx8_QY.jpg",
+          "link": "https://www.youtube.com/watch?v=1d7VeJx8_QY"
+        }
       ]
     },
     {
@@ -108,9 +283,33 @@
       "ctaLabel": "Request this session",
       "ctaHref": "",
       "items": [
-        { "title": "Portfolio review", "subtitle": "60 min", "meta": "Price on request", "tag": "", "description": "Honest, detailed feedback on your portfolio.", "image": "", "link": "" },
-        { "title": "Single session", "subtitle": "90 min", "meta": "Price on request", "tag": "", "description": "One focused deep-dive on a skill or a problem you're stuck on.", "image": "", "link": "" },
-        { "title": "Mentorship track", "subtitle": "Monthly", "meta": "Price on request", "tag": "", "description": "Ongoing guidance towards an industry-ready portfolio.", "image": "", "link": "" }
+        {
+          "title": "Portfolio review",
+          "subtitle": "60 min",
+          "meta": "Price on request",
+          "tag": "",
+          "description": "Honest, detailed feedback on your portfolio.",
+          "image": "",
+          "link": ""
+        },
+        {
+          "title": "Single session",
+          "subtitle": "90 min",
+          "meta": "Price on request",
+          "tag": "",
+          "description": "One focused deep-dive on a skill or a problem you're stuck on.",
+          "image": "",
+          "link": ""
+        },
+        {
+          "title": "Mentorship track",
+          "subtitle": "Monthly",
+          "meta": "Price on request",
+          "tag": "",
+          "description": "Ongoing guidance towards an industry-ready portfolio.",
+          "image": "",
+          "link": ""
+        }
       ]
     },
     {
@@ -125,7 +324,15 @@
       "ctaLabel": "Start a project",
       "ctaHref": "page.html?s=contact",
       "items": [
-        { "title": "Project title", "subtitle": "Client / Personal", "meta": "Status", "tag": "", "description": "Short description of the project.", "image": "", "link": "" }
+        {
+          "title": "Project title",
+          "subtitle": "Client / Personal",
+          "meta": "Status",
+          "tag": "",
+          "description": "Short description of the project.",
+          "image": "",
+          "link": ""
+        }
       ]
     }
   ],

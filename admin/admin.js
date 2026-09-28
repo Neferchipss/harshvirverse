@@ -226,10 +226,10 @@
     ],
     hero: () => [
       el("h2", {}, "Landing"),
-      el("p", { class: "hint" }, "The full-screen character page. Video mode: moving the cursor left→right scrubs the video from its first frame to its last."),
+      el("p", { class: "hint" }, "The full-screen character page. Video mode: moving the cursor left→right scrubs the video from its first frame to its last. Rig mode: the cursor poses his head (frames are cut from the clip with tools/rig-frames.sh; the image here is the loading poster)."),
       fields(content.hero, [
         ["headlineTop", "First name"], ["headlineBottom", "Last name"], ["tagline", "Small line under the name"],
-        ["mediaType", "Background type", "select", ["image", "video"]],
+        ["mediaType", "Background type", "select", ["image", "video", "rig"]],
         ["media", "Background image / video", "media", "image/*,video/mp4,video/webm"],
       ]),
     ],

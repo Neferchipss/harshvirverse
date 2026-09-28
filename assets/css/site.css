@@ -4,6 +4,7 @@
   --muted: #8b9098;
   --faint: #ffffff14;
   --accent: #f07a3a;
+  --rig: #e6b93c;
   --rail-w: 76px;
   --gutter: clamp(20px, 5vw, 72px);
   --font: "Inter Tight", "Inter", system-ui, sans-serif;
@@ -60,9 +61,18 @@ svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width:
 .home { overflow: hidden; }
 .stage { position: fixed; inset: 0; }
 .stage-media { position: absolute; inset: 0; overflow: hidden; }
-.stage-media img, .stage-media video {
+.stage-media img, .stage-media video, .stage-media canvas {
   width: 100%; height: 100%; object-fit: cover;
   transform: scale(1.05); will-change: transform;
+}
+.stage-media canvas { display: block; transform: none; }
+/* Rig landing: he stands left in the viewport, the name takes the empty grid on the right */
+.home.rig .mark { display: none; }
+.home.rig .stage-shade { background: linear-gradient(0deg, #0b0c0ec0 0%, transparent 34%); }
+.home.rig .stage-caption { left: auto; text-align: right; max-width: 52vw; }
+.home.rig .stage-caption p { justify-content: flex-end; }
+@media (max-width: 700px) {
+  .home.rig .stage-caption { left: var(--gutter); max-width: none; }
 }
 .stage-shade {
   position: absolute; inset: 0; pointer-events: none;
@@ -449,6 +459,28 @@ select.blank option { background: var(--bg); color: var(--text); font-size: 16px
 }
 .cursor.labelled span { opacity: 1; }
 .cursor.gone::before { opacity: 0; }
+
+/* Rig landing: cursor = eye-target control */
+.home.rig, .home.rig * { cursor: none; }
+.rig-target::before { opacity: 0; }
+.rig-target svg {
+  position: absolute; left: -24px; top: -24px; width: 48px; height: 48px;
+  stroke: var(--rig); stroke-width: 1.6; fill: none; overflow: visible;
+  transition: transform .25s cubic-bezier(.2,.7,.2,1), opacity .2s;
+}
+.rig-target svg .core { fill: var(--rig); stroke: none; }
+.rig-target b, .rig-target i {
+  position: absolute; left: 22px; white-space: nowrap; font: 500 10px/1.2 ui-monospace, "Cascadia Mono", Consolas, monospace;
+  letter-spacing: .02em; transition: opacity .2s;
+}
+.rig-target b { top: 12px; color: var(--rig); }
+.rig-target i { top: 25px; color: #ffffff80; font-style: normal; }
+.rig-target.hover svg { transform: scale(.6); opacity: 0; }
+.rig-target.hover b, .rig-target.hover i, .rig-target.gone svg, .rig-target.gone b, .rig-target.gone i { opacity: 0; }
+.rig-target.hover::before { opacity: 1; }
+.rig-line { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 20; pointer-events: none; }
+.rig-line line { stroke: var(--rig); stroke-width: 1; stroke-dasharray: 4 5; opacity: .45; }
+body:has(.rig-target.hover) .rig-line, body:has(.rig-target.gone) .rig-line { opacity: 0; }
 
 /* Scroll reveal + page fade */
 .reveal { opacity: 0; transform: translateY(26px); transition: opacity .8s var(--d, 0ms), transform .8s cubic-bezier(.2,.7,.2,1) var(--d, 0ms); }
