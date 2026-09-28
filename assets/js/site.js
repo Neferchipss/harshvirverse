@@ -96,8 +96,9 @@
 
     if (h.mediaType === "video") {
       const v = el("video");
-      Object.assign(v, { src: h.media, muted: true, playsInline: true, preload: "auto" });
+      Object.assign(v, { src: h.media, muted: true, playsInline: true, preload: "auto", disablePictureInPicture: true });
       v.setAttribute("muted", "");
+      v.setAttribute("controlslist", "nodownload noplaybackrate noremoteplayback");
       box.append(v);
       let seeking = false;
       v.addEventListener("seeked", () => { seeking = false; });
@@ -937,6 +938,26 @@
     $$(".reveal").forEach((n, i) => { n.style.setProperty("--d", `${Math.min(i, 8) * 60}ms`); io.observe(n); });
   }
 
+  // Deter casual saving of media: no "Save image/video as" or copy menu,
+  // no dragging images out, no Ctrl/Cmd+S "save page". (Nothing on the web
+  // is truly undownloadable — this just closes the easy routes.)
+  function protectMedia() {
+    const media = "img, video, canvas, picture, iframe, .tile, .campus-float, .campus-inline, .lightbox, .stage, .obj-wrap";
+    document.addEventListener("contextmenu", (e) => { if (e.target.closest(media)) e.preventDefault(); });
+    document.addEventListener("dragstart", (e) => { if (e.target.closest(media)) e.preventDefault(); });
+    document.addEventListener("keydown", (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") e.preventDefault();
+    });
+    // images added later (lightbox, campus photos) are covered by the delegated handlers;
+    // mark the ones present now as non-draggable too
+    $$("img").forEach((i) => { i.draggable = false; });
+    new MutationObserver((list) => list.forEach((m) => m.addedNodes.forEach((n) => {
+      if (n.nodeType !== 1) return;
+      if (n.tagName === "IMG") n.draggable = false;
+      n.querySelectorAll?.("img").forEach((i) => { i.draggable = false; });
+    }))).observe(document.body, { childList: true, subtree: true });
+  }
+
   // Soft fade between pages
   function transitions() {
     document.addEventListener("click", (e) => {
@@ -962,6 +983,7 @@
       tilt();
       reveal();
       transitions();
+      protectMedia();
     })
     .catch((err) => {
       console.error(err);

@@ -649,3 +649,8 @@ body.leaving { opacity: 0; }
   .home .rail a.active::after { background: #fff; right: -8px; width: 4px; height: 4px; }
   .home .rail a svg { stroke-width: 1.4; filter: drop-shadow(0 1px 3px #0006); }
 }
+
+/* Media: no drag-out, no long-press save sheet (iOS/Android), no selection highlight */
+img, video, canvas, .tile, .campus-float, .stage {
+  -webkit-user-drag: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+}
