@@ -472,20 +472,24 @@ select.blank option { background: var(--bg); color: var(--text); font-size: 16px
 .x-axis {
   position: fixed; left: 0; top: 50%; z-index: 5; height: 1px; pointer-events: none;
   background: var(--axis-x); opacity: .7; box-shadow: 0 0 6px #ff335266;
+  /* break the line where the hollow arrow sits, so it reads as running behind it */
+  --gap: 78px;
+  -webkit-mask: linear-gradient(90deg, #000 calc(var(--hx, -999px) - var(--gap)), #0000 0 calc(var(--hx, -999px) + var(--gap)), #000 0);
+          mask: linear-gradient(90deg, #000 calc(var(--hx, -999px) - var(--gap)), #0000 0 calc(var(--hx, -999px) + var(--gap)), #000 0);
 }
 .x-handle {
   position: fixed; left: 0; top: 50%; z-index: 6; width: 0; height: 0; pointer-events: none;
 }
 .x-handle svg {
-  position: absolute; left: -56px; top: -23px; width: 112px; height: 46px; overflow: visible;
-  fill: #16171acc; stroke: var(--axis-x); stroke-width: 2.4; stroke-linejoin: miter;
+  position: absolute; left: -80px; top: -33px; width: 160px; height: 66px; overflow: visible;
+  fill: none; stroke: var(--axis-x); stroke-width: 2.6; stroke-linejoin: miter;
 }
 .x-handle b, .x-handle i {
   position: absolute; left: -60px; width: 120px; text-align: center; white-space: nowrap;
   font: 500 10px/1.2 ui-monospace, "Cascadia Mono", Consolas, monospace; letter-spacing: .02em;
 }
-.x-handle b { top: 30px; color: var(--axis-x); }
-.x-handle i { top: 43px; color: #ffffff80; font-style: normal; }
+.x-handle b { top: 42px; color: var(--axis-x); }
+.x-handle i { top: 55px; color: #ffffff80; font-style: normal; }
 
 /* Scroll reveal + page fade */
 .reveal { opacity: 0; transform: translateY(26px); transition: opacity .8s var(--d, 0ms), transform .8s cubic-bezier(.2,.7,.2,1) var(--d, 0ms); }

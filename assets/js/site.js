@@ -275,6 +275,7 @@
         const w = rb && rb.height > rb.width ? rb.left : innerWidth;
         const p = clamp((head - sweep[0]) / (sweep[1] - sweep[0]), 0, 1);
         axis.style.width = `${w}px`;
+        axis.style.setProperty("--hx", `${p * w}px`);
         handle.style.transform = `translate(${p * w}px, 0)`;
         readout.textContent = `X ${(p * 2 - 1).toFixed(2)}`;
       }
