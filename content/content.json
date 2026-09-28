@@ -3,12 +3,10 @@
     "name": "Harshvir Wankhade",
     "initials": "HW",
     "roles": ["3D Artist", "Educator", "Industry Professional"],
-    "metaDescription": "Harshvir Wankhade — 3D artist, educator and industry professional. Teaching, workshops, mentorship, portfolio and projects.",
-    "email": "hello@example.com",
+    "metaDescription": "Harshvir Wankhade — 3D artist and educator in Mumbai. Seven+ years across 3D animation, modelling, texturing and motion graphics; lecturer at leading art & design schools.",
+    "email": "official.harshvirwankhade@gmail.com",
     "socials": [
-      { "label": "ArtStation", "url": "https://www.artstation.com/" },
-      { "label": "LinkedIn", "url": "https://www.linkedin.com/" },
-      { "label": "Instagram", "url": "https://www.instagram.com/" }
+      { "label": "Vimeo", "url": "https://vimeo.com/843414694" }
     ]
   },
   "hero": {
@@ -25,13 +23,16 @@
       "icon": "university",
       "eyebrow": "Universities",
       "title": "From classroom to industry",
-      "intro": "Teaching, mentoring and developing industry-oriented 3D skills across higher education.",
+      "intro": "Teaching CGI and animation across India's art and design schools — procedural workflows, hands-on learning and real production practice.",
       "ctaLabel": "Invite me to teach",
       "ctaHref": "page.html?s=contact",
       "items": [
-        { "title": "University Name", "subtitle": "Department / Course", "meta": "Year / Period", "description": "", "image": "", "link": "" },
-        { "title": "University Name", "subtitle": "Department / Course", "meta": "Year / Period", "description": "", "image": "", "link": "" },
-        { "title": "University Name", "subtitle": "Department / Course", "meta": "Year / Period", "description": "", "image": "", "link": "" }
+        { "title": "Tata Institute of Social Sciences (TISS)", "subtitle": "Lecturer", "meta": "Present", "description": "", "image": "", "link": "" },
+        { "title": "École Intuit Lab", "subtitle": "Lecturer", "meta": "2023 — Present", "description": "", "image": "", "link": "" },
+        { "title": "Sir J.J. School of Art, Mumbai", "subtitle": "Lecturer", "meta": "2026", "description": "", "image": "", "link": "" },
+        { "title": "Amity University", "subtitle": "Lecturer", "meta": "2023 — 2025", "description": "", "image": "", "link": "" },
+        { "title": "National School of Design (NSD)", "subtitle": "Lecturer", "meta": "2024 — 2025", "description": "", "image": "", "link": "" },
+        { "title": "Symbiosis School of Art & Design", "subtitle": "External Jury", "meta": "2025", "description": "", "image": "", "link": "" }
       ]
     },
     {
@@ -40,12 +41,14 @@
       "icon": "briefcase",
       "eyebrow": "Industry experience",
       "title": "From industry production to classroom",
-      "intro": "Studios, productions and professional pipelines I've worked in.",
+      "intro": "Seven+ years of production work in 3D animation, modelling, texturing and motion graphics — for advertising, engineering and training.",
       "ctaLabel": "",
       "ctaHref": "",
       "items": [
-        { "title": "Studio / Company", "subtitle": "Role", "meta": "Years", "description": "What I worked on and shipped.", "image": "", "link": "" },
-        { "title": "Studio / Company", "subtitle": "Role", "meta": "Years", "description": "What I worked on and shipped.", "image": "", "link": "" }
+        { "title": "GapBox", "subtitle": "Senior 3D Artist", "meta": "2023", "description": "3D assets and animation for advertising campaigns across print, digital and video.", "image": "", "link": "" },
+        { "title": "B62 Studios", "subtitle": "3D Artist", "meta": "2023", "description": "Models, textures and materials; rigging and animation with the animation team; asset optimisation for real-time.", "image": "", "link": "" },
+        { "title": "Balaji Defence Engineering Solutions", "subtitle": "3D Artist", "meta": "2021 — 2023", "description": "Technically accurate renders and animations built with engineers — materials, lighting and client-facing visuals.", "image": "", "link": "" },
+        { "title": "KARCO", "subtitle": "3D Artist", "meta": "2019 — 2021", "description": "3D visuals for maritime training, built with subject-matter experts for technical accuracy.", "image": "", "link": "" }
       ]
     },
     {
@@ -65,18 +68,17 @@
     {
       "id": "portfolio",
       "nav": "Portfolio",
-      "icon": "grid",
+      "icon": "portfolio",
       "layout": "grid",
       "eyebrow": "Portfolio",
       "title": "Selected work",
-      "intro": "Characters, game assets, environments and more.",
+      "intro": "3D animation, advertising and more.",
       "ctaLabel": "",
       "ctaHref": "",
       "items": [
-        { "title": "Artwork title", "subtitle": "Game asset", "meta": "2026", "description": "", "image": "", "link": "" },
-        { "title": "Artwork title", "subtitle": "Environment", "meta": "2026", "description": "", "image": "", "link": "" },
-        { "title": "Artwork title", "subtitle": "Character", "meta": "2025", "description": "", "image": "", "link": "" },
-        { "title": "Artwork title", "subtitle": "Prop", "meta": "2025", "description": "", "image": "", "link": "" }
+        { "title": "Portfolio reel", "subtitle": "3D Animation", "meta": "Vimeo", "description": "", "image": "assets/uploads/portfolio-showreel.jpg", "link": "https://vimeo.com/843414694" },
+        { "title": "Mr. India meets Google Pixel — The Rental", "subtitle": "Advertisement", "meta": "Google India", "description": "", "image": "assets/uploads/google-pixel-jqyFJhCmwRc.jpg", "link": "https://www.youtube.com/watch?v=jqyFJhCmwRc" },
+        { "title": "Mr. India meets Google Pixel — The Reunion", "subtitle": "Advertisement", "meta": "Google India", "description": "", "image": "assets/uploads/google-pixel-1d7VeJx8_QY.jpg", "link": "https://www.youtube.com/watch?v=1d7VeJx8_QY" }
       ]
     },
     {
@@ -85,7 +87,7 @@
       "icon": "mentor",
       "eyebrow": "1:1 Mentorship",
       "title": "Personalised online guidance",
-      "intro": "One-on-one sessions tailored to where you are and where you want to go.",
+      "intro": "One-on-one sessions in Blender, ZBrush, Substance Painter, Photoshop and After Effects — from procedural texturing to rigging and animation workflows.",
       "ctaLabel": "Book a session",
       "ctaHref": "page.html?s=contact",
       "items": [
@@ -110,9 +112,9 @@
   "contact": {
     "eyebrow": "Contact",
     "title": "Let's work together",
-    "text": "Universities, studios, students — reach out for teaching, workshops, mentorship or projects.",
-    "email": "hello@example.com",
+    "text": "Universities, studios, students — reach out for teaching, workshops, mentorship or projects. English, Hindi, Marathi, Japanese.",
+    "email": "official.harshvirwankhade@gmail.com",
     "phone": "",
-    "location": "India"
+    "location": "Mumbai, India"
   }
 }

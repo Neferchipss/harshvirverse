@@ -39,14 +39,14 @@
     const links = [
       { id: "home", label: "Home", icon: "home", url: href("./") },
       ...c.sections.map((s) => ({ id: s.id, label: s.nav || s.title, icon: s.icon, url: pageUrl(s.id) })),
-      { id: "contact", label: "Contact", icon: "mail", url: pageUrl("contact") },
+      { id: "contact", label: "Contact", icon: "send", url: pageUrl("contact") },
     ];
     rail.replaceChildren(...links.map((l) => {
       const a = el("a", l.id === current ? "active" : "");
       a.href = l.url;
       a.setAttribute("aria-label", l.label);
       if (l.id === current) a.setAttribute("aria-current", "page");
-      a.append(window.hvIcon(l.icon), el("span", "tip", l.label));
+      a.append(window.hvIcon(l.icon, l.id), el("span", "tip", l.label));
       return a;
     }));
 

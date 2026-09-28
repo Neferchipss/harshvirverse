@@ -269,7 +269,7 @@
     const taken = new Set(["hero", "contact", "top", ...content.sections.map((s) => s.id)]);
     let id = slug(name), n = 2;
     while (taken.has(id)) id = `${slug(name)}-${n++}`;
-    content.sections.push({ id, nav: name, icon: "circle", eyebrow: name, title: name, intro: "", ctaLabel: "", ctaHref: "page.html?s=contact", layout: "auto", items: [] });
+    content.sections.push({ id, nav: name, icon: "spark", eyebrow: name, title: name, intro: "", ctaLabel: "", ctaHref: "page.html?s=contact", layout: "auto", items: [] });
     view = "s" + (content.sections.length - 1);
     setDirty(true); draw();
   }
