@@ -168,7 +168,10 @@
       return img;
     });
 
-    // object-fit: cover, anchored by r.focus so he never gets cropped away
+    // Fit the frame's full height (never crop his neck/shoulders). If the
+    // screen is wider than the frame, pin it left and extend the viewport to
+    // the right with mirrored copies of an empty grid strip from the frame;
+    // if narrower (phones), crop the sides around r.focus.
     let fit = null;
     const size = () => {
       const dpr = Math.min(devicePixelRatio || 1, 2);
@@ -179,21 +182,33 @@
     const cover = (img) => {
       const iw = img.naturalWidth, ih = img.naturalHeight;
       if (fit && fit.iw === iw && fit.ih === ih) return fit;
-      const s = Math.max(canvas.width / iw, canvas.height / ih);
-      const [fx, fy] = r.focus || [0.5, 0.5];
-      const w = iw * s, hgt = ih * s;
-      fit = { x: (canvas.width - w) * fx, y: (canvas.height - hgt) * fy, w, h: hgt, iw, ih };
+      const s = canvas.height / ih;
+      const w = iw * s;
+      const x = w >= canvas.width ? (canvas.width - w) * (r.focus ? r.focus[0] : 0.5) : 0;
+      fit = { x, y: 0, w, h: canvas.height, s, iw, ih };
       return fit;
     };
     size();
     addEventListener("resize", size);
 
+    const [ga, gb] = r.gridStrip || [0.66, 0.95];   // empty-grid columns of the frame
     const ready = (img) => img && img.complete && img.naturalWidth;
     const draw = (img, alpha) => {
       if (!ready(img)) return false;
       const f = cover(img);
       ctx.globalAlpha = alpha;
       ctx.drawImage(img, f.x, f.y, f.w, f.h);
+      if (f.x + f.w < canvas.width) {
+        const sx = f.iw * ga, sw = f.iw * (gb - ga), dw = sw * f.s;
+        let x = f.x + f.w * gb, flip = true;
+        while (x < canvas.width) {
+          ctx.save();
+          if (flip) { ctx.translate(x + dw, 0); ctx.scale(-1, 1); ctx.drawImage(img, sx, 0, sw, f.ih, 0, 0, dw, f.h); }
+          else ctx.drawImage(img, sx, 0, sw, f.ih, x, 0, dw, f.h);
+          ctx.restore();
+          x += dw; flip = !flip;
+        }
+      }
       return true;
     };
     const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
@@ -277,6 +292,11 @@
         axis.style.width = `${w}px`;
         axis.style.setProperty("--hx", `${p * w}px`);
         handle.style.transform = `translate(${p * w}px, 0)`;
+        // ride at his eye level (fraction of the frame height)
+        if (fit) {
+          const ey = `${(fit.y + (r.eye ? r.eye[1] : 0.5) * fit.h) / (canvas.height / innerHeight)}px`;
+          axis.style.top = ey; handle.style.top = ey;
+        }
         readout.textContent = `X ${(p * 2 - 1).toFixed(2)}`;
       }
       requestAnimationFrame(tick);
