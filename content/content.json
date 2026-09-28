@@ -25,45 +25,56 @@
       "eyebrow": "Universities",
       "title": "From classroom to industry",
       "intro": "Teaching CGI and animation across India's art and design schools — procedural workflows, hands-on learning and real production practice.",
+      "status": "",
       "ctaLabel": "Invite me to teach",
       "ctaHref": "page.html?s=contact",
       "items": [
-        { "title": "Tata Institute of Social Sciences (TISS)", "subtitle": "Lecturer", "meta": "Present", "description": "", "image": "", "link": "" },
-        { "title": "École Intuit Lab", "subtitle": "Lecturer", "meta": "2023 — Present", "description": "", "image": "", "link": "" },
-        { "title": "Sir J.J. School of Art, Mumbai", "subtitle": "Lecturer", "meta": "2026", "description": "", "image": "", "link": "" },
-        { "title": "Amity University", "subtitle": "Lecturer", "meta": "2023 — 2025", "description": "", "image": "", "link": "" },
-        { "title": "National School of Design (NSD)", "subtitle": "Lecturer", "meta": "2024 — 2025", "description": "", "image": "", "link": "" },
-        { "title": "Symbiosis School of Art & Design", "subtitle": "External Jury", "meta": "2025", "description": "", "image": "", "link": "" }
+        { "title": "Tata Institute of Social Sciences (TISS)", "subtitle": "Lecturer", "meta": "Present", "tag": "", "description": "", "image": "", "link": "",
+          "campus": "assets/uploads/campus-tiss.jpg", "campusCaption": "TISS campus, Mumbai", "campusCredit": "Virani q · CC BY-SA 4.0", "campusCreditUrl": "https://commons.wikimedia.org/wiki/File:TISS_.jpg" },
+        { "title": "École Intuit Lab", "subtitle": "Lecturer", "meta": "2023 — Present", "tag": "", "description": "", "image": "", "link": "",
+          "campus": "", "campusCaption": "", "campusCredit": "", "campusCreditUrl": "" },
+        { "title": "Sir J.J. School of Art, Mumbai", "subtitle": "Lecturer", "meta": "2026", "tag": "", "description": "", "image": "", "link": "",
+          "campus": "assets/uploads/campus-sirjj.jpg", "campusCaption": "Sir J.J. School of Art, Mumbai", "campusCredit": "DesiBoy101 · CC BY 4.0", "campusCreditUrl": "https://commons.wikimedia.org/wiki/File:Building_of_Sir_J._J._School_of_Art,_Mumbai.jpg" },
+        { "title": "Amity University", "subtitle": "Lecturer", "meta": "2023 — 2025", "tag": "", "description": "", "image": "", "link": "",
+          "campus": "", "campusCaption": "", "campusCredit": "", "campusCreditUrl": "" },
+        { "title": "National School of Design (NSD)", "subtitle": "Lecturer", "meta": "2024 — 2025", "tag": "", "description": "", "image": "", "link": "",
+          "campus": "", "campusCaption": "", "campusCredit": "", "campusCreditUrl": "" },
+        { "title": "Symbiosis School of Art & Design", "subtitle": "External Jury", "meta": "2025", "tag": "", "description": "", "image": "", "link": "",
+          "campus": "assets/uploads/campus-symbiosis.jpg", "campusCaption": "Symbiosis International University, S. B. Road campus", "campusCredit": "DesiBoy101 · CC BY 4.0", "campusCreditUrl": "https://commons.wikimedia.org/wiki/File:Symbiosis_International_University,_S._B._Road_campus.jpg" }
       ]
     },
     {
       "id": "industry",
       "nav": "Industry",
       "icon": "briefcase",
+      "layout": "timeline",
       "eyebrow": "Industry experience",
       "title": "From industry production to classroom",
       "intro": "Seven+ years of production work in 3D animation, modelling, texturing and motion graphics — for advertising, engineering and training.",
+      "status": "",
       "ctaLabel": "",
       "ctaHref": "",
       "items": [
-        { "title": "GapBox", "subtitle": "Senior 3D Artist", "meta": "2023", "description": "3D assets and animation for advertising campaigns across print, digital and video.", "image": "", "link": "" },
-        { "title": "B62 Studios", "subtitle": "3D Artist", "meta": "2023", "description": "Models, textures and materials; rigging and animation with the animation team; asset optimisation for real-time.", "image": "", "link": "" },
-        { "title": "Balaji Defence Engineering Solutions", "subtitle": "3D Artist", "meta": "2021 — 2023", "description": "Technically accurate renders and animations built with engineers — materials, lighting and client-facing visuals.", "image": "", "link": "" },
-        { "title": "KARCO", "subtitle": "3D Artist", "meta": "2019 — 2021", "description": "3D visuals for maritime training, built with subject-matter experts for technical accuracy.", "image": "", "link": "" }
+        { "title": "GapBox", "subtitle": "Senior 3D Artist", "meta": "2023", "tag": "Advertising", "description": "3D assets and animation for advertising campaigns across print, digital and video.", "image": "", "link": "" },
+        { "title": "B62 Studios", "subtitle": "3D Artist", "meta": "2023", "tag": "Animation & real-time", "description": "Models, textures and materials; rigging and animation with the animation team; asset optimisation for real-time.", "image": "", "link": "" },
+        { "title": "Balaji Defence Engineering Solutions", "subtitle": "3D Artist", "meta": "2021 — 2023", "tag": "Defence engineering", "description": "Technically accurate renders and animations built with engineers — materials, lighting and client-facing visuals.", "image": "", "link": "" },
+        { "title": "KARCO", "subtitle": "3D Artist", "meta": "2019 — 2021", "tag": "Maritime training", "description": "3D visuals for maritime training, built with subject-matter experts for technical accuracy.", "image": "", "link": "" }
       ]
     },
     {
       "id": "workshops",
       "nav": "Workshops",
       "icon": "presentation",
+      "layout": "tickets",
       "eyebrow": "Workshops",
       "title": "Industry-driven workshops",
       "intro": "Hands-on sessions built around real production workflows, designed for university students.",
+      "status": "",
       "ctaLabel": "Invite me to your university",
       "ctaHref": "page.html?s=contact",
       "items": [
-        { "title": "Workshop title", "subtitle": "Institution", "meta": "Date", "description": "Short description of the workshop.", "image": "", "link": "" },
-        { "title": "Workshop title", "subtitle": "Institution", "meta": "Date", "description": "Short description of the workshop.", "image": "", "link": "" }
+        { "title": "Workshop title", "subtitle": "Institution", "meta": "Date", "tag": "", "description": "Short description of the workshop.", "image": "", "link": "" },
+        { "title": "Workshop title", "subtitle": "Institution", "meta": "Date", "tag": "", "description": "Short description of the workshop.", "image": "", "link": "" }
       ]
     },
     {
@@ -74,46 +85,56 @@
       "eyebrow": "Portfolio",
       "title": "Selected work",
       "intro": "3D animation, advertising and more.",
+      "status": "",
       "ctaLabel": "",
       "ctaHref": "",
       "items": [
-        { "title": "Portfolio reel", "subtitle": "3D Animation", "meta": "Vimeo", "description": "", "image": "assets/uploads/portfolio-showreel.jpg", "link": "https://vimeo.com/843414694" },
-        { "title": "Mr. India meets Google Pixel — The Rental", "subtitle": "Advertisement", "meta": "Google India", "description": "", "image": "assets/uploads/google-pixel-jqyFJhCmwRc.jpg", "link": "https://www.youtube.com/watch?v=jqyFJhCmwRc" },
-        { "title": "Mr. India meets Google Pixel — The Reunion", "subtitle": "Advertisement", "meta": "Google India", "description": "", "image": "assets/uploads/google-pixel-1d7VeJx8_QY.jpg", "link": "https://www.youtube.com/watch?v=1d7VeJx8_QY" }
+        { "title": "Portfolio reel", "subtitle": "3D Animation", "meta": "Vimeo", "tag": "", "description": "", "image": "assets/uploads/portfolio-showreel.jpg", "link": "https://vimeo.com/843414694" },
+        { "title": "Mr. India meets Google Pixel — The Rental", "subtitle": "Advertisement", "meta": "Google India", "tag": "", "description": "", "image": "assets/uploads/google-pixel-jqyFJhCmwRc.jpg", "link": "https://www.youtube.com/watch?v=jqyFJhCmwRc" },
+        { "title": "Mr. India meets Google Pixel — The Reunion", "subtitle": "Advertisement", "meta": "Google India", "tag": "", "description": "", "image": "assets/uploads/google-pixel-1d7VeJx8_QY.jpg", "link": "https://www.youtube.com/watch?v=1d7VeJx8_QY" }
       ]
     },
     {
       "id": "classes",
       "nav": "1:1 Classes",
       "icon": "mentor",
+      "layout": "builder",
       "eyebrow": "1:1 Mentorship",
-      "title": "Personalised online guidance",
-      "intro": "One-on-one sessions in Blender, ZBrush, Substance Painter, Photoshop and After Effects — from procedural texturing to rigging and animation workflows.",
-      "ctaLabel": "Book a session",
-      "ctaHref": "page.html?s=contact",
+      "title": "Build your session",
+      "intro": "One-on-one online guidance for serious 3D learners — pick a format, pick what you want to work on, and send it over.",
+      "status": "",
+      "tools": "Blender, ZBrush, Substance Painter, Photoshop, After Effects, Illustrator",
+      "topics": "Hard-surface modelling, Sculpting, Procedural texturing, Materials & lighting, Rigging, Animation, Motion graphics, Portfolio building",
+      "ctaLabel": "Request this session",
+      "ctaHref": "",
       "items": [
-        { "title": "Portfolio review", "subtitle": "60 min", "meta": "Price on request", "description": "Honest, detailed feedback on your portfolio.", "image": "", "link": "" },
-        { "title": "Mentorship track", "subtitle": "Monthly", "meta": "Price on request", "description": "Ongoing guidance towards an industry-ready portfolio.", "image": "", "link": "" }
+        { "title": "Portfolio review", "subtitle": "60 min", "meta": "Price on request", "tag": "", "description": "Honest, detailed feedback on your portfolio.", "image": "", "link": "" },
+        { "title": "Single session", "subtitle": "90 min", "meta": "Price on request", "tag": "", "description": "One focused deep-dive on a skill or a problem you're stuck on.", "image": "", "link": "" },
+        { "title": "Mentorship track", "subtitle": "Monthly", "meta": "Price on request", "tag": "", "description": "Ongoing guidance towards an industry-ready portfolio.", "image": "", "link": "" }
       ]
     },
     {
       "id": "projects",
       "nav": "Projects",
       "icon": "cube",
+      "layout": "grid",
       "eyebrow": "Projects",
       "title": "Collaborations",
       "intro": "Personal and industry projects — and what I'm open to next.",
+      "status": "Open for collaborations",
       "ctaLabel": "Start a project",
       "ctaHref": "page.html?s=contact",
       "items": [
-        { "title": "Project title", "subtitle": "Client / Personal", "meta": "Status", "description": "Short description of the project.", "image": "", "link": "" }
+        { "title": "Project title", "subtitle": "Client / Personal", "meta": "Status", "tag": "", "description": "Short description of the project.", "image": "", "link": "" }
       ]
     }
   ],
   "contact": {
     "eyebrow": "Contact",
     "title": "Let's work together",
-    "text": "Universities, studios, students — reach out for teaching, workshops, mentorship or projects. English, Hindi, Marathi, Japanese.",
+    "text": "Fill in the blanks and it lands in my inbox. English, Hindi, Marathi, Japanese.",
+    "whoOptions": "a university, a studio, a brand, a student",
+    "whatOptions": "invite you for a workshop, bring you on as a lecturer, book a 1:1 session, collaborate on a project",
     "email": "official.harshvirwankhade@gmail.com",
     "phone": "",
     "location": "Mumbai, India"

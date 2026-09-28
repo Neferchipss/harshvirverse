@@ -1,5 +1,6 @@
 (() => {
   const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => [...r.querySelectorAll(s)];
   const el = (tag, cls, text) => {
     const n = document.createElement(tag);
     if (cls) n.className = cls;
@@ -7,10 +8,15 @@
     return n;
   };
   const get = (obj, path) => path.split(".").reduce((o, k) => (o == null ? o : o[k]), obj);
+  const csv = (s) => (s || "").split(",").map((x) => x.trim()).filter(Boolean);
   const params = new URLSearchParams(location.search);
   const preview = params.has("preview");
   const isHome = document.body.classList.contains("home");
   const current = isHome ? "home" : params.get("s") || "";
+  const finePointer = matchMedia("(hover: hover) and (pointer: fine)").matches;
+  const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const pointer = { x: innerWidth / 2, y: innerHeight / 2 };
+  addEventListener("pointermove", (e) => { pointer.x = e.clientX; pointer.y = e.clientY; }, { passive: true });
 
   // Keep ?preview=1 on internal links so the admin draft follows you around
   const href = (url) => {
@@ -18,6 +24,7 @@
     return url + (url.includes("?") ? "&" : "?") + "preview=1";
   };
   const pageUrl = (id) => href(`page.html?s=${encodeURIComponent(id)}`);
+  const external = (a, url) => { a.href = url; a.target = "_blank"; a.rel = "noopener"; };
 
   async function loadContent() {
     if (preview) {
@@ -31,17 +38,16 @@
   }
 
   function renderShared(c) {
-    document.querySelectorAll("[data-bind]").forEach((n) => { n.textContent = get(c, n.dataset.bind) ?? ""; });
-    document.querySelectorAll(".mark").forEach((a) => { a.href = href("./"); });
+    $$("[data-bind]").forEach((n) => { n.textContent = get(c, n.dataset.bind) ?? ""; });
+    $$(".mark").forEach((a) => { a.href = href("./"); });
     $('meta[name="description"]').content = c.site.metaDescription || "";
 
-    const rail = $("#rail");
     const links = [
       { id: "home", label: "Home", icon: "home", url: href("./") },
       ...c.sections.map((s) => ({ id: s.id, label: s.nav || s.title, icon: s.icon, url: pageUrl(s.id) })),
       { id: "contact", label: "Contact", icon: "send", url: pageUrl("contact") },
     ];
-    rail.replaceChildren(...links.map((l) => {
+    $("#rail").replaceChildren(...links.map((l) => {
       const a = el("a", l.id === current ? "active" : "");
       a.href = l.url;
       a.setAttribute("aria-label", l.label);
@@ -54,7 +60,7 @@
     if (socials) {
       socials.replaceChildren(...(c.site.socials || []).filter((s) => s.url).map((s) => {
         const a = el("a", "", s.label);
-        a.href = s.url; a.target = "_blank"; a.rel = "noopener";
+        external(a, s.url);
         return a;
       }));
     }
@@ -62,10 +68,11 @@
     if (year) year.textContent = new Date().getFullYear();
   }
 
-  /* ---------- landing ---------- */
+  /* =========================================================
+     Landing
+     ========================================================= */
   function renderHome(c) {
-    const name = [c.hero.headlineTop, c.hero.headlineBottom].filter(Boolean).join(" ");
-    document.title = name || c.site.name;
+    document.title = [c.hero.headlineTop, c.hero.headlineBottom].filter(Boolean).join(" ") || c.site.name;
     // "A × B × C" — separators get the accent colour
     const tag = $("#tagline");
     (c.hero.tagline || "").split(/\s*×\s*/).filter(Boolean).forEach((part, i) => {
@@ -82,10 +89,8 @@
   function heroMedia(h) {
     const box = $("#stage-media");
     if (!h.media) return;
-    const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
-    let target = 0.5, cur = 0.5, ty = 0.5;
-    addEventListener("pointermove", (e) => { target = e.clientX / innerWidth; ty = e.clientY / innerHeight; });
-    document.addEventListener("pointerleave", () => { target = 0.5; ty = 0.5; });
+    let cur = 0.5;
+    const tx = () => (document.hidden ? 0.5 : pointer.x / innerWidth);
 
     if (h.mediaType === "video") {
       const v = el("video");
@@ -96,8 +101,8 @@
       v.addEventListener("seeked", () => { seeking = false; });
       v.addEventListener("loadedmetadata", () => { v.currentTime = v.duration / 2; });
       const tick = () => {
-        cur += (target - cur) * 0.12;
-        if (!reduce && v.duration && !seeking && Math.abs(v.currentTime - cur * v.duration) > 1 / 60) {
+        cur += (tx() - cur) * 0.12;
+        if (!reduceMotion && v.duration && !seeking && Math.abs(v.currentTime - cur * v.duration) > 1 / 60) {
           seeking = true;
           v.currentTime = Math.min(1, Math.max(0, cur)) * (v.duration - 0.05);
         }
@@ -109,99 +114,93 @@
       img.src = h.media;
       img.alt = "";
       box.append(img);
-      if (reduce) return;
+      if (reduceMotion) return;
+      let cy = 0.5;
       const tick = () => {
-        cur += (target - cur) * 0.06;
-        img.style.transform = `scale(1.06) translate(${(cur - 0.5) * -22}px, ${(ty - 0.5) * -12}px)`;
+        cur += (tx() - cur) * 0.06;
+        cy += (pointer.y / innerHeight - cy) * 0.06;
+        img.style.transform = `scale(1.06) translate(${(cur - 0.5) * -22}px, ${(cy - 0.5) * -12}px)`;
         requestAnimationFrame(tick);
       };
       requestAnimationFrame(tick);
     }
   }
 
-  /* ---------- inner pages ---------- */
-  function head(eyebrow, title, intro) {
+  /* =========================================================
+     Inner pages
+     ========================================================= */
+  function head(s) {
     const h = el("header", "page-head");
-    if (eyebrow) h.append(el("p", "eyebrow", eyebrow));
-    h.append(el("h1", "", title || ""));
-    if (intro) h.append(el("p", "intro", intro));
+    if (s.status) h.append(el("span", "now status", s.status));
+    if (s.eyebrow) h.append(el("p", "eyebrow", s.eyebrow));
+    h.append(el("h1", "", s.title || ""));
+    if (s.intro) h.append(el("p", "intro", s.intro));
     return h;
   }
+  const linkCta = (s) => {
+    const a = el("a", "link-cta", s.ctaLabel);
+    a.href = href(s.ctaHref || "page.html?s=contact");
+    return a;
+  };
+  const bigCta = (s) => {
+    if (!s.ctaLabel) return null;
+    const a = el("a", "big-cta reveal", s.ctaLabel);
+    a.href = href(s.ctaHref || "page.html?s=contact");
+    return a;
+  };
+  function stats(list) {
+    const d = el("div", "stats");
+    for (const { value, label, plus } of list) {
+      if (value == null || value === "" || Number.isNaN(value)) continue;
+      const box = el("div", "stat reveal");
+      const b = el("b", "", String(value));
+      if (plus) b.append(el("sup", "", "+"));
+      box.append(b, el("span", "", label));
+      d.append(box);
+    }
+    return d;
+  }
+  const isNow = (it) => /present|now|current/i.test(it.meta || "");
+  const yearsIn = (items) => items.flatMap((it) => (it.meta || "").match(/\b(19|20)\d{2}\b/g) || []).map(Number);
+
+  const LAYOUTS = { showcase, timeline, tickets, builder, grid, list };
 
   function renderSection(c, s) {
     document.title = `${s.nav || s.title} — ${c.site.name}`;
-    const h = head(s.eyebrow, s.title, s.intro);
-    if (s.ctaLabel) {
-      const a = el("a", "link-cta", s.ctaLabel);
-      a.href = href(s.ctaHref || "page.html?s=contact");
-      h.append(a);
-    }
     const items = s.items || [];
-    if (s.layout === "showcase") return renderShowcase(s, h, items);
-    // layout: "grid" | "list" | anything else = grid when entries have images
-    const grid = s.layout === "grid" || (s.layout !== "list" && items.some((it) => it.image));
-    const wrap = el("div", grid ? "tiles" : "rows");
-    for (const it of items) {
-      const node = el(it.link ? "a" : "div", grid ? "tile" : "row");
-      if (it.link) { node.href = it.link; node.target = "_blank"; node.rel = "noopener"; }
-      if (grid) {
-        const media = el("div", "tile-media");
-        if (it.image) {
-          const img = el("img");
-          img.src = it.image; img.alt = it.title || ""; img.loading = "lazy";
-          media.append(img);
-        } else {
-          media.classList.add("empty");
-          media.append(window.hvIcon("image"));
-        }
-        node.append(media, el("h3", "", it.title || ""));
-        const sub = [it.subtitle, it.meta].filter(Boolean).join(" · ");
-        if (sub) node.append(el("p", "sub", sub));
-        if (it.description) node.append(el("p", "desc", it.description));
-      } else {
-        node.append(el("h3", "", it.title || ""), el("span", "sub", it.subtitle || ""), el("span", "meta", it.meta || ""));
-        if (it.description) node.append(el("p", "desc", it.description));
-      }
-      wrap.append(node);
-    }
-    $("#page").replaceChildren(h, wrap);
+    // "auto" (or unknown) = grid when entries have images, list otherwise
+    const layout = LAYOUTS[s.layout] ? s.layout : items.some((it) => it.image) ? "grid" : "list";
+    document.body.dataset.layout = layout;
+    LAYOUTS[layout](s, items);
   }
 
-  /* Showcase: stats worked out from the entries, a marquee of names, and a big-type roster.
-     An entry counts as current when its "meta" says present / now / current. */
-  function renderShowcase(s, h, items) {
-    const page = $("#page");
-    page.classList.add("wide");
-    const isNow = (it) => /present|now|current/i.test(it.meta || "");
-    const years = items.flatMap((it) => (it.meta || "").match(/\b(19|20)\d{2}\b/g) || []).map(Number);
+  /* ---------- Showcase: big-name roster with campus photos that unroll on hover ---------- */
+  function showcase(s, items) {
+    const h = head(s);
+    const years = yearsIn(items);
+    h.append(stats([
+      { value: items.length, label: s.countLabel || "Institutions" },
+      { value: items.filter(isNow).length || null, label: s.currentLabel || "Teaching now" },
+      { value: years.length ? Math.min(...years) : null, label: "Since" },
+    ]));
 
-    // The text link moves to the big CTA at the bottom
-    h.querySelector(".link-cta")?.remove();
-    const stats = el("div", "stats");
-    const stat = (value, label, plus) => {
-      const d = el("div", "stat");
-      const b = el("b", "", String(value));
-      if (plus) b.append(el("sup", "", "+"));
-      d.append(b, el("span", "", label));
-      stats.append(d);
-    };
-    if (items.length) stat(items.length, s.countLabel || "Institutions");
-    const now = items.filter(isNow).length;
-    if (now) stat(now, s.currentLabel || "Teaching now");
-    if (years.length) stat(Math.min(...years), "Since");
-    h.append(stats);
-
+    const names = items.map((it) => it.title).filter(Boolean);
     const marquee = el("div", "marquee");
     marquee.setAttribute("aria-hidden", "true");
     const track = el("div", "marquee-track");
-    const names = items.map((it) => it.title).filter(Boolean);
     for (let i = 0; i < 2; i++) names.forEach((n) => track.append(el("span", "", n)));
     marquee.append(track);
 
+    const float = el("figure", "campus-float");
+    const fImg = el("img");
+    fImg.alt = "";
+    const fCap = el("figcaption");
+    float.append(fImg, fCap);
+
     const roster = el("div", "roster");
     for (const it of items) {
-      const row = el(it.link ? "a" : "div", "roster-row");
-      if (it.link) { row.href = it.link; row.target = "_blank"; row.rel = "noopener"; }
+      const row = el(it.link ? "a" : "div", "roster-row reveal");
+      if (it.link) external(row, it.link);
       const name = el("h3", "roster-name");
       if (it.image) {
         const logo = el("img");
@@ -215,26 +214,381 @@
       if (it.meta && !/^\s*(present|now|current)\s*$/i.test(it.meta)) side.append(el("span", "years", it.meta));
       row.append(name, side);
       if (it.description) row.append(el("p", "roster-desc", it.description));
+
+      if (it.campus) {
+        row.classList.add("has-campus");
+        side.append(Object.assign(el("span", "campus-hint"), { title: "Hover to see the campus" }));
+        side.lastChild.append(window.hvIcon("image"), el("span", "", "Campus"));
+        // Touch screens: the photo unrolls inline when scrolled into view
+        const inline = el("figure", "campus-inline");
+        const img = el("img");
+        img.src = it.campus; img.alt = it.campusCaption || it.title; img.loading = "lazy";
+        inline.append(img, el("figcaption", "", [it.campusCaption, it.campusCredit].filter(Boolean).join(" — ")));
+        row.append(inline);
+        row.addEventListener("pointerenter", (e) => {
+          if (e.pointerType !== "mouse") return;
+          fImg.src = it.campus;
+          fImg.alt = it.campusCaption || it.title;
+          fCap.textContent = [it.campusCaption, it.campusCredit].filter(Boolean).join(" — ");
+          float.classList.add("show");
+        });
+        row.addEventListener("pointerleave", () => float.classList.remove("show"));
+      }
       roster.append(row);
     }
 
-    const nodes = [h, names.length > 1 ? marquee : null, roster];
-    if (s.ctaLabel) {
-      const cta = el("a", "big-cta", s.ctaLabel);
-      cta.href = href(s.ctaHref || "page.html?s=contact");
-      nodes.push(cta);
+    // The floating campus photo trails the cursor
+    let fx = pointer.x, fy = pointer.y;
+    const follow = () => {
+      fx += (pointer.x - fx) * 0.14;
+      fy += (pointer.y - fy) * 0.14;
+      const w = float.offsetWidth, hgt = float.offsetHeight;
+      const x = Math.min(innerWidth - w - 16, Math.max(16, fx + 36));
+      const y = Math.min(innerHeight - hgt - 16, Math.max(16, fy - hgt / 2));
+      float.style.transform = `translate(${x}px, ${y}px) rotate(${(pointer.x - fx) * 0.04}deg)`;
+      requestAnimationFrame(follow);
+    };
+    if (finePointer) requestAnimationFrame(follow);
+
+    const credits = items.filter((it) => it.campus && it.campusCredit);
+    let creditLine = null;
+    if (credits.length) {
+      creditLine = el("p", "credits", "Campus photos via Wikimedia Commons: ");
+      credits.forEach((it, i) => {
+        if (i) creditLine.append("; ");
+        const a = el("a", "", `${it.campusCaption || it.title} (${it.campusCredit})`);
+        if (it.campusCreditUrl) external(a, it.campusCreditUrl);
+        creditLine.append(a);
+      });
     }
-    page.replaceChildren(...nodes.filter(Boolean));
+
+    $("#page").classList.add("wide");
+    $("#page").replaceChildren(...[h, names.length > 1 ? marquee : null, roster, bigCta(s), creditLine].filter(Boolean));
+    // Outside #page: its entrance animation would make position:fixed relative to it
+    document.body.append(float);
   }
 
+  /* ---------- Timeline: production history that draws itself as you scroll ---------- */
+  function timeline(s, items) {
+    const h = head(s);
+    const years = yearsIn(items);
+    const since = years.length ? Math.min(...years) : null;
+    h.append(stats([
+      { value: since ? new Date().getFullYear() - since : null, label: "Years in production", plus: true },
+      { value: items.length, label: s.countLabel || "Studios" },
+      { value: new Set(items.map((it) => it.tag).filter(Boolean)).size || null, label: "Sectors" },
+    ]));
+    if (s.ctaLabel) h.append(linkCta(s));
+
+    const tl = el("div", "timeline");
+    const line = el("div", "tl-line");
+    const prog = el("div", "tl-progress");
+    tl.append(line, prog);
+    items.forEach((it, i) => {
+      const row = el(it.link ? "a" : "div", "tl-item reveal");
+      if (it.link) external(row, it.link);
+      const when = el("div", "tl-when", it.meta || "");
+      const node = el("span", "tl-node");
+      const body = el("div", "tl-body");
+      if (it.tag) body.append(el("span", "chip", it.tag));
+      body.append(el("h3", "", it.title || ""));
+      if (it.subtitle) body.append(el("p", "tl-role", it.subtitle));
+      if (it.description) body.append(el("p", "tl-desc", it.description));
+      body.append(el("span", "tl-index", String(i + 1).padStart(2, "0")));
+      row.append(when, node, body);
+      tl.append(row);
+    });
+
+    const update = () => {
+      const r = tl.getBoundingClientRect();
+      const mark = innerHeight * 0.62;
+      const p = Math.min(1, Math.max(0, (mark - r.top) / r.height));
+      prog.style.height = p * 100 + "%";
+      $$(".tl-item", tl).forEach((row) => {
+        row.classList.toggle("passed", row.querySelector(".tl-node").getBoundingClientRect().top < mark);
+      });
+    };
+    addEventListener("scroll", update, { passive: true });
+    addEventListener("resize", update);
+    requestAnimationFrame(update);
+
+    $("#page").classList.add("wide");
+    $("#page").replaceChildren(h, tl);
+  }
+
+  /* ---------- Tickets: workshops as event passes ---------- */
+  function tickets(s, items) {
+    const h = head(s);
+    const wrap = el("div", "tickets");
+    items.forEach((it, i) => {
+      const t = el(it.link ? "a" : "div", "ticket reveal tilt");
+      if (it.link) external(t, it.link);
+      const stub = el("div", "ticket-stub");
+      stub.append(el("span", "ticket-no", "No. " + String(i + 1).padStart(3, "0")), el("span", "ticket-date", it.meta || ""));
+      const body = el("div", "ticket-body");
+      if (it.subtitle) body.append(el("p", "eyebrow", it.subtitle));
+      body.append(el("h3", "", it.title || ""));
+      if (it.description) body.append(el("p", "ticket-desc", it.description));
+      if (it.tag) body.append(el("span", "chip", it.tag));
+      const barcode = el("span", "barcode");
+      barcode.setAttribute("aria-hidden", "true");
+      body.append(barcode);
+      t.append(stub, body);
+      wrap.append(t);
+    });
+    $("#page").replaceChildren(...[h, wrap, bigCta(s)].filter(Boolean));
+  }
+
+  /* ---------- Builder: pick a format + topics, get a ready-made email ---------- */
+  function builder(s, items) {
+    const h = head(s);
+    const email = siteContent.site.email || siteContent.contact.email;
+    const state = { format: null, topics: new Set() };
+
+    const tools = csv(s.tools);
+    let toolRow = null;
+    if (tools.length) {
+      toolRow = el("div", "tools reveal");
+      toolRow.append(el("span", "tools-label", "Taught in"));
+      tools.forEach((t, i) => {
+        const chip = el("span", "tool", t);
+        chip.style.setProperty("--i", i);
+        toolRow.append(chip);
+      });
+    }
+
+    const step = (n, label) => {
+      const d = el("div", "step reveal");
+      d.append(el("span", "step-no", n), el("h2", "", label));
+      return d;
+    };
+
+    const formats = el("div", "formats");
+    items.forEach((it) => {
+      const b = el("button", "format tilt");
+      b.type = "button";
+      b.setAttribute("aria-pressed", "false");
+      b.append(el("span", "format-meta", [it.subtitle, it.meta].filter(Boolean).join(" · ")), el("h3", "", it.title || ""));
+      if (it.description) b.append(el("p", "", it.description));
+      b.addEventListener("click", () => {
+        state.format = state.format === it ? null : it;
+        $$(".format", formats).forEach((x) => x.setAttribute("aria-pressed", "false"));
+        if (state.format) b.setAttribute("aria-pressed", "true");
+        sync();
+      });
+      formats.append(b);
+    });
+
+    const topicsWrap = el("div", "topics");
+    csv(s.topics).forEach((t) => {
+      const b = el("button", "topic", t);
+      b.type = "button";
+      b.setAttribute("aria-pressed", "false");
+      b.addEventListener("click", () => {
+        state.topics.has(t) ? state.topics.delete(t) : state.topics.add(t);
+        b.setAttribute("aria-pressed", String(state.topics.has(t)));
+        sync();
+      });
+      topicsWrap.append(b);
+    });
+
+    const bar = el("div", "summary");
+    const sumText = el("p", "summary-text");
+    const send = el("a", "btn-send", s.ctaLabel || "Request this session");
+    bar.append(sumText, send);
+
+    function sync() {
+      const f = state.format ? state.format.title : null;
+      const t = [...state.topics];
+      sumText.replaceChildren();
+      if (!f && !t.length) {
+        sumText.append(el("span", "muted", "Pick a format and a few topics ↑"));
+      } else {
+        sumText.append(el("b", "", f || "Any format"));
+        if (t.length) sumText.append(el("span", "muted", " — " + t.join(", ")));
+      }
+      const subject = `1:1 session request${f ? " — " + f : ""}`;
+      const body = [
+        "Hi Harshvir,", "",
+        `I'd like to book: ${f || "(not sure yet)"}`,
+        t.length ? `I want to work on: ${t.join(", ")}` : "",
+        "", "A bit about me and my current level:", "", "",
+      ].join("\n");
+      send.href = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+      bar.classList.toggle("ready", Boolean(f || t.length));
+    }
+    sync();
+
+    const nodes = [h, toolRow];
+    if (items.length) nodes.push(step("01", "Pick a format"), formats);
+    if (topicsWrap.children.length) nodes.push(step(items.length ? "02" : "01", "What do you want to work on?"), topicsWrap);
+    nodes.push(bar);
+    $("#page").replaceChildren(...nodes.filter(Boolean));
+  }
+
+  /* ---------- Grid: tilting tiles, category filter, in-page video player ---------- */
+  function embedUrl(link) {
+    const yt = (link || "").match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/)([\w-]{11})/);
+    if (yt) return `https://www.youtube-nocookie.com/embed/${yt[1]}?autoplay=1&rel=0`;
+    const vm = (link || "").match(/vimeo\.com\/(?:video\/)?(\d+)/);
+    if (vm) return `https://player.vimeo.com/video/${vm[1]}?autoplay=1`;
+    return null;
+  }
+
+  function grid(s, items) {
+    const h = head(s);
+    if (s.ctaLabel) h.append(linkCta(s));
+
+    const cats = [...new Set(items.map((it) => it.subtitle).filter(Boolean))];
+    let filters = null;
+    const wrap = el("div", "tiles");
+    if (cats.length > 1) {
+      filters = el("div", "filters reveal");
+      ["All", ...cats].forEach((cat, i) => {
+        const b = el("button", "filter", cat);
+        b.type = "button";
+        b.setAttribute("aria-pressed", String(i === 0));
+        b.addEventListener("click", () => {
+          $$(".filter", filters).forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+          $$(".tile", wrap).forEach((t) => t.classList.toggle("hidden", cat !== "All" && t.dataset.cat !== cat));
+        });
+        filters.append(b);
+      });
+    }
+
+    items.forEach((it) => {
+      const video = embedUrl(it.link);
+      const tile = el(it.link ? "a" : "div", "tile reveal");
+      tile.dataset.cat = it.subtitle || "";
+      if (it.link) {
+        external(tile, it.link);
+        tile.dataset.cursor = video ? "Play" : "Open";
+        if (video) tile.addEventListener("click", (e) => { e.preventDefault(); lightbox(video, it.title); });
+      }
+      const media = el("div", "tile-media tilt");
+      if (it.image) {
+        const img = el("img");
+        img.src = it.image; img.alt = it.title || ""; img.loading = "lazy";
+        media.append(img);
+      } else {
+        media.classList.add("empty");
+        media.append(window.hvIcon("cube"));
+      }
+      if (video) {
+        const play = el("span", "play");
+        play.append(window.hvIcon("play"));
+        media.append(play);
+      }
+      media.append(el("span", "glare"));
+      tile.append(media, el("h3", "", it.title || ""));
+      const sub = [it.subtitle, it.meta].filter(Boolean).join(" · ");
+      if (sub) tile.append(el("p", "sub", sub));
+      if (it.description) tile.append(el("p", "desc", it.description));
+      wrap.append(tile);
+    });
+    $("#page").replaceChildren(...[h, filters, wrap].filter(Boolean));
+  }
+
+  function lightbox(src, title) {
+    const box = el("div", "lightbox");
+    box.setAttribute("role", "dialog");
+    box.setAttribute("aria-label", title || "Video");
+    const frame = el("div", "lightbox-frame");
+    const iframe = el("iframe");
+    Object.assign(iframe, { src, title: title || "Video", allow: "autoplay; fullscreen; picture-in-picture", allowFullscreen: true });
+    frame.append(iframe);
+    const close = el("button", "lightbox-close", "Close ✕");
+    close.type = "button";
+    box.append(frame, close);
+    const done = () => {
+      box.classList.remove("open");
+      setTimeout(() => box.remove(), 300);
+      removeEventListener("keydown", onKey);
+    };
+    const onKey = (e) => { if (e.key === "Escape") done(); };
+    box.addEventListener("click", (e) => { if (e.target === box) done(); });
+    close.addEventListener("click", done);
+    addEventListener("keydown", onKey);
+    document.body.append(box);
+    requestAnimationFrame(() => box.classList.add("open"));
+    close.focus();
+  }
+
+  /* ---------- List: plain rows ---------- */
+  function list(s, items) {
+    const h = head(s);
+    if (s.ctaLabel) h.append(linkCta(s));
+    const wrap = el("div", "rows");
+    for (const it of items) {
+      const row = el(it.link ? "a" : "div", "row reveal");
+      if (it.link) external(row, it.link);
+      row.append(el("h3", "", it.title || ""), el("span", "sub", it.subtitle || ""), el("span", "meta", it.meta || ""));
+      if (it.description) row.append(el("p", "desc", it.description));
+      wrap.append(row);
+    }
+    $("#page").replaceChildren(h, wrap);
+  }
+
+  /* ---------- Contact: fill-in-the-blanks message ---------- */
   function renderContact(c) {
     const k = c.contact;
     document.title = `Contact — ${c.site.name}`;
-    const lines = el("div", "contact-lines");
-    if (k.email) { const a = el("a", "", k.email); a.href = "mailto:" + k.email; lines.append(a); }
+    document.body.dataset.layout = "contact";
+    const email = k.email || c.site.email;
+    const h = head({ eyebrow: k.eyebrow, title: k.title, intro: k.text });
+
+    const pick = (options) => {
+      const sel = el("select", "blank");
+      options.forEach((o) => sel.append(Object.assign(el("option", "", o), { value: o })));
+      return sel;
+    };
+    const field = (placeholder, type = "text") => {
+      const i = el("input", "blank");
+      Object.assign(i, { placeholder, type, autocomplete: type === "email" ? "email" : "name" });
+      const fit = () => { i.style.width = Math.max(placeholder.length, i.value.length) + 1 + "ch"; };
+      i.addEventListener("input", fit);
+      fit();
+      return i;
+    };
+    const who = pick(csv(k.whoOptions).length ? csv(k.whoOptions) : ["a university", "a studio", "a student"]);
+    const what = pick(csv(k.whatOptions).length ? csv(k.whatOptions) : ["work together"]);
+    const name = field("your name");
+    const reply = field("your email", "email");
+
+    const form = el("form", "composer reveal");
+    const line = (...parts) => {
+      const p = el("p");
+      parts.forEach((x) => p.append(typeof x === "string" ? document.createTextNode(x) : x));
+      return p;
+    };
+    form.append(
+      line("Hi Harshvir, I'm ", name, " from ", who, "."),
+      line("I'd love to ", what, "."),
+      line("Reach me at ", reply, "."),
+    );
+    const send = el("button", "btn-send", "Send it");
+    send.type = "submit";
+    form.append(send);
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const n = name.value.trim();
+      const subject = `${n ? n + " — " : ""}${what.value}`;
+      const body = [
+        "Hi Harshvir,", "",
+        `I'm ${n || "writing"} from ${who.value}, and I'd love to ${what.value}.`,
+        reply.value.trim() ? `You can reach me at ${reply.value.trim()}.` : "",
+        "", "",
+      ].join("\n");
+      location.href = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    });
+
+    const lines = el("div", "contact-lines reveal");
+    lines.append(el("span", "or", "Or directly"));
+    if (email) { const a = el("a", "", email); a.href = "mailto:" + email; lines.append(a); }
     if (k.phone) { const a = el("a", "", k.phone); a.href = "tel:" + k.phone.replace(/\s/g, ""); lines.append(a); }
     if (k.location) lines.append(el("span", "", k.location));
-    $("#page").replaceChildren(head(k.eyebrow, k.title, k.text), lines);
+
+    $("#page").replaceChildren(h, form, lines);
   }
 
   function renderPage(c) {
@@ -243,13 +597,113 @@
     if (s) return renderSection(c, s);
     const back = el("a", "link-cta", "Back home");
     back.href = href("./");
-    $("#page").replaceChildren(head("", "Page not found", "That page doesn't exist (anymore)."), back);
+    $("#page").replaceChildren(head({ title: "Page not found", intro: "That page doesn't exist (anymore)." }), back);
   }
 
+  /* =========================================================
+     Interaction layer
+     ========================================================= */
+
+  // A wireframe cube that tracks the cursor — the 3D-artist signature on every inner page
+  function cube() {
+    if (isHome) return;
+    const wrap = el("div", "cube-wrap");
+    wrap.setAttribute("aria-hidden", "true");
+    const c = el("div", "cube");
+    ["front", "back", "left", "right", "top", "bottom"].forEach((f) => c.append(el("span", "face " + f)));
+    wrap.append(c);
+    document.body.append(wrap);
+    if (reduceMotion) return;
+    let rx = -20, ry = 30, spin = 0;
+    const tick = () => {
+      spin += 0.12;
+      const tx = (pointer.y / innerHeight - 0.5) * -50;
+      const ty = (pointer.x / innerWidth - 0.5) * 70;
+      rx += (tx - 20 - rx) * 0.06;
+      ry += (ty + spin - ry) * 0.06;
+      c.style.transform = `rotateX(${rx}deg) rotateY(${ry}deg)`;
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }
+
+  // Cursor ring that grows over anything clickable and can carry a label ("Play", "Open")
+  function cursor() {
+    if (!finePointer || reduceMotion) return;
+    const ring = el("div", "cursor");
+    const label = el("span");
+    ring.append(label);
+    document.body.append(ring);
+    let x = pointer.x, y = pointer.y;
+    const tick = () => {
+      x += (pointer.x - x) * 0.2;
+      y += (pointer.y - y) * 0.2;
+      ring.style.transform = `translate(${x}px, ${y}px)`;
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+    document.addEventListener("pointerover", (e) => {
+      const t = e.target.closest("a, button, select, input, [data-cursor]");
+      ring.classList.toggle("hover", Boolean(t));
+      const text = t?.closest("[data-cursor]")?.dataset.cursor || "";
+      label.textContent = text;
+      ring.classList.toggle("labelled", Boolean(text));
+    });
+    document.addEventListener("pointerleave", () => ring.classList.add("gone"));
+    document.addEventListener("pointerenter", () => ring.classList.remove("gone"));
+  }
+
+  // Cards lean toward the cursor, with a moving highlight
+  function tilt() {
+    if (!finePointer || reduceMotion) return;
+    $$(".tilt").forEach((n) => {
+      n.addEventListener("pointermove", (e) => {
+        const r = n.getBoundingClientRect();
+        const px = (e.clientX - r.left) / r.width, py = (e.clientY - r.top) / r.height;
+        n.style.setProperty("--rx", `${(0.5 - py) * 10}deg`);
+        n.style.setProperty("--ry", `${(px - 0.5) * 12}deg`);
+        n.style.setProperty("--gx", `${px * 100}%`);
+        n.style.setProperty("--gy", `${py * 100}%`);
+      });
+      n.addEventListener("pointerleave", () => {
+        n.style.setProperty("--rx", "0deg");
+        n.style.setProperty("--ry", "0deg");
+      });
+    });
+  }
+
+  function reveal() {
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } });
+    }, { threshold: 0.15, rootMargin: "0px 0px -5% 0px" });
+    $$(".reveal").forEach((n, i) => { n.style.setProperty("--d", `${Math.min(i, 8) * 60}ms`); io.observe(n); });
+  }
+
+  // Soft fade between pages
+  function transitions() {
+    document.addEventListener("click", (e) => {
+      const a = e.target.closest("a[href]");
+      if (!a || a.target === "_blank" || e.defaultPrevented || e.metaKey || e.ctrlKey || e.shiftKey) return;
+      const url = new URL(a.href, location.href);
+      if (url.origin !== location.origin || /^(mailto|tel):/.test(a.href) || (url.pathname === location.pathname && url.search === location.search)) return;
+      e.preventDefault();
+      document.body.classList.add("leaving");
+      setTimeout(() => { location.href = a.href; }, reduceMotion ? 0 : 220);
+    });
+    addEventListener("pageshow", () => document.body.classList.remove("leaving"));
+  }
+
+  let siteContent = null;
   loadContent()
     .then((c) => {
+      siteContent = c;
       renderShared(c);
       isHome ? renderHome(c) : renderPage(c);
+      cube();
+      cursor();
+      tilt();
+      reveal();
+      transitions();
     })
     .catch((err) => {
       console.error(err);

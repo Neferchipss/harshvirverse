@@ -208,8 +208,11 @@
 
   /* ---------- views ---------- */
   const ITEM_SPECS = [
-    ["title", "Title"], ["subtitle", "Subtitle"], ["meta", "Small detail (year, duration…)"], ["link", "Link (optional)"],
-    ["description", "Description", "textarea"], ["image", "Image", "media", "image/*"],
+    ["title", "Title"], ["subtitle", "Subtitle (role / category)"], ["meta", "Small detail (years, date — write \"Present\" if ongoing)"],
+    ["tag", "Tag (sector, level…)"], ["link", "Link (optional — YouTube/Vimeo links play on the page)"],
+    ["description", "Description", "textarea"], ["image", "Image / logo", "media", "image/*"],
+    ["campus", "Campus photo (Universities: unrolls on hover)", "media", "image/*"],
+    ["campusCaption", "Campus photo caption"], ["campusCredit", "Photo credit (if not yours)"], ["campusCreditUrl", "Photo credit link"],
   ];
   const BLANK_ITEM = { title: "New item", subtitle: "", meta: "", description: "", image: "", link: "" };
 
@@ -232,7 +235,9 @@
     ],
     contact: () => [
       el("h2", {}, "Contact"),
-      fields(content.contact, [["eyebrow", "Small heading"], ["title", "Title"], ["email", "Email"], ["phone", "Phone"], ["location", "Location"], ["text", "Text", "textarea"]]),
+      el("p", { class: "hint" }, "Visitors fill in the blanks (\"I'm … from [who] and I'd love to [what]\") and it opens an email to you."),
+      fields(content.contact, [["eyebrow", "Small heading"], ["title", "Title"], ["email", "Email"], ["phone", "Phone"], ["location", "Location"], ["text", "Text", "textarea"],
+        ["whoOptions", "\"From …\" choices (comma separated)", "textarea"], ["whatOptions", "\"I'd love to …\" choices (comma separated)", "textarea"]]),
     ],
   };
 
@@ -250,7 +255,9 @@
         ["nav", "Menu name (icon tooltip)"], ["icon", "Menu icon", "select", Object.keys(window.HV_ICONS)],
         ["eyebrow", "Small heading"], ["title", "Page title"],
         ["intro", "Intro text", "textarea"], ["ctaLabel", "Link text (optional)"], ["ctaHref", "Link goes to"],
-        ["layout", "Entries shown as", "select", ["auto", "grid", "list", "showcase"]],
+        ["layout", "Page style", "select", ["auto", "grid", "list", "showcase", "timeline", "tickets", "builder"]],
+        ["status", "Status badge (optional, e.g. \"Open for collaborations\")"],
+        ["tools", "Builder: software (comma separated)", "textarea"], ["topics", "Builder: topics to pick (comma separated)", "textarea"],
       ], () => drawSide()),
       list({ title: "Entries", arr: (s.items ??= []), specs: ITEM_SPECS, blank: BLANK_ITEM, thumb: (it) => it.image, addText: "Add entry" }),
       el("div", { class: "danger-zone" },
