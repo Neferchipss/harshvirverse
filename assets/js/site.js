@@ -604,27 +604,14 @@
      Interaction layer
      ========================================================= */
 
-  // A wireframe cube that tracks the cursor — the 3D-artist signature on every inner page
-  function cube() {
+  // Hand the page's 3D object over to objects.js (a wireframe model per section)
+  function announcePage(c) {
     if (isHome) return;
-    const wrap = el("div", "cube-wrap");
-    wrap.setAttribute("aria-hidden", "true");
-    const c = el("div", "cube");
-    ["front", "back", "left", "right", "top", "bottom"].forEach((f) => c.append(el("span", "face " + f)));
-    wrap.append(c);
-    document.body.append(wrap);
-    if (reduceMotion) return;
-    let rx = -20, ry = 30, spin = 0;
-    const tick = () => {
-      spin += 0.12;
-      const tx = (pointer.y / innerHeight - 0.5) * -50;
-      const ty = (pointer.x / innerWidth - 0.5) * 70;
-      rx += (tx - 20 - rx) * 0.06;
-      ry += (ty + spin - ry) * 0.06;
-      c.style.transform = `rotateX(${rx}deg) rotateY(${ry}deg)`;
-      requestAnimationFrame(tick);
-    };
-    requestAnimationFrame(tick);
+    const s = c.sections.find((x) => x.id === current);
+    if (!s && current !== "contact") return;
+    document.body.dataset.section = current;
+    document.body.dataset.model = (s ? s.model : c.contact.model) || "";
+    document.dispatchEvent(new Event("hv:page"));
   }
 
   // Cursor ring that grows over anything clickable and can carry a label ("Play", "Open")
@@ -699,7 +686,7 @@
       siteContent = c;
       renderShared(c);
       isHome ? renderHome(c) : renderPage(c);
-      cube();
+      announcePage(c);
       cursor();
       tilt();
       reveal();

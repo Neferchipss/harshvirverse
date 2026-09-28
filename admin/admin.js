@@ -257,6 +257,7 @@
         ["intro", "Intro text", "textarea"], ["ctaLabel", "Link text (optional)"], ["ctaHref", "Link goes to"],
         ["layout", "Page style", "select", ["auto", "grid", "list", "showcase", "timeline", "tickets", "builder"]],
         ["status", "Status badge (optional, e.g. \"Open for collaborations\")"],
+        ["model", "3D object (top right)", "select", ["auto", "university", "gear", "easel", "teapot", "bulb", "rocket", "plane", "cube"]],
         ["tools", "Builder: software (comma separated)", "textarea"], ["topics", "Builder: topics to pick (comma separated)", "textarea"],
       ], () => drawSide()),
       list({ title: "Entries", arr: (s.items ??= []), specs: ITEM_SPECS, blank: BLANK_ITEM, thumb: (it) => it.image, addText: "Add entry" }),

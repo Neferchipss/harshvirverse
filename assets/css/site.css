@@ -424,21 +424,13 @@ select.blank option { background: var(--bg); color: var(--text); font-size: 16px
 }
 .lightbox-close:hover { border-color: var(--accent); color: var(--accent); }
 
-/* Wireframe cube (inner pages) */
-.cube-wrap { position: absolute; top: 110px; right: calc(var(--rail-w) + 40px); width: 110px; height: 110px; perspective: 700px; z-index: 1; pointer-events: none; }
-.cube { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; transform: rotateX(-20deg) rotateY(30deg); }
-.cube .face {
-  position: absolute; inset: 0; border: 1px solid #f07a3a8c;
-  background:
-    linear-gradient(#ffffff14 1px, transparent 1px) 0 0 / 25% 25%,
-    linear-gradient(90deg, #ffffff14 1px, transparent 1px) 0 0 / 25% 25%;
+/* Wireframe 3D object (inner pages, drawn by objects.js) */
+.obj-wrap {
+  position: absolute; top: 70px; right: calc(var(--rail-w) + 20px); z-index: 1; pointer-events: none;
+  width: clamp(180px, 17vw, 250px); aspect-ratio: 1;
+  animation: rise 1s .3s both;
 }
-.cube .front  { transform: translateZ(55px); }
-.cube .back   { transform: rotateY(180deg) translateZ(55px); }
-.cube .right  { transform: rotateY(90deg) translateZ(55px); }
-.cube .left   { transform: rotateY(-90deg) translateZ(55px); }
-.cube .top    { transform: rotateX(90deg) translateZ(55px); }
-.cube .bottom { transform: rotateX(-90deg) translateZ(55px); }
+.obj-wrap canvas { width: 100% !important; height: 100% !important; display: block; }
 
 /* Cursor ring */
 .cursor {
@@ -482,7 +474,7 @@ body.leaving { opacity: 0; }
 @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
 
 @media (max-width: 1000px) {
-  .cube-wrap { display: none; }
+  .obj-wrap { width: 150px; top: 60px; right: 12px; opacity: .8; }
 }
 
 /* Phones: rail becomes a bottom bar */
