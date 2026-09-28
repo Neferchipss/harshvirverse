@@ -7,6 +7,7 @@
   --rail-w: 76px;
   --gutter: clamp(20px, 5vw, 72px);
   --font: "Inter Tight", "Inter", system-ui, sans-serif;
+  --display: "Archivo", "Inter Tight", system-ui, sans-serif;
 }
 
 * { box-sizing: border-box; }
@@ -26,7 +27,7 @@ svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width:
 /* Monogram */
 .mark {
   position: fixed; top: 24px; left: var(--gutter); z-index: 30;
-  font-weight: 600; font-size: 20px; letter-spacing: -.02em;
+  font-family: var(--display); font-weight: 800; font-stretch: 125%; font-size: 20px; letter-spacing: -.02em;
 }
 
 /* Icon rail */
@@ -66,16 +67,26 @@ svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width:
 .stage-shade {
   position: absolute; inset: 0; pointer-events: none;
   background:
-    linear-gradient(0deg, #0b0c0ecc 0%, transparent 32%),
+    linear-gradient(0deg, #0b0c0ef0 0%, #0b0c0e80 22%, transparent 48%),
     linear-gradient(180deg, #0b0c0e80 0%, transparent 18%);
 }
 .stage-caption {
-  position: absolute; left: var(--gutter); bottom: clamp(28px, 6vh, 56px);
+  position: absolute; left: var(--gutter); right: calc(var(--rail-w) + 24px); bottom: clamp(28px, 6vh, 60px);
   animation: rise .9s .2s both;
 }
-.stage-caption h1 { font-weight: 300; font-size: clamp(26px, 3.2vw, 40px); letter-spacing: -.01em; line-height: 1.1; }
-.stage-caption h1 span:last-child { font-weight: 500; }
-.stage-caption p { margin-top: 8px; font-size: 12px; letter-spacing: .16em; text-transform: uppercase; color: #ffffffb3; }
+.stage-caption h1 {
+  font-family: var(--display); font-weight: 800; font-stretch: 125%;
+  font-size: clamp(40px, 7.4vw, 132px); line-height: .86; letter-spacing: -.015em;
+  text-transform: uppercase;
+}
+.stage-caption h1 span { display: block; }
+.stage-caption p {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px;
+  margin-top: clamp(14px, 2vh, 22px);
+  font-family: var(--display); font-weight: 600; font-stretch: 112%;
+  font-size: clamp(12px, 1.25vw, 19px); letter-spacing: .14em; text-transform: uppercase;
+}
+.stage-caption p .x { color: var(--accent); font-weight: 400; }
 
 /* Inner pages */
 .page {
@@ -120,6 +131,81 @@ a.tile:hover .tile-media img { transform: scale(1.03); }
 .tile .sub { color: var(--muted); font-size: 14px; }
 .tile .desc { color: var(--muted); font-size: 14px; margin-top: 6px; }
 
+/* Showcase layout (big-name roster) */
+.page.wide { max-width: 1320px; }
+.stats { display: flex; flex-wrap: wrap; gap: clamp(28px, 6vw, 88px); margin-top: 56px; }
+.stat b {
+  display: block; font-family: var(--display); font-weight: 800; font-stretch: 125%;
+  font-size: clamp(44px, 6vw, 84px); line-height: .9; letter-spacing: -.02em;
+}
+.stat b sup { font-size: .4em; color: var(--accent); vertical-align: top; margin-left: 2px; }
+.stat span { display: block; margin-top: 10px; font-size: 12px; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); }
+
+.marquee {
+  position: relative; overflow: hidden; margin: 80px calc(-1 * var(--gutter)) 24px;
+  padding: 26px 0; border-block: 1px solid var(--faint);
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+          mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+}
+.marquee-track { display: flex; width: max-content; animation: marquee 40s linear infinite; }
+.marquee:hover .marquee-track { animation-play-state: paused; }
+.marquee-track span {
+  display: flex; align-items: center; gap: 40px; padding-right: 40px; white-space: nowrap;
+  font-family: var(--display); font-weight: 800; font-stretch: 125%; text-transform: uppercase;
+  font-size: clamp(28px, 4vw, 54px); line-height: 1;
+  color: transparent; -webkit-text-stroke: 1px #ffffff55;
+}
+.marquee-track span::after { content: "✦"; font-size: .45em; color: var(--accent); -webkit-text-stroke: 0; }
+@keyframes marquee { to { transform: translateX(-50%); } }
+
+.roster { counter-reset: r; }
+.roster-row {
+  position: relative; display: grid; grid-template-columns: 56px 1fr auto; gap: 8px 28px; align-items: center;
+  padding: clamp(22px, 3vw, 34px) 0; border-bottom: 1px solid var(--faint);
+}
+.roster-row::before {
+  counter-increment: r; content: counter(r, decimal-leading-zero);
+  font-size: 13px; letter-spacing: .1em; color: var(--muted); align-self: start; padding-top: .6em;
+}
+.roster-row::after {
+  content: ""; position: absolute; left: 0; right: 100%; bottom: -1px; height: 1px; background: var(--accent);
+  transition: right .6s cubic-bezier(.2,.7,.2,1);
+}
+.roster-row:hover::after { right: 0; }
+.roster-name {
+  display: flex; align-items: center; gap: 20px; min-width: 0;
+  font-family: var(--display); font-weight: 800; font-stretch: 118%; text-transform: uppercase;
+  font-size: clamp(24px, 3.9vw, 54px); line-height: .95; letter-spacing: -.015em;
+  transition: color .3s, transform .4s cubic-bezier(.2,.7,.2,1);
+}
+.roster-row:hover .roster-name { color: var(--accent); transform: translateX(8px); }
+.roster-name img { height: clamp(34px, 4vw, 56px); width: auto; flex: none; border-radius: 6px; background: #fff; padding: 4px; }
+.roster-side { text-align: right; display: flex; flex-direction: column; gap: 6px; align-items: flex-end; }
+.roster-side .role { font-size: 15px; }
+.roster-side .years { font-size: 13px; color: var(--muted); letter-spacing: .08em; }
+.now {
+  display: inline-flex; align-items: center; gap: 8px; width: fit-content;
+  font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--accent);
+  border: 1px solid #f07a3a55; border-radius: 999px; padding: 4px 10px;
+}
+.now::before {
+  content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--accent);
+  box-shadow: 0 0 0 0 #f07a3aaa; animation: pulse 1.8s infinite;
+}
+@keyframes pulse { 70% { box-shadow: 0 0 0 8px #f07a3a00; } 100% { box-shadow: 0 0 0 0 #f07a3a00; } }
+.roster-desc { grid-column: 2 / -1; color: var(--muted); max-width: 640px; }
+
+.big-cta {
+  display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-top: 64px;
+  padding: clamp(28px, 4vw, 48px) 0; border-block: 1px solid var(--faint);
+  font-family: var(--display); font-weight: 800; font-stretch: 125%; text-transform: uppercase;
+  font-size: clamp(28px, 5vw, 72px); line-height: 1; letter-spacing: -.015em;
+  transition: color .3s;
+}
+.big-cta::after { content: "→"; color: var(--accent); transition: transform .4s cubic-bezier(.2,.7,.2,1); }
+.big-cta:hover { color: var(--accent); }
+.big-cta:hover::after { transform: translateX(12px); }
+
 /* Contact */
 .contact-lines { display: flex; flex-direction: column; gap: 10px; margin-top: 48px; }
 .contact-lines a { font-weight: 300; font-size: clamp(24px, 3.4vw, 40px); letter-spacing: -.01em; width: fit-content; border-bottom: 1px solid var(--faint); transition: border-color .2s; }
@@ -148,7 +234,12 @@ a.tile:hover .tile-media img { transform: scale(1.03); }
   .rail a { width: 38px; height: 38px; }
   .rail a.active::after { right: auto; bottom: -3px; }
   .rail .tip { display: none; }
-  .stage-caption { bottom: 86px; }
+  .stage-caption { bottom: 86px; right: var(--gutter); }
+  .roster-row { grid-template-columns: 1fr; }
+  .roster-row::before { padding-top: 0; }
+  .roster-side { text-align: left; align-items: flex-start; flex-direction: row; flex-wrap: wrap; gap: 10px; }
+  .roster-desc { grid-column: 1; }
+  .marquee { margin-top: 56px; }
   .page { padding: 100px var(--gutter) 60px; }
   .page-head { margin-bottom: 48px; }
   .footer { padding: 24px var(--gutter) 96px; }
@@ -158,4 +249,5 @@ a.tile:hover .tile-media img { transform: scale(1.03); }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
+  .marquee-track { flex-wrap: wrap; width: auto; }
 }

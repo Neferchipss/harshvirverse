@@ -21,6 +21,7 @@
       "id": "universities",
       "nav": "Universities",
       "icon": "university",
+      "layout": "showcase",
       "eyebrow": "Universities",
       "title": "From classroom to industry",
       "intro": "Teaching CGI and animation across India's art and design schools — procedural workflows, hands-on learning and real production practice.",

@@ -250,7 +250,7 @@
         ["nav", "Menu name (icon tooltip)"], ["icon", "Menu icon", "select", Object.keys(window.HV_ICONS)],
         ["eyebrow", "Small heading"], ["title", "Page title"],
         ["intro", "Intro text", "textarea"], ["ctaLabel", "Link text (optional)"], ["ctaHref", "Link goes to"],
-        ["layout", "Entries shown as", "select", ["auto", "grid", "list"]],
+        ["layout", "Entries shown as", "select", ["auto", "grid", "list", "showcase"]],
       ], () => drawSide()),
       list({ title: "Entries", arr: (s.items ??= []), specs: ITEM_SPECS, blank: BLANK_ITEM, thumb: (it) => it.image, addText: "Add entry" }),
       el("div", { class: "danger-zone" },

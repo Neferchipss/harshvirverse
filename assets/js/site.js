@@ -66,6 +66,12 @@
   function renderHome(c) {
     const name = [c.hero.headlineTop, c.hero.headlineBottom].filter(Boolean).join(" ");
     document.title = name || c.site.name;
+    // "A × B × C" — separators get the accent colour
+    const tag = $("#tagline");
+    (c.hero.tagline || "").split(/\s*×\s*/).filter(Boolean).forEach((part, i) => {
+      if (i) tag.append(el("span", "x", "×"));
+      tag.append(el("span", "", part));
+    });
     heroMedia(c.hero);
   }
 
@@ -131,6 +137,7 @@
       h.append(a);
     }
     const items = s.items || [];
+    if (s.layout === "showcase") return renderShowcase(s, h, items);
     // layout: "grid" | "list" | anything else = grid when entries have images
     const grid = s.layout === "grid" || (s.layout !== "list" && items.some((it) => it.image));
     const wrap = el("div", grid ? "tiles" : "rows");
@@ -158,6 +165,66 @@
       wrap.append(node);
     }
     $("#page").replaceChildren(h, wrap);
+  }
+
+  /* Showcase: stats worked out from the entries, a marquee of names, and a big-type roster.
+     An entry counts as current when its "meta" says present / now / current. */
+  function renderShowcase(s, h, items) {
+    const page = $("#page");
+    page.classList.add("wide");
+    const isNow = (it) => /present|now|current/i.test(it.meta || "");
+    const years = items.flatMap((it) => (it.meta || "").match(/\b(19|20)\d{2}\b/g) || []).map(Number);
+
+    // The text link moves to the big CTA at the bottom
+    h.querySelector(".link-cta")?.remove();
+    const stats = el("div", "stats");
+    const stat = (value, label, plus) => {
+      const d = el("div", "stat");
+      const b = el("b", "", String(value));
+      if (plus) b.append(el("sup", "", "+"));
+      d.append(b, el("span", "", label));
+      stats.append(d);
+    };
+    if (items.length) stat(items.length, s.countLabel || "Institutions");
+    const now = items.filter(isNow).length;
+    if (now) stat(now, s.currentLabel || "Teaching now");
+    if (years.length) stat(Math.min(...years), "Since");
+    h.append(stats);
+
+    const marquee = el("div", "marquee");
+    marquee.setAttribute("aria-hidden", "true");
+    const track = el("div", "marquee-track");
+    const names = items.map((it) => it.title).filter(Boolean);
+    for (let i = 0; i < 2; i++) names.forEach((n) => track.append(el("span", "", n)));
+    marquee.append(track);
+
+    const roster = el("div", "roster");
+    for (const it of items) {
+      const row = el(it.link ? "a" : "div", "roster-row");
+      if (it.link) { row.href = it.link; row.target = "_blank"; row.rel = "noopener"; }
+      const name = el("h3", "roster-name");
+      if (it.image) {
+        const logo = el("img");
+        logo.src = it.image; logo.alt = ""; logo.loading = "lazy";
+        name.append(logo);
+      }
+      name.append(el("span", "", it.title || ""));
+      const side = el("div", "roster-side");
+      if (isNow(it)) side.append(el("span", "now", s.nowLabel || "Now teaching"));
+      if (it.subtitle) side.append(el("span", "role", it.subtitle));
+      if (it.meta && !/^\s*(present|now|current)\s*$/i.test(it.meta)) side.append(el("span", "years", it.meta));
+      row.append(name, side);
+      if (it.description) row.append(el("p", "roster-desc", it.description));
+      roster.append(row);
+    }
+
+    const nodes = [h, names.length > 1 ? marquee : null, roster];
+    if (s.ctaLabel) {
+      const cta = el("a", "big-cta", s.ctaLabel);
+      cta.href = href(s.ctaHref || "page.html?s=contact");
+      nodes.push(cta);
+    }
+    page.replaceChildren(...nodes.filter(Boolean));
   }
 
   function renderContact(c) {
