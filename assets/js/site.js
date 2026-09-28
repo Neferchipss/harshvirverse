@@ -161,12 +161,41 @@
 
     const poster = new Image();
     poster.src = h.media;
-    const frames = Array.from({ length: n }, (_, i) => {
-      const img = new Image();
-      img.decoding = "async";
-      img.src = `${r.path}f_${String(i).padStart(3, "0")}.${r.ext || "webp"}`;
-      return img;
-    });
+
+    // Frames: a lighter set by default, the sharper one only for tall/HiDPI
+    // screens. Loaded coarse → fine (every 8th, 4th, 2nd, then the rest) so
+    // the whole sweep is usable after a handful of downloads, and each one is
+    // decoded off the main thread before it's used, so drawing never stalls.
+    const base = r.pathHi && innerHeight * Math.min(devicePixelRatio || 1, 2) > 1200 ? r.pathHi : r.path;
+    const frames = Array.from({ length: n }, () => ({ img: new Image(), ok: false }));
+    let loaded = 0;
+    const order = [];
+    const lo = sweep ? Math.floor(sweep[0]) : 0, hi = sweep ? Math.ceil(sweep[1]) : n - 1;
+    for (const step of [8, 4, 2, 1]) for (let i = lo; i <= hi; i += step) if (!order.includes(i)) order.push(i);
+    for (let i = 0; i < n; i++) if (!order.includes(i)) order.push(i);
+    const fetchNext = () => {
+      const i = order.shift();
+      if (i == null) return;
+      const f = frames[i];
+      const done = () => {
+        f.ok = f.img.complete && f.img.naturalWidth > 0;
+        loaded++;
+        fetchNext();
+      };
+      // decode off-thread, but never let a slow/deferred decode block loading
+      f.img.onload = () => Promise.race([f.img.decode().catch(() => {}), new Promise((res) => setTimeout(res, 800))]).then(done);
+      f.img.onerror = done;
+      f.img.src = `${base}f_${String(i).padStart(3, "0")}.${r.ext || "webp"}`;
+    };
+    for (let k = 0; k < 6; k++) fetchNext();
+    // Nearest frame that's ready (so the head never sticks while loading)
+    const nearest = (i) => {
+      for (let d = 0; d < n; d++) {
+        if (frames[i - d] && frames[i - d].ok) return frames[i - d].img;
+        if (frames[i + d] && frames[i + d].ok) return frames[i + d].img;
+      }
+      return null;
+    };
 
     // Fit the frame's full height (never crop his neck/shoulders). If the
     // screen is wider than the frame, pin it left and extend the viewport to
@@ -242,7 +271,7 @@
     const target = (tx, ty) => targets(tx, ty)[0];
     const colOf = (f) => cols.findIndex((c) => f >= Math.min(...c) - 1 && f <= Math.max(...c) + 1);
 
-    let head = target(0.5, 0.5), from = head, fadeT = 1, last = performance.now(), hold = [0.5, 0.5];
+    let head = target(0.5, 0.5), from = head, fadeT = 1, last = performance.now(), hold = [0.5, 0.5], painted = "";
     const tick = (now) => {
       const dt = Math.min(64, now - last) / 1000;
       last = now;
@@ -279,11 +308,16 @@
       }
       fadeT = Math.min(1, fadeT + dt / 0.22);
 
-      const cur = frames[Math.round(head)];
-      if (fadeT < 1) {
-        if (!draw(frames[Math.round(from)], 1)) draw(poster, 1);
-        draw(cur, fadeT);
-      } else if (!draw(cur, 1)) draw(poster, 1);
+      // Only repaint when the picture actually changes
+      const cur = nearest(Math.round(head)), prev = fadeT < 1 ? nearest(Math.round(from)) : null;
+      const key = `${cur && cur.src}|${prev && prev.src}|${fadeT.toFixed(2)}|${canvas.width}x${canvas.height}`;
+      if (key !== painted) {
+        painted = key;
+        if (prev) {
+          if (!draw(prev, 1)) draw(poster, 1);
+          draw(cur, fadeT);
+        } else if (!draw(cur, 1)) draw(poster, 1);
+      }
       window.hvRigState = { head, want, fadeT };
       if (sweep) {
         const rb = rail && rail.getBoundingClientRect();
@@ -297,7 +331,7 @@
           const ey = `${(fit.y + (r.eye ? r.eye[1] : 0.5) * fit.h) / (canvas.height / innerHeight)}px`;
           axis.style.top = ey; handle.style.top = ey;
         }
-        readout.textContent = `X ${(p * 2 - 1).toFixed(2)}`;
+        readout.textContent = loaded < n ? `loading ${loaded}/${n}` : `X ${(p * 2 - 1).toFixed(2)}`;
       }
       requestAnimationFrame(tick);
     };
