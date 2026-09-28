@@ -150,6 +150,15 @@
     box.append(canvas);
     document.body.classList.add("rig");
 
+    // Locked X axis across the screen, with a double-arrow handle riding it.
+    // The handle sits wherever his head actually is, so it lags like a drag.
+    const axis = el("div", "x-axis");
+    const handle = el("div", "x-handle");
+    handle.innerHTML = '<svg viewBox="0 0 120 50" aria-hidden="true">' +
+      '<path d="M3 25 32 3v12h56V3l29 22-29 22V35H32v12z"/></svg><b>CTRL_head · X lock</b><i></i>';
+    const readout = handle.querySelector("i");
+    document.body.append(axis, handle);
+
     const poster = new Image();
     poster.src = h.media;
     const frames = Array.from({ length: n }, (_, i) => {
@@ -175,12 +184,6 @@
       const w = iw * s, hgt = ih * s;
       fit = { x: (canvas.width - w) * fx, y: (canvas.height - hgt) * fy, w, h: hgt, iw, ih };
       return fit;
-    };
-    // Screen position of the eyes (for the cursor's "look-at" line)
-    const eyes = () => {
-      if (!fit || !r.eye) return null;
-      const dpr = canvas.width / innerWidth;
-      return { x: (fit.x + r.eye[0] * fit.w) / dpr, y: (fit.y + r.eye[1] * fit.h) / dpr };
     };
     size();
     addEventListener("resize", size);
@@ -266,8 +269,15 @@
         if (!draw(frames[Math.round(from)], 1)) draw(poster, 1);
         draw(cur, fadeT);
       } else if (!draw(cur, 1)) draw(poster, 1);
-      window.hvRigEyes = eyes();
       window.hvRigState = { head, want, fadeT };
+      if (sweep) {
+        const rb = rail && rail.getBoundingClientRect();
+        const w = rb && rb.height > rb.width ? rb.left : innerWidth;
+        const p = clamp((head - sweep[0]) / (sweep[1] - sweep[0]), 0, 1);
+        axis.style.width = `${w}px`;
+        handle.style.transform = `translate(${p * w}px, 0)`;
+        readout.textContent = `X ${(p * 2 - 1).toFixed(2)}`;
+      }
       requestAnimationFrame(tick);
     };
     requestAnimationFrame(tick);
@@ -768,36 +778,14 @@
     const label = el("span");
     ring.append(label);
     document.body.append(ring);
-    // On the rig landing the cursor becomes the eye-target control,
-    // tied to his eyes by a dashed "look-at" line like a Blender constraint
-    const rig = document.body.classList.contains("rig");
-    let line = null, coords = null;
-    if (rig) {
-      ring.classList.add("rig-target");
-      ring.insertAdjacentHTML("beforeend",
-        '<svg viewBox="-24 -24 48 48" aria-hidden="true"><circle class="core" r="2.4"/>' +
-        '<path d="M-7 0H-21M-15-6L-21 0-15 6M7 0H21M15-6L21 0 15 6"/></svg><b>CTRL_head · X lock</b><i></i>');
-      coords = ring.querySelector("i");
-      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-      svg.setAttribute("class", "rig-line");
-      line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-      svg.append(line);
-      document.body.append(svg);
-    }
+    // On the rig landing the cursor is just a small free dot; the X-lock
+    // handle on the axis (drawn by rigHero) shows what it's driving
+    if (document.body.classList.contains("rig")) ring.classList.add("rig-dot");
     let x = pointer.x, y = pointer.y;
     const tick = () => {
       x += (pointer.x - x) * 0.2;
       y += (pointer.y - y) * 0.2;
       ring.style.transform = `translate(${x}px, ${y}px)`;
-      if (rig) {
-        const e = window.hvRigEyes;
-        if (e) {
-          line.setAttribute("x1", e.x); line.setAttribute("y1", e.y);
-          line.setAttribute("x2", x); line.setAttribute("y2", y);
-        }
-        // Blender-style readout: X/Y in metres from screen centre
-        coords.textContent = `X ${((x / innerWidth - 0.5) * 2).toFixed(2)}`;
-      }
       requestAnimationFrame(tick);
     };
     requestAnimationFrame(tick);
