@@ -298,10 +298,21 @@
       return true;
     };
     const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+    // Sweep mapping: screen centre → r.mid (the frontal pose), each half linear,
+    // so an uneven clip (short left turn, long right turn) still feels centred
+    const mid = sweep && (r.mid != null ? r.mid * fps : (sweep[0] + sweep[1]) / 2);
+    const blend = (r.blend || []).map(([a, b]) => [a, b]);   // frame index ranges
+    const warp = (t) => t < 0.5 ? sweep[0] + (mid - sweep[0]) * t * 2 : mid + (sweep[1] - mid) * (t - 0.5) * 2;
+    const unwarp = (f) => f < mid ? (f - sweep[0]) / (mid - sweep[0]) / 2 : 0.5 + (f - mid) / (sweep[1] - mid) / 2;
     // Frames that show the requested pose (one per sweep of that column)
     const targets = (tx, ty) => {
       // Sweep mode: one left → right turn, cursor X only
-      if (sweep) return [clamp(sweep[0] + (sweep[1] - sweep[0]) * clamp(tx, 0, 1), 0, n - 1)];
+      if (sweep) {
+        let f = warp(clamp(tx, 0, 1));
+        // never come to rest on an interpolated bridge frame (they ghost when held)
+        for (const [a, b] of blend) if (f > a - 1 && f < b + 1) f = f - (a - 1) < (b + 1) - f ? a - 1 : b + 1;
+        return [clamp(f, 0, n - 1)];
+      }
       const [top, bottom, top2] = cols[clamp(Math.floor(tx * cols.length), 0, cols.length - 1)];
       const y = clamp(ty, 0, 1);
       const out = [top + (bottom - top) * y];
@@ -379,7 +390,7 @@
       if (sweep) {
         const rb = rail && rail.getBoundingClientRect();
         const w = rb && rb.height > rb.width ? rb.left : innerWidth;
-        const p = clamp((head - sweep[0]) / (sweep[1] - sweep[0]), 0, 1);
+        const p = clamp(unwarp(head), 0, 1);
         axis.style.width = `${w}px`;
         axis.style.setProperty("--hx", `${p * w}px`);
         handle.style.transform = `translate(${p * w}px, 0)`;
