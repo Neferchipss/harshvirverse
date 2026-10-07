@@ -346,7 +346,10 @@
         // The rail isn't part of the interactive area: map X across the
         // space to its left (full width when it's the phone bottom bar)
         const rb = rail && rail.getBoundingClientRect();
-        const w = rb && rb.height > rb.width ? rb.left : innerWidth;
+        let w = rb && rb.height > rb.width ? rb.left : innerWidth;
+        // On ultrawide screens the footage is pinned left and the rest is
+        // mirrored backdrop: sweep across the footage's own width, not the screen's
+        if (fit) w = Math.min(w, fit.w * innerWidth / canvas.width);
         tx = pointer.x / w;
         ty = pointer.y / innerHeight;
       } else {
