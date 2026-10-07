@@ -101,9 +101,6 @@ svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width:
    a small viewport name label carrying the roles. */
 /* red backdrop: axis, handle and the selected-object accents go white */
 .home.rig { --active: #fff; --axis-x: #fff; }
-.home.rig .x-axis { opacity: .85; box-shadow: 0 0 6px #0003; }
-.home.rig .x-handle svg { filter: drop-shadow(0 1px 3px #0004); }
-.home.rig .x-handle i { color: #ffffffb3; }
 .home.rig .stage-shade { background: none; }
 .home.rig .stage-caption {
   /* origin sits on the scene's red X axis line (16.5% up from the frame bottom) */
@@ -115,19 +112,19 @@ svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width:
   font-size: clamp(36px, 5.4vw, 104px); line-height: .9; letter-spacing: 0;
   color: #fff; text-shadow: 0 2px 18px #0003;
 }
-/* object origin */
-.home.rig .stage-caption h1::after {
-  content: ""; position: absolute; left: -6px; bottom: -4px; width: 9px; height: 9px; border-radius: 50%;
-  background: var(--active); box-shadow: 0 0 0 1.5px #0005;
-}
 .home.rig .stage-caption p {
   position: absolute; left: 0; top: 100%; width: max-content;
   justify-content: flex-start; gap: 4px 8px; margin-top: 14px;
   font: 500 13px/1.4 var(--font); letter-spacing: 0; text-transform: none; color: #e8e8e8;
   text-shadow: 0 1px 2px #000a;
 }
-.home.rig .stage-caption p::before { content: "Text.001"; color: #ffffffb3; margin-right: 6px; }
-.home.rig .stage-caption p .x { color: #ffffff80; }
+.home.rig .stage-caption p::before { content: ""; width: clamp(48px, 7vw, 120px); height: 1px; background: #fff; margin-right: 14px; }
+.home.rig .stage-caption p .x { color: #ffffffb3; }
+.rig-hud {
+  position: fixed; top: 28px; right: calc(var(--rail-w) + 28px); z-index: 5; pointer-events: none; text-align: right;
+  font: 500 11px/1.5 ui-monospace, "Cascadia Mono", Consolas, monospace; color: #ffffffcc; transition: opacity .6s;
+}
+.rig-hud.done { opacity: 0; }
 @media (max-width: 700px) {
   .home.rig .stage-caption { left: var(--gutter); right: var(--gutter); bottom: 132px; max-width: none; }
 }

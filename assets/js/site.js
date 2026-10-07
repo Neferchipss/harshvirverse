@@ -204,14 +204,9 @@
     box.append(canvas);
     document.body.classList.add("rig");
 
-    // Locked X axis across the screen, with a double-arrow handle riding it.
-    // The handle sits wherever his head actually is, so it lags like a drag.
-    const axis = el("div", "x-axis");
-    const handle = el("div", "x-handle");
-    handle.innerHTML = '<svg viewBox="0 0 120 50" aria-hidden="true">' +
-      '<path d="M3 25 32 3v12h56V3l29 22-29 22V35H32v12z"/></svg><b>CTRL_head · X lock</b><i></i>';
-    const readout = handle.querySelector("i");
-    document.body.append(axis, handle);
+    // Small loading readout, top right (fades out once every frame is in)
+    const hud = el("div", "rig-hud");
+    document.body.append(hud);
 
     const poster = new Image();
     poster.src = h.media;
@@ -387,20 +382,8 @@
         } else if (!draw(cur, 1)) draw(poster, 1);
       }
       window.hvRigState = { head, want, fadeT };
-      if (sweep) {
-        const rb = rail && rail.getBoundingClientRect();
-        const w = rb && rb.height > rb.width ? rb.left : innerWidth;
-        const p = clamp(unwarp(head), 0, 1);
-        axis.style.width = `${w}px`;
-        axis.style.setProperty("--hx", `${p * w}px`);
-        handle.style.transform = `translate(${p * w}px, 0)`;
-        // ride at his eye level (fraction of the frame height)
-        if (fit) {
-          const ey = `${(fit.y + (r.eye ? r.eye[1] : 0.5) * fit.h) / (canvas.height / innerHeight)}px`;
-          axis.style.top = ey; handle.style.top = ey;
-        }
-        readout.textContent = loaded < n ? `loading ${loaded}/${n}` : `X ${(p * 2 - 1).toFixed(2)}`;
-      }
+      hud.textContent = loaded < n ? `Loading ${loaded}/${n}` : "";
+      hud.classList.toggle("done", loaded >= n);
       requestAnimationFrame(tick);
     };
     requestAnimationFrame(tick);
@@ -901,8 +884,7 @@
     const label = el("span");
     ring.append(label);
     document.body.append(ring);
-    // On the rig landing the cursor is just a small free dot; the X-lock
-    // handle on the axis (drawn by rigHero) shows what it's driving
+    // On the rig landing the cursor is just a small free dot
     if (document.body.classList.contains("rig")) ring.classList.add("rig-dot");
     let x = pointer.x, y = pointer.y;
     const tick = () => {
