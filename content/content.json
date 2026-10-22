@@ -62,6 +62,19 @@
       "ctaHref": "page.html?s=contact",
       "items": [
         {
+          "title": "Amity University",
+          "subtitle": "Lecturer",
+          "meta": "2023 — 2025",
+          "tag": "",
+          "description": "",
+          "image": "",
+          "link": "",
+          "campus": "",
+          "campusCaption": "",
+          "campusCredit": "",
+          "campusCreditUrl": ""
+        },
+        {
           "title": "Tata Institute of Social Sciences (TISS)",
           "subtitle": "Lecturer",
           "meta": "Present",
@@ -73,6 +86,19 @@
           "campusCaption": "TISS campus, Mumbai",
           "campusCredit": "Virani q · CC BY-SA 4.0",
           "campusCreditUrl": "https://commons.wikimedia.org/wiki/File:TISS_.jpg"
+        },
+        {
+          "title": "National School of Design (NSD)",
+          "subtitle": "Lecturer",
+          "meta": "2024 — 2025",
+          "tag": "",
+          "description": "",
+          "image": "",
+          "link": "",
+          "campus": "",
+          "campusCaption": "",
+          "campusCredit": "",
+          "campusCreditUrl": ""
         },
         {
           "title": "École Intuit Lab",
@@ -101,32 +127,6 @@
           "campusCreditUrl": "https://commons.wikimedia.org/wiki/File:Building_of_Sir_J._J._School_of_Art,_Mumbai.jpg"
         },
         {
-          "title": "Amity University",
-          "subtitle": "Lecturer",
-          "meta": "2023 — 2025",
-          "tag": "",
-          "description": "",
-          "image": "",
-          "link": "",
-          "campus": "",
-          "campusCaption": "",
-          "campusCredit": "",
-          "campusCreditUrl": ""
-        },
-        {
-          "title": "National School of Design (NSD)",
-          "subtitle": "Lecturer",
-          "meta": "2024 — 2025",
-          "tag": "",
-          "description": "",
-          "image": "",
-          "link": "",
-          "campus": "",
-          "campusCaption": "",
-          "campusCredit": "",
-          "campusCreditUrl": ""
-        },
-        {
           "title": "Symbiosis School of Art & Design",
           "subtitle": "External Jury",
           "meta": "2025",
@@ -138,6 +138,14 @@
           "campusCaption": "Symbiosis International University, S. B. Road campus",
           "campusCredit": "DesiBoy101 · CC BY 4.0",
           "campusCreditUrl": "https://commons.wikimedia.org/wiki/File:Symbiosis_International_University,_S._B._Road_campus.jpg"
+        },
+        {
+          "title": "Pune Chinchwad University",
+          "subtitle": "Lecturer",
+          "meta": "",
+          "description": "",
+          "image": "assets/uploads/1792666914050-screenshot-2026-10-22-163127.png",
+          "link": ""
         }
       ]
     },
