@@ -127,6 +127,14 @@
           "campusCreditUrl": "https://commons.wikimedia.org/wiki/File:Building_of_Sir_J._J._School_of_Art,_Mumbai.jpg"
         },
         {
+          "title": "Pune Chinchwad University",
+          "subtitle": "Lecturer",
+          "meta": "",
+          "description": "",
+          "image": "assets/uploads/1792666914050-screenshot-2026-10-22-163127.png",
+          "link": ""
+        },
+        {
           "title": "Symbiosis School of Art & Design",
           "subtitle": "External Jury",
           "meta": "2025",
@@ -140,11 +148,11 @@
           "campusCreditUrl": "https://commons.wikimedia.org/wiki/File:Symbiosis_International_University,_S._B._Road_campus.jpg"
         },
         {
-          "title": "Pune Chinchwad University",
-          "subtitle": "Lecturer",
+          "title": "",
+          "subtitle": "",
           "meta": "",
           "description": "",
-          "image": "assets/uploads/1792666914050-screenshot-2026-10-22-163127.png",
+          "image": "",
           "link": ""
         }
       ]
