@@ -1,3 +1,16 @@
+# v4.1 — crash fix ("A problem repeatedly occurred" in Safari on refresh)
+
+The v4 home page used too much memory, so Safari killed the tab, mostly after a refresh.
+- **Hero frames:** on retina Macs the site picked the 1440p frame set and kept all 62 frames decoded as ImageBitmaps, which is about 780 MB. Now it always uses the 1080p set and keeps the frames compressed (Blobs). Only a window of the 24 most recently used frames around the cursor is decoded, and an evicted bitmap is `close()`d.
+- **Canvas size:** the hero canvas is capped at 1.5× DPR instead of 2×. The frames are only 1080 px tall.
+- **Leaving the page (`pagehide`):** every bitmap and the rim sprite is closed, every canvas is shrunk to 0×0, the AudioContext is closed and all animation loops stop. Three.js renderers are disposed and their GL contexts released (`forceContextLoss`). A page restored from the back/forward cache reloads.
+- **WebGL:**
+  - A lost context stops drawing instead of erroring.
+  - Renderer creation is guarded, so the 3D object is skipped when WebGL is unavailable.
+  - The object's DPR is capped at 1.5 and the workspace's at 1.25, with no antialiasing.
+  - The workspace scene runs one loop, and only while it is on screen.
+  - It is skipped on devices that report 4 GB of memory or less.
+
 # harshvirverse.com — v4 "wow" (branch `v4-wow`, built on `v3-redesign`, not published)
 
 Everything from v2 and v3 is kept. That includes Asset Bay, the UPI QR at harshvirwankhede-1@oksbi with no amount and no prices, empty categories hidden, 11+ years, the `content/content.json` and `/admin/` setup, and the desktop-only target.

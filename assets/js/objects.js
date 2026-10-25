@@ -177,6 +177,25 @@ const MODELS = {
   },
 };
 
+/* v4.1 (memory): every renderer is disposed and its GL context released when the
+   page is left (Safari otherwise keeps contexts alive across reloads and kills
+   the tab once its limits are hit), and a lost context just stops drawing. */
+function guard(renderer, stop) {
+  const el = renderer.domElement;
+  el.addEventListener("webglcontextlost", (e) => { e.preventDefault(); stop(); }, false);
+  addEventListener("pagehide", () => {
+    stop();
+    try { renderer.dispose(); renderer.forceContextLoss(); } catch (_) {}
+    el.width = el.height = 0;
+    el.remove();
+  }, { once: true });
+  addEventListener("pageshow", (e) => { if (e.persisted) location.reload(); });
+}
+const lowMem = !!(navigator.deviceMemory && navigator.deviceMemory <= 4);
+const makeRenderer = (opts) => {
+  try { return new THREE.WebGLRenderer(opts); } catch (_) { return null; }   // no WebGL: skip the object
+};
+
 function start(id, override) {
   const name = MODELS[override] ? override : DEFAULTS[id] || "cube";
   const wrap = document.createElement("div");
@@ -185,10 +204,13 @@ function start(id, override) {
   document.body.append(wrap);
 
   const size = wrap.clientWidth || 220;
-  const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  const renderer = makeRenderer({ alpha: true, antialias: !lowMem });
+  if (!renderer) { wrap.remove(); return; }
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
   renderer.setSize(size, size);
   wrap.append(renderer.domElement);
+  let dead = false;
+  guard(renderer, () => { dead = true; });
 
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(32, 1, 0.1, 100);
@@ -217,8 +239,9 @@ function start(id, override) {
   let rx = 0.15, ry = -0.5, spin = 0;
   const clock = new THREE.Clock();
   const tick = () => {
+    if (dead) return;
     requestAnimationFrame(tick);
-    if (!visible) return;
+    if (!visible || document.hidden) return;
     const t = clock.getElapsedTime();
     if (!reduce) {
       spin += 0.003;
@@ -255,9 +278,12 @@ function fitted(name, size) {
   return pivot;
 }
 export function workspace(host) {
-  const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, powerPreference: "low-power" });
-  renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
+  const renderer = lowMem ? null : makeRenderer({ alpha: true, antialias: false, powerPreference: "low-power" });
+  if (!renderer) return { set() {}, active() {} };   // low-memory device or no WebGL: panels only
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 1.25));
   host.append(renderer.domElement);
+  let dead = false;
+  guard(renderer, () => { dead = true; });
   const scene = new THREE.Scene();
   scene.fog = new THREE.Fog(0x0c0d10, 14, 42);
   const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 200);
@@ -293,9 +319,11 @@ export function workspace(host) {
   size();
   addEventListener("resize", size);
   const clock = new THREE.Clock();
+  let looping = false;
   const tick = () => {
+    if (dead || !on) { looping = false; return; }   // one loop at most, and only while on screen
     requestAnimationFrame(tick);
-    if (!on || document.hidden) return;
+    if (document.hidden) return;
     const t = clock.getElapsedTime();
     const e = 1 - Math.pow(1 - p, 3);
     camera.position.set(Math.sin(t * 0.1) * 0.6 * e, 0.4 + 2.4 * e, 3.2 + 10 * e);
@@ -308,9 +336,12 @@ export function workspace(host) {
     });
     renderer.render(scene, camera);
   };
-  tick();
   return {
     set(v) { p = v; },
-    active(v) { on = v; host.classList.toggle("on", v); },
+    active(v) {
+      on = v && !dead;
+      host.classList.toggle("on", on);
+      if (on && !looping) { looping = true; requestAnimationFrame(tick); }
+    },
   };
 }

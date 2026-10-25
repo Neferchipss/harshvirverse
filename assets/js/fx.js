@@ -28,8 +28,25 @@
   const settings = { light: 1, tint: "warm", samples: 128, shade: "rendered", engine: "cycles" };
   document.documentElement.classList.add("v4");
 
+  /* v4.1 (memory): one teardown when the page is left. Every loop stops, the
+     sprite bitmap and audio are released and every canvas is shrunk to 0×0, so
+     Safari doesn't carry canvas memory into the next load. */
+  let gone = false;
+  const pool = new Set();
+  const own = (cv) => (pool.add(cv), cv);
+  let releaseSprite = () => {};
+  addEventListener("pagehide", () => {
+    gone = true;
+    releaseSprite();
+    try { audio && audio.close && audio.close(); } catch (_) {}
+    audio = null;
+    pool.forEach((cv) => { cv.width = cv.height = 0; });
+    document.querySelectorAll("canvas").forEach((cv) => { if (!cv.closest(".obj-wrap, .ws-3d")) { cv.width = cv.height = 0; } });
+  });
+  addEventListener("pageshow", (e) => { if (e.persisted) location.reload(); });
+
   /* ---------- edge map: "wireframe" line art from any image ---------- */
-  const work = mk("canvas");
+  const work = own(mk("canvas"));
   const wctx = work.getContext("2d", { willReadFrequently: true });
   function edgeMap(src, sx, sy, sw, sh, w, h, out, opt = {}) {
     work.width = w; work.height = h;
@@ -37,7 +54,7 @@
     const d = wctx.getImageData(0, 0, w, h).data;
     const L = new Float32Array(w * h);
     for (let i = 0, j = 0; i < L.length; i++, j += 4) L[i] = d[j] * 0.299 + d[j + 1] * 0.587 + d[j + 2] * 0.114;
-    out = out || mk("canvas");
+    out = out || own(mk("canvas"));
     if (out.width !== w || out.height !== h) { out.width = w; out.height = h; }
     const oc = out.getContext("2d");
     const img = oc.createImageData(w, h), o = img.data;
@@ -279,6 +296,7 @@
     // a drag inside a link (home card) must not navigate
     tt.addEventListener("click", (e) => { if (moved > 6) { e.preventDefault(); e.stopPropagation(); } }, true);
     const tick = (now) => {
+      if (gone) return;
       requestAnimationFrame(tick);
       const dt = Math.min(64, now - last) / 1000; last = now;
       if (!vis || document.hidden) return;
@@ -388,7 +406,8 @@
 
     // current frame edge map (frame space), refreshed at most every 160 ms
     const EW = 328, EH = 216;
-    const edgeCv = mk("canvas");
+    const edgeCv = own(mk("canvas"));
+    own(fx); own(shadeL); own(keyL); own(rim);
     let frame = null, edgesAt = 0, edgesDirty = true, haveEdges = false;
     let cur = null, curIdx = 0, sprite = null;
     hook.onPaint = (img, i) => { if (img) cur = img; if (i != null) curIdx = i; edgesDirty = true; };
@@ -397,11 +416,16 @@
     // alpha-only ImageBitmap so the main thread never reads pixels back.
     const loadSprite = () => {
       if (!window.Worker || !window.OffscreenCanvas) return;
-      const code = `onmessage=async(e)=>{try{const r=await fetch(e.data);const b=await createImageBitmap(await r.blob());const c=new OffscreenCanvas(b.width,b.height);const x=c.getContext('2d');x.drawImage(b,0,0);const d=x.getImageData(0,0,b.width,b.height),p=d.data;for(let i=0;i<p.length;i+=4){p[i+3]=p[i];p[i]=255;p[i+1]=206;p[i+2]=160;}x.putImageData(d,0,0);const o=c.transferToImageBitmap();postMessage(o,[o]);}catch(err){postMessage(null);}}`;
+      const code = `onmessage=async(e)=>{try{const r=await fetch(e.data);const b=await createImageBitmap(await r.blob());const c=new OffscreenCanvas(b.width,b.height);const x=c.getContext('2d');x.drawImage(b,0,0);b.close();const d=x.getImageData(0,0,b.width,b.height),p=d.data;for(let i=0;i<p.length;i+=4){p[i+3]=p[i];p[i]=255;p[i+1]=206;p[i+2]=160;}x.putImageData(d,0,0);const o=c.transferToImageBitmap();postMessage(o,[o]);}catch(err){postMessage(null);}}`;
       try {
         const url = URL.createObjectURL(new Blob([code], { type: "text/javascript" }));
         const w = new Worker(url);
-        w.onmessage = (e) => { sprite = e.data; w.terminate(); URL.revokeObjectURL(url); edgesDirty = true; };
+        w.onmessage = (e) => {
+          w.terminate(); URL.revokeObjectURL(url);
+          if (gone) { e.data && e.data.close && e.data.close(); return; }
+          sprite = e.data; edgesDirty = true;
+        };
+        releaseSprite = () => { try { sprite && sprite.close && sprite.close(); } catch (_) {} sprite = null; w.terminate(); };
         w.postMessage(new URL("assets/hero/rim-edges.webp", location.href).href);
       } catch (_) {}
     };
@@ -434,8 +458,8 @@
     let phase = RM ? "done" : "wire", t0 = 0, opening = !RM;
     const FW = 720, FH = 450;
     fx.width = FW; fx.height = FH;
-    const small = mk("canvas"), sctx = small.getContext("2d");
-    const noise = mk("canvas"); noise.width = noise.height = 128;
+    const small = own(mk("canvas")), sctx = small.getContext("2d");
+    const noise = own(mk("canvas")); noise.width = noise.height = 128;
     (() => { const c = noise.getContext("2d"), d = c.createImageData(128, 128); for (let i = 0; i < d.data.length; i += 4) { const v = Math.random() * 255; d.data[i] = d.data[i + 1] = d.data[i + 2] = v; d.data[i + 3] = 255; } c.putImageData(d, 0, 0); })();
     const drawWire = (alpha) => {
       wireBackdrop(fctx, FW, FH, 24);
@@ -483,7 +507,7 @@
     const loadWs = () => {
       if (wsLoading || !ws) return;
       wsLoading = true;
-      import("./objects.js?v=40").then((m) => { wsApi = m.workspace($(".ws-3d", ws)); wsApi.set(pullP); wsApi.active(pullP > 0.005); }).catch(() => {});
+      import("./objects.js?v=41").then((m) => { wsApi = m.workspace($(".ws-3d", ws)); wsApi.set(pullP); wsApi.active(pullP > 0.005); }).catch(() => {});
     };
     const onPull = () => {
       if (!pull) return;
@@ -527,6 +551,7 @@
     let lastLight = "", lastName = "", rimKey = "", nameBox = null, nameAt = 0;
     addEventListener("resize", () => { nameBox = null; });
     const tick = (now) => {
+      if (gone) return;
       requestAnimationFrame(tick);
       if (document.hidden || !visible) return;
       placeRim();

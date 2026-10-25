@@ -491,9 +491,34 @@
     // load first and end the boot loader; the rest stream in afterwards.
     // Each frame becomes an ImageBitmap (decoded once, off the main thread) so
     // drawing never triggers a decode while the cursor moves.
-    const tall = innerHeight * Math.min(devicePixelRatio || 1, 2) > 1200;
-    const base = r.pathHi && tall ? r.pathHi : r.pathFast || r.path;
-    const frames = Array.from({ length: n }, () => ({ bmp: null, ok: false }));
+    // v4.1 (memory): always the 1080p set — the 1440p set cost ~780 MB once decoded,
+    // which made Safari kill the tab ("A problem repeatedly occurred").
+    // Frames are kept compressed (a ~100 KB Blob each); only a small,
+    // least-recently-used window around the cursor is decoded into ImageBitmaps
+    // (off the main thread, so drawing never decodes), and every bitmap is closed
+    // when it is evicted or the page is left. Decoded memory is capped at
+    // BMP_CAP frames (~7 MB each) instead of all 62.
+    const base = r.pathFast || r.path;
+    const lowMem = (navigator.deviceMemory && navigator.deviceMemory <= 4) || false;
+    const BMP_CAP = lowMem ? 10 : 24;
+    const canBmp = !!window.createImageBitmap && !!window.fetch;
+    const frames = Array.from({ length: n }, () => ({ blob: null, img: null, bmp: null, ok: false, used: 0, pending: false }));
+    let bmpCount = 0, torn = false;
+    const evict = (keep) => {
+      let lru = null;
+      for (const f of frames) if (f.bmp && f !== keep && (!lru || f.used < lru.used)) lru = f;
+      if (lru) { try { lru.bmp.close && lru.bmp.close(); } catch (_) {} lru.bmp = null; bmpCount--; }
+    };
+    const promote = (f) => {
+      if (f.bmp || f.pending || !f.blob || torn) return;
+      f.pending = true;
+      createImageBitmap(f.blob).then((b) => {
+        f.pending = false;
+        if (torn) { b.close && b.close(); return; }
+        if (bmpCount >= BMP_CAP) evict(f);
+        f.bmp = b; bmpCount++; painted = "";
+      }, () => { f.pending = false; });
+    };
     let loaded = 0;
     // v2: clamp to the last real frame (the old code asked for a non-existent f_062)
     const lo = sweep ? Math.max(0, Math.floor(sweep[0])) : 0, hi = sweep ? Math.min(n - 1, Math.ceil(sweep[1])) : n - 1;
@@ -503,40 +528,66 @@
     for (const step of [4, 2, 1]) for (let i = lo; i <= hi; i += step) if (!order.includes(i)) order.push(i);
     for (let i = 0; i < n; i++) if (!order.includes(i)) order.push(i);
     let keysLoaded = 0;
-    const toBitmap = (img) => (window.createImageBitmap ? createImageBitmap(img).catch(() => img) : img.decode().then(() => img, () => img));
+    const decoded = (img) => (img.decode ? img.decode().then(() => img, () => img) : Promise.resolve(img));
     const fetchNext = () => {
       const i = order.shift();
       if (i == null) return;
       const f = frames[i];
-      const img = new Image();
-      img.decoding = "async";
-      const done = (bmp) => {
-        if (bmp && (bmp.width || bmp.naturalWidth)) { f.bmp = bmp; f.ok = true; painted = ""; }
+      const done = (ok) => {
+        if (torn) return;
+        if (ok) { f.ok = true; painted = ""; if (bmpCount < BMP_CAP) promote(f); }
         loaded++;
         if (keys.includes(i)) keysLoaded++;
         // after the key frames, stream the rest at a gentler pace
         if (keysLoaded >= keys.length && "requestIdleCallback" in window) requestIdleCallback(fetchNext, { timeout: 300 });
         else fetchNext();
       };
-      img.onload = () => toBitmap(img).then(done, () => done(null));
-      img.onerror = () => done(null);
-      img.src = `${base}f_${String(i).padStart(3, "0")}.${r.ext || "webp"}`;
+      const src = `${base}f_${String(i).padStart(3, "0")}.${r.ext || "webp"}`;
+      if (canBmp) {
+        fetch(src).then((res) => (res.ok ? res.blob() : null)).then((b) => { f.blob = b; done(!!b); }, () => done(false));
+      } else {
+        // very old browsers: plain <img> frames
+        const img = new Image();
+        img.decoding = "async";
+        img.onload = () => decoded(img).then(() => { f.img = img; done(true); });
+        img.onerror = () => done(false);
+        img.src = src;
+      }
     };
     for (let k = 0; k < 6; k++) fetchNext();
-    bootLoader(() => keysLoaded / keys.length, () => `Loading rig ${loaded}/${n}`,
-      () => frames.reduce((a, f) => a + (f.ok ? f.bmp.width * f.bmp.height * 4 : 0), 0) / 1048576);
+    bootLoader(() => Math.min(keysLoaded / keys.length, canBmp ? bmpCount / Math.min(keys.length, BMP_CAP) : 1), () => `Loading rig ${loaded}/${n}`,
+      () => frames.reduce((a, f) => a + (f.bmp ? f.bmp.width * f.bmp.height * 4 : f.img ? f.img.naturalWidth * f.img.naturalHeight * 4 : 0), 0) / 1048576);
+    const has = (f) => f && f.ok && (f.bmp || f.img);
     const nearest = (i) => {
+      const now = performance.now();
+      // decode the wanted frame and its neighbours ahead of the cursor
+      for (const d of [0, 1, -1, 2, -2]) { const f = frames[i + d]; if (f && f.ok) { f.used = now - Math.abs(d); promote(f); } }
       for (let d = 0; d < n; d++) {
-        if (frames[i - d] && frames[i - d].ok) return frames[i - d].bmp;
-        if (frames[i + d] && frames[i + d].ok) return frames[i + d].bmp;
+        if (has(frames[i - d])) { frames[i - d].used = now; return frames[i - d].bmp || frames[i - d].img; }
+        if (has(frames[i + d])) { frames[i + d].used = now; return frames[i + d].bmp || frames[i + d].img; }
       }
       return null;
     };
+    window.hvRig.frames = () => ({ loaded: frames.filter((f) => f.ok).length, bitmaps: bmpCount });
+    // Leaving the page: give every pixel back right away (Safari keeps canvas and
+    // bitmap memory alive across reloads otherwise). A page restored from the
+    // back/forward cache is simply reloaded.
+    addEventListener("pagehide", () => {
+      torn = true;
+      order.length = 0;
+      frames.forEach((f) => { if (f.bmp) { try { f.bmp.close && f.bmp.close(); } catch (_) {} } f.bmp = null; f.blob = null; if (f.img) f.img.src = ""; f.img = null; f.ok = false; });
+      bmpCount = 0;
+      canvas.width = canvas.height = 0;
+      document.dispatchEvent(new Event("hv:teardown"));
+    });
+    addEventListener("pageshow", (e) => { if (e.persisted) location.reload(); });
 
     // Geometry is measured only on resize (never inside the animation loop)
     let fit = null, railBox = null, railHover = false;
     const measure = () => {
-      const dpr = Math.min(devicePixelRatio || 1, 2);
+      if (torn) return;
+      // v4.1: the frames are 1080 px tall, so a canvas above 1.5× buys nothing but memory
+      const dpr = Math.min(devicePixelRatio || 1, 1.5);
       canvas.width = Math.round(innerWidth * dpr);
       canvas.height = Math.round(innerHeight * dpr);
       fit = null; painted = "";
@@ -613,6 +664,7 @@
     measure();
     addEventListener("resize", () => { measure(); lastHx = lastTop = lastW = null; });
     const tick = (now) => {
+      if (torn) return;
       requestAnimationFrame(tick);
       if (document.hidden || offscreen) { last = now; return; }
       const dt = Math.min(64, now - last) / 1000;
