@@ -9,6 +9,8 @@
   };
   const get = (obj, path) => path.split(".").reduce((o, k) => (o == null ? o : o[k]), obj);
   const csv = (s) => (s || "").split(",").map((x) => x.trim()).filter(Boolean);
+  // An entry's pictures: the main image (or campus photo on showcase pages) plus its "More pictures"
+  const pics = (it, first = it.image) => [first, ...(it.images || [])].filter(Boolean);
   const params = new URLSearchParams(location.search);
   const preview = params.has("preview");
   const isHome = document.body.classList.contains("home");
@@ -410,15 +412,19 @@
     if (s.intro) h.append(el("p", "intro", s.intro));
     return h;
   }
+  const ctaHref = (a, url) => {
+    url = url || "page.html?s=contact";
+    if (/^https?:/.test(url)) external(a, url); else a.href = href(url);
+  };
   const linkCta = (s) => {
     const a = el("a", "link-cta", s.ctaLabel);
-    a.href = href(s.ctaHref || "page.html?s=contact");
+    ctaHref(a, s.ctaHref);
     return a;
   };
   const bigCta = (s) => {
     if (!s.ctaLabel) return null;
     const a = el("a", "big-cta reveal", s.ctaLabel);
-    a.href = href(s.ctaHref || "page.html?s=contact");
+    ctaHref(a, s.ctaHref);
     return a;
   };
   function stats(list) {
@@ -442,7 +448,7 @@
     document.title = `${s.nav || s.title} — ${c.site.name}`;
     const items = s.items || [];
     // "auto" (or unknown) = grid when entries have images, list otherwise
-    const layout = LAYOUTS[s.layout] ? s.layout : items.some((it) => it.image) ? "grid" : "list";
+    const layout = LAYOUTS[s.layout] ? s.layout : items.some((it) => pics(it).length) ? "grid" : "list";
     document.body.dataset.layout = layout;
     LAYOUTS[layout](s, items);
   }
@@ -488,24 +494,35 @@
       row.append(name, side);
       if (it.description) row.append(el("p", "roster-desc", it.description));
 
-      if (it.campus) {
+      const campus = pics(it, it.campus);
+      if (campus.length) {
         row.classList.add("has-campus");
         side.append(Object.assign(el("span", "campus-hint"), { title: "Hover to see the campus" }));
-        side.lastChild.append(window.hvIcon("image"), el("span", "", "Campus"));
+        side.lastChild.append(window.hvIcon("image"), el("span", "", campus.length > 1 ? `Campus · ${campus.length}` : "Campus"));
         // Touch screens: the photo unrolls inline when scrolled into view
         const inline = el("figure", "campus-inline");
-        const img = el("img");
-        img.src = it.campus; img.alt = it.campusCaption || it.title; img.loading = "lazy";
-        inline.append(img, el("figcaption", "", [it.campusCaption, it.campusCredit].filter(Boolean).join(" — ")));
+        const stack = el("div", "campus-pics");
+        campus.forEach((src, i) => {
+          const img = el("img");
+          img.src = src; img.alt = it.campusCaption || it.title; img.loading = "lazy";
+          if (i) img.classList.add("off");
+          stack.append(img);
+        });
+        if (campus.length > 1) slides(stack, campus.length);
+        inline.append(stack, el("figcaption", "", [it.campusCaption, it.campusCredit].filter(Boolean).join(" — ")));
         row.append(inline);
+        // Mouse: the floating photo, stepping through the pictures while hovered
+        let cycle = null;
         row.addEventListener("pointerenter", (e) => {
           if (e.pointerType !== "mouse") return;
-          fImg.src = it.campus;
+          let n = 0;
+          fImg.src = campus[0];
           fImg.alt = it.campusCaption || it.title;
           fCap.textContent = [it.campusCaption, it.campusCredit].filter(Boolean).join(" — ");
           float.classList.add("show");
+          if (campus.length > 1) cycle = setInterval(() => { fImg.src = campus[++n % campus.length]; }, 1400);
         });
-        row.addEventListener("pointerleave", () => float.classList.remove("show"));
+        row.addEventListener("pointerleave", () => { float.classList.remove("show"); clearInterval(cycle); });
       }
       roster.append(row);
     }
@@ -736,13 +753,22 @@
       if (it.link) {
         external(tile, it.link);
         tile.dataset.cursor = video ? "Play" : "Open";
-        if (video) tile.addEventListener("click", (e) => { e.preventDefault(); lightbox(video, it.title); });
+        if (video) tile.addEventListener("click", (e) => { e.preventDefault(); videoBox(video, it.title); });
       }
       const media = el("div", "tile-media tilt");
-      if (it.image) {
-        const img = el("img");
-        img.src = it.image; img.alt = it.title || ""; img.loading = "lazy";
-        media.append(img);
+      const photos = pics(it);
+      if (photos.length) {
+        photos.forEach((src, i) => {
+          const img = el("img");
+          img.src = src; img.alt = it.title || ""; img.loading = "lazy";
+          if (i) img.classList.add("off");
+          media.append(img);
+        });
+        if (photos.length > 1) slides(media, photos.length);
+        if (!it.link) {
+          tile.dataset.cursor = "View";
+          tile.addEventListener("click", () => photoBox(photos, +(media.dataset.at || 0), it.title));
+        }
       } else {
         media.classList.add("empty");
         media.append(window.hvIcon("cube"));
@@ -762,14 +788,43 @@
     $("#page").replaceChildren(...[h, filters, wrap].filter(Boolean));
   }
 
-  function lightbox(src, title) {
+  // Prev/next arrows, dots and swipe over a stack of <img> (only one without .off shows)
+  function slides(media, count, onChange) {
+    const imgs = $$("img", media);
+    const dots = el("div", "pic-dots");
+    for (let i = 0; i < count; i++) dots.append(el("span"));
+    let at = 0;
+    const go = (i) => {
+      at = (i + count) % count;
+      media.dataset.at = at;
+      imgs.forEach((img, j) => img.classList.toggle("off", j !== at));
+      [...dots.children].forEach((d, j) => d.classList.toggle("on", j === at));
+      onChange?.(at);
+    };
+    const arrow = (cls, text, d) => {
+      const b = el("button", "pic-nav " + cls, text);
+      b.type = "button";
+      b.setAttribute("aria-label", d < 0 ? "Previous picture" : "Next picture");
+      b.addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); go(at + d); });
+      return b;
+    };
+    let sx = null;
+    media.addEventListener("pointerdown", (e) => { sx = e.clientX; });
+    media.addEventListener("pointerup", (e) => {
+      if (sx == null || e.pointerType === "mouse") return;
+      const dx = e.clientX - sx;
+      sx = null;
+      if (Math.abs(dx) > 40) go(at - Math.sign(dx));
+    });
+    media.append(arrow("prev", "‹", -1), arrow("next", "›", 1), dots);
+    go(0);
+    return go;
+  }
+
+  function lightbox(frame, label, keys) {
     const box = el("div", "lightbox");
     box.setAttribute("role", "dialog");
-    box.setAttribute("aria-label", title || "Video");
-    const frame = el("div", "lightbox-frame");
-    const iframe = el("iframe");
-    Object.assign(iframe, { src, title: title || "Video", allow: "autoplay; fullscreen; picture-in-picture", allowFullscreen: true });
-    frame.append(iframe);
+    box.setAttribute("aria-label", label);
     const close = el("button", "lightbox-close", "Close ✕");
     close.type = "button";
     box.append(frame, close);
@@ -778,13 +833,35 @@
       setTimeout(() => box.remove(), 300);
       removeEventListener("keydown", onKey);
     };
-    const onKey = (e) => { if (e.key === "Escape") done(); };
+    const onKey = (e) => { if (e.key === "Escape") done(); else keys?.(e); };
     box.addEventListener("click", (e) => { if (e.target === box) done(); });
     close.addEventListener("click", done);
     addEventListener("keydown", onKey);
     document.body.append(box);
     requestAnimationFrame(() => box.classList.add("open"));
     close.focus();
+  }
+  function videoBox(src, title) {
+    const frame = el("div", "lightbox-frame");
+    const iframe = el("iframe");
+    Object.assign(iframe, { src, title: title || "Video", allow: "autoplay; fullscreen; picture-in-picture", allowFullscreen: true });
+    frame.append(iframe);
+    lightbox(frame, title || "Video");
+  }
+  function photoBox(photos, start, title) {
+    const frame = el("div", "lightbox-photos");
+    photos.forEach((src) => {
+      const img = el("img");
+      img.src = src; img.alt = title || "";
+      frame.append(img);
+    });
+    const go = photos.length > 1 ? slides(frame, photos.length) : null;
+    go?.(start);
+    lightbox(frame, title || "Pictures", (e) => {
+      if (!go) return;
+      if (e.key === "ArrowLeft") go(+frame.dataset.at - 1);
+      if (e.key === "ArrowRight") go(+frame.dataset.at + 1);
+    });
   }
 
   /* ---------- List: plain rows ---------- */

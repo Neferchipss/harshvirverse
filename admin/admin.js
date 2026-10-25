@@ -176,7 +176,51 @@
           picker),
         preview);
     }
+    if (type === "gallery") return gallery(obj, path, label, extra, onChange);
     return el("label", {}, label, el("input", { value: val, oninput: (e) => commit(e.target.value) }));
+  }
+
+  // Several pictures on one entry: upload many at once, reorder, remove, or paste a URL
+  function gallery(obj, path, label, accept, onChange) {
+    const arr = () => (getPath(obj, path) || []);
+    const wrap = el("div", { class: "wide" });
+    const commit = (next) => { setPath(obj, path, next); setDirty(true); onChange?.(next); draw(); };
+    const url = el("input", { placeholder: "…or paste an image URL and press Enter", onkeydown: (e) => {
+      if (e.key !== "Enter" || !url.value.trim()) return;
+      e.preventDefault();
+      commit([...arr(), url.value.trim()]);
+      url.value = "";
+    } });
+    const picker = el("input", {
+      type: "file", accept: accept || "image/*", multiple: true, hidden: true,
+      onchange: async (e) => {
+        const files = [...e.target.files];
+        e.target.value = "";
+        const added = [];
+        for (const f of files) {
+          try { const p = await upload(f); if (p) added.push(p); } catch (err) { setStatus("Upload failed: " + err.message, "err"); }
+        }
+        if (added.length) commit([...arr(), ...added]);
+      },
+    });
+    const draw = () => {
+      const a = arr();
+      const move = (i, d) => { const n = [...a]; [n[i], n[i + d]] = [n[i + d], n[i]]; commit(n); };
+      wrap.replaceChildren(
+        el("span", { class: "gallery-label" }, `${label} (${a.length})`),
+        el("div", { class: "gallery" }, a.map((p, i) => el("div", { class: "gallery-pic" },
+          el("img", { src: mediaUrl(p), alt: "" }),
+          el("div", { class: "gallery-ctrl" },
+            el("button", { class: "btn btn-sm", type: "button", title: "Move left", disabled: i === 0, onclick: () => move(i, -1) }, "←"),
+            el("button", { class: "btn btn-sm", type: "button", title: "Move right", disabled: i === a.length - 1, onclick: () => move(i, 1) }, "→"),
+            el("button", { class: "btn btn-sm btn-danger", type: "button", title: "Remove", onclick: () => commit(a.filter((_, j) => j !== i)) }, "✕"))))),
+        el("div", { class: "media-field" },
+          el("label", {}, url),
+          el("button", { class: "btn", type: "button", onclick: () => picker.click() }, "Upload pictures"),
+          picker));
+    };
+    draw();
+    return wrap;
   }
   const fields = (obj, specs, onChange) => el("div", { class: "fields" }, specs.map((s) => field(obj, s, onChange)));
 
@@ -211,6 +255,7 @@
     ["title", "Title"], ["subtitle", "Subtitle (role / category)"], ["meta", "Small detail (years, date — write \"Present\" if ongoing)"],
     ["tag", "Tag (sector, level…)"], ["link", "Link (optional — YouTube/Vimeo links play on the page)"],
     ["description", "Description", "textarea"], ["image", "Image / logo", "media", "image/*"],
+    ["images", "More pictures (grid pages: slideshow on the card; showcase pages: extra campus photos)", "gallery", "image/*"],
     ["campus", "Campus photo (Universities: unrolls on hover)", "media", "image/*"],
     ["campusCaption", "Campus photo caption"], ["campusCredit", "Photo credit (if not yours)"], ["campusCreditUrl", "Photo credit link"],
   ];
@@ -260,7 +305,7 @@
         ["model", "3D object (top right)", "select", ["auto", "university", "gear", "easel", "teapot", "bulb", "rocket", "plane", "cube"]],
         ["tools", "Builder: software (comma separated)", "textarea"], ["topics", "Builder: topics to pick (comma separated)", "textarea"],
       ], () => drawSide()),
-      list({ title: "Entries", arr: (s.items ??= []), specs: ITEM_SPECS, blank: BLANK_ITEM, thumb: (it) => it.image, addText: "Add entry" }),
+      list({ title: "Entries", arr: (s.items ??= []), specs: ITEM_SPECS, blank: BLANK_ITEM, thumb: (it) => it.image || it.images?.[0], addText: "Add entry" }),
       el("div", { class: "danger-zone" },
         el("button", { class: "btn", disabled: i === 0, onclick: () => move(-1) }, "Move section up"), " ",
         el("button", { class: "btn", disabled: i === content.sections.length - 1, onclick: () => move(1) }, "Move section down"), " ",

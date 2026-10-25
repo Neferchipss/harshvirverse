@@ -105,3 +105,9 @@ textarea { min-height: 80px; resize: vertical; }
   .side h4 { display: none; }
   .side button { white-space: nowrap; }
 }
+.gallery-label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 8px; }
+.gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; margin-bottom: 10px; }
+.gallery:empty { display: none; }
+.gallery-pic { border-radius: 8px; overflow: hidden; background: var(--bg); }
+.gallery-pic img { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; }
+.gallery-ctrl { display: flex; gap: 4px; padding: 6px; justify-content: center; }
