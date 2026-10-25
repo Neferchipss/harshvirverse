@@ -529,7 +529,7 @@
     const loadWs = () => {
       if (wsLoading || !ws) return;
       wsLoading = true;
-      import("./objects.js?v=41").then((m) => { wsApi = m.workspace($(".ws-3d", ws)); wsApi.set(pullP); wsApi.active(pullP > 0.005); }).catch(() => {});
+      import("./objects.js?v=42").then((m) => { wsApi = m.workspace($(".ws-3d", ws)); wsApi.set(pullP); wsApi.active(pullP > 0.005); }).catch(() => {});
     };
     const onPull = () => {
       if (!pull) return;

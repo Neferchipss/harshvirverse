@@ -201,6 +201,10 @@ function start(id, override) {
   const wrap = document.createElement("div");
   wrap.className = "obj-wrap";
   wrap.setAttribute("aria-hidden", "true");
+  // v4.1: on the Contact page the paper plane flies a slow loop over the whole page
+  // (same renderer, the wrapper just moves; never blocks clicks)
+  const fly = name === "plane" && id === "contact" && !matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (fly) wrap.classList.add("obj-fly");
   document.body.append(wrap);
 
   const size = wrap.clientWidth || 220;
@@ -238,12 +242,38 @@ function start(id, override) {
 
   let rx = 0.15, ry = -0.5, spin = 0;
   const clock = new THREE.Clock();
+  // flight path: a figure-8 across the upper part of the viewport, nose along the travel direction
+  const F = { x: 0, y: 0, vx: 0, vy: 0, yaw: 0.95, pitch: 0, bank: 0, op: "", avoid: [], at: 0 };
+  const flyPos = (t) => {
+    const W = innerWidth, H = innerHeight, S = wrap.offsetWidth || 160, a = (2 * Math.PI) / 28;
+    return [W / 2 + (W / 2 - S * 0.6) * Math.sin(a * t), H * 0.3 + H * 0.17 * Math.sin(2 * a * t) + Math.sin(t * 1.7) * 6, S];
+  };
+  const flyStep = (t, dt) => {
+    const [x, y, S] = flyPos(t), [x2, y2] = flyPos(t + 0.15);
+    const vx = (x2 - x) / 0.15, vy = (y2 - y) / 0.15;
+    const k = 1 - Math.exp(-dt * 4);
+    F.yaw += (0.95 + 0.95 * Math.tanh(vx / 90) - F.yaw) * k;          // nose left <-> nose right
+    F.pitch += (Math.tanh(-vy / 160) * 0.45 - F.pitch) * k;
+    F.bank += (Math.tanh((vx - F.vx) / dt / 260 || 0) * 0.5 - F.bank) * k;
+    F.vx = vx; F.vy = vy;
+    wrap.style.transform = `translate3d(${(x - S / 2).toFixed(1)}px, ${(y - S / 2).toFixed(1)}px, 0)`;
+    // fade while crossing text / the form so it never sits on top of reading for long
+    if (t - F.at > 0.5) { F.at = t; F.avoid = [...document.querySelectorAll("#page h1, #page h2, #page p, #page form, .contact-lines")].map((e) => e.getBoundingClientRect()); }
+    const over = F.avoid.some((r) => x > r.left - 30 && x < r.right + 30 && y > r.top - 30 && y < r.bottom + 30);
+    const op = over ? "0.28" : "0.92";
+    if (op !== F.op) { wrap.style.opacity = op; F.op = op; }
+    pivot.rotation.set(0.35 + F.pitch, F.yaw - 0.95, F.bank);
+  };
+  let lastT = 0;
   const tick = () => {
     if (dead) return;
     requestAnimationFrame(tick);
     if (!visible || document.hidden) return;
     const t = clock.getElapsedTime();
-    if (!reduce) {
+    if (fly) {
+      flyStep(t, Math.min(0.05, t - lastT || 0.016)); lastT = t;
+      model.userData.update?.(t);
+    } else if (!reduce) {
       spin += 0.003;
       rx += ((pointer.y - 0.5) * 0.7 + 0.12 - rx) * 0.05;
       ry += ((pointer.x - 0.5) * 1.4 - 0.5 + spin - ry) * 0.05;

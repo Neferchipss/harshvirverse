@@ -230,3 +230,22 @@
 .rset-hint kbd {
   font: inherit; color: #ffa033; border: 1px solid #ffa03366; border-bottom-width: 2px; border-radius: 4px; padding: 1px 5px; margin: 0 2px;
 }
+
+/* v4.1: cursor-following eyes (canvas over the face, under the light layers) */
+.stage-media canvas.eyes-cv { position: absolute; left: 0; top: 0; display: none; pointer-events: none; transform-origin: 0 0; will-change: transform; }
+
+/* v4.1: email fallback under send buttons */
+.mail-fallback { flex-basis: 100%; margin-top: 10px; font-size: 13px; color: var(--muted, #9a9ba1); }
+.mail-fallback a, .mail-fallback button { color: #ffa033; background: none; border: 0; padding: 0; font: inherit; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.mail-fallback a:hover, .mail-fallback button:hover { color: #fff; }
+
+/* v4.1: Contact page paper plane flying over the page */
+.obj-wrap.obj-fly { position: fixed; top: 0; left: 0; right: auto; width: 210px; z-index: 40; pointer-events: none; animation: none; transition: opacity .6s ease; will-change: transform, opacity; }
+
+/* v4.1: Universities "Teaching now" slot-machine reel */
+.stat b.reel { display: block; width: max-content; height: .9em; line-height: .9; overflow: hidden; color: var(--accent, #ffa033);
+  -webkit-mask-image: linear-gradient(180deg, transparent, #000 9%, #000 91%, transparent); mask-image: linear-gradient(180deg, transparent, #000 9%, #000 91%, transparent); }
+.stat b.reel .reel-strip { all: unset; display: flex; flex-direction: column; animation: reel-spin 1.5s linear infinite; will-change: transform; filter: blur(.4px); }
+.stat b.reel .reel-strip > span { all: unset; display: block; height: .9em; line-height: .9; text-align: center; }
+@keyframes reel-spin { from { transform: translateY(0); } to { transform: translateY(-90%); } }
+@media (prefers-reduced-motion: reduce) { .stat b.reel .reel-strip { animation: none; filter: none; } }

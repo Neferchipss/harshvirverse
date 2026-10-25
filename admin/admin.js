@@ -317,6 +317,7 @@
         ["layout", "Page style", "select", ["auto", "grid", "list", "showcase", "timeline", "tickets", "builder", "shop"]],
         ["status", "Status badge (optional, e.g. \"Open for collaborations\")"],
         ["years", "Timeline: years of experience shown (optional, e.g. 11)"],
+        ["since", "Showcase: \"Since\" year shown (optional, e.g. 2021)"],
         ["model", "3D object (top right)", "select", ["auto", "university", "gear", "easel", "teapot", "bulb", "rocket", "plane", "cube"]],
         ["tools", "Builder: software (comma separated)", "textarea"], ["topics", "Builder: topics to pick (comma separated)", "textarea"],
       ], () => drawSide()),

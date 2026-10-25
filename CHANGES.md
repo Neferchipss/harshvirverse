@@ -255,7 +255,7 @@ still edits and publishes that same file. This branch is not live: GitHub Pages 
 ## Still open
 - `payment.formEndpoint` is empty. Until a Formspree/Google Form URL is set, "Send for delivery"
   opens a pre-filled email to the site email.
-- "Since 2023" on Universities is computed from the listed dates.
+- "Since" on Universities is set to 2021 in admin (Universities page → "Since" year); without it, the earliest listed date is used.
 - Showcase painting disclosure (previously described as code-generated): owner's call.
 
 ## Not changed (flagged)
@@ -273,3 +273,11 @@ still edits and publishes that same file. This branch is not live: GitHub Pages 
 | Long tasks (main thread blocked) | 17.6 s | 0 s |
 | Console errors | 404 + script error | none |
 Raw data: /workspace/perf/before2.json, /workspace/perf/after.json
+
+# v4.2 — eyes, Gmail compose, flying plane, Universities reel
+
+- **Hero head and eyes:** the head now turns only a little with the cursor (frames 19–38 around front-facing). The eyes follow the cursor fully: a light 2D layer redraws only the iris and pupil using per-frame eye landmarks (`assets/hero/eyes.json`). It only repaints when the gaze changes, it is hidden during frame cross-fades, and it is off under reduced motion.
+- **1:1 Classes "Request this session" and the Contact form:** these now open Gmail compose in a new tab, addressed to `official.harshvirwankhade@gmail.com` (the site email in admin), with every selection filled in. If Gmail doesn't open, there are fallback links: "Open in your email app" (mailto), "Open Gmail again" and "Copy details".
+- **Contact:** the wireframe paper plane flies a continuous figure-8 over the page and banks into its turns. It can't be clicked, fades over text and pauses when the tab is hidden. It reuses the page's single WebGL renderer and stays still under reduced motion.
+- **Universities:** "Since" is now 2021 (editable in admin). "Teaching now" spins like a slot-machine reel (1→9, looping) in orange, using CSS transforms only; reduced motion shows the plain number.
+- **Asset Bay:** unchanged.

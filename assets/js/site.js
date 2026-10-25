@@ -455,10 +455,159 @@
      before travelling the playhead may hop to its twin — invisible, same
      pose — to take the shorter route: up, across the top, and down.
      Columns: [topSec, bottomSec, topAgainSec] (or [topSec, bottomSec]). */
+  /* v4.1: email hand-off. A mailto: link opened a blank tab for visitors without a
+     mail app, so every "send" flow now opens Gmail's compose window in a new tab
+     (straight from the click, so popup blockers allow it), and shows a fallback
+     under the button: open in the email app (mailto) or copy the details. */
+  const DEFAULT_MAIL = "official.harshvirwankhade@gmail.com";
+  const gmailUrl = (to, su, body) =>
+    `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(to)}&su=${encodeURIComponent(su)}&body=${encodeURIComponent(body)}`;
+  const mailtoUrl = (to, su, body) => `mailto:${to}?subject=${encodeURIComponent(su)}&body=${encodeURIComponent(body)}`;
+  function composeMail(to, su, body, after) {
+    to = to || DEFAULT_MAIL;
+    const url = gmailUrl(to, su, body);
+    window.hvLastMail = url;                       // for tests
+    window.open(url, "_blank", "noopener");
+    if (!after) return;
+    let box = after.nextElementSibling && after.nextElementSibling.classList.contains("mail-fallback") ? after.nextElementSibling : null;
+    if (!box) { box = el("div", "mail-fallback"); after.after(box); }
+    const m = el("a", "", "Open in your email app"); m.href = mailtoUrl(to, su, body);
+    const g = el("a", "", "Open Gmail again"); g.href = url; g.target = "_blank"; g.rel = "noopener";
+    const c = el("button", "", "Copy details"); c.type = "button";
+    c.addEventListener("click", () => {
+      const text = `To: ${to}\nSubject: ${su}\n\n${body}`;
+      const done = () => { c.textContent = "Copied ✓"; setTimeout(() => { c.textContent = "Copy details"; }, 1800); };
+      if (navigator.clipboard) navigator.clipboard.writeText(text).then(done, () => {}); else done();
+    });
+    box.replaceChildren(el("span", "", `Gmail didn't open? `), m, el("span", "", " · "), g, el("span", "", " · "), c, el("span", "muted", ` — or write to ${to}`));
+  }
+
+  /* v4.1: eyes that follow the cursor on top of the photo frames.
+     assets/hero/eyes.json holds, per frame, each eye's opening (16 face-landmark
+     points), iris centre/radius and sclera colour (found offline with a face-landmark
+     model). Each tick, a small canvas over the face repaints both eyes: sclera, the
+     real iris cut from the front-facing frame (moved toward the cursor within the
+     opening), then an upper-lid shadow, with a feathered edge. Reduced motion: off. */
+  function eyeLayer(r, box, main, frames, getFit) {
+    const cv = el("canvas", "eyes-cv");
+    cv.setAttribute("aria-hidden", "true");
+    main.after(cv);
+    const c = cv.getContext("2d");
+    const tmp = document.createElement("canvas"), tc = tmp.getContext("2d");
+    const msk = document.createElement("canvas"), mc = msk.getContext("2d");
+    let data = null, tex = null, regKey = "", visible = false, lastF = null;
+    const gaze = { re: [0, 0], le: [0, 0] };
+    const srcFrame = r.eyes.source ?? 28;
+    // geometry per frame is precomputed once (no allocations in the animation loop)
+    const prep = (F) => {
+      const all = [...F.re.p, ...F.le.p];
+      F.box = [Math.min(...all.map((p) => p[0])) - 24, Math.min(...all.map((p) => p[1])) - 24, Math.max(...all.map((p) => p[0])) + 24, Math.max(...all.map((p) => p[1])) + 24];
+      for (const k of ["re", "le"]) {
+        const e = F[k], xs = e.p.map((p) => p[0]), ys = e.p.map((p) => p[1]);
+        e.g = { ew: Math.max(...xs) - Math.min(...xs), eh: Math.max(...ys) - Math.min(...ys), cx: (Math.max(...xs) + Math.min(...xs)) / 2, cy: (Math.max(...ys) + Math.min(...ys)) / 2, top: Math.min(...ys), bot: Math.max(...ys) };
+        e.rings = [[1.0, 0.35], [0.95, 0.6], [0.9, 1]].map(([q, al]) => [scale(e.p, e.g.cx, e.g.cy, q * 0.97), al]);
+      }
+    };
+    fetch(r.eyes.path).then((x) => x.json()).then((d) => { Object.values(d).forEach(prep); data = d; }).catch(() => {});
+    let bb = null, last = "";
+    const rebox = () => { bb = null; };
+    addEventListener("resize", rebox); addEventListener("scroll", rebox, { passive: true });
+    // iris textures, cut once from the front-facing frame
+    const makeTex = () => {
+      const f = frames[srcFrame];
+      if (tex || !data || !data[srcFrame] || !f || !f.blob) return;
+      tex = {};
+      createImageBitmap(f.blob).then((bmp) => {
+        for (const k of ["re", "le"]) {
+          const e = data[srcFrame][k], R = Math.ceil(e.r * 1.15), t = document.createElement("canvas");
+          t.width = t.height = R * 2;
+          const x = t.getContext("2d");
+          x.drawImage(bmp, e.c[0] - R, e.c[1] - R, R * 2, R * 2, 0, 0, R * 2, R * 2);
+          // soft round edge so the iris melts into the sclera
+          x.globalCompositeOperation = "destination-in";
+          const g = x.createRadialGradient(R, R, e.r * 0.8, R, R, e.r * 1.1);
+          g.addColorStop(0, "#000"); g.addColorStop(1, "rgba(0,0,0,0)");
+          x.fillStyle = g; x.fillRect(0, 0, R * 2, R * 2);
+          tex[k] = { cv: t, R, r: e.r };
+        }
+        bmp.close && bmp.close();
+      }, () => { tex = null; });
+    };
+    const near = (i) => { for (let d = 0; d < 6; d++) { if (data[i - d]) return data[i - d]; if (data[i + d]) return data[i + d]; } return null; };
+    const scale = (pts, cx, cy, k) => pts.map(([x, y]) => [cx + (x - cx) * k, cy + (y - cy) * k]);
+    const path = (ctx, pts, ox, oy, s) => { ctx.beginPath(); pts.forEach(([x, y], i) => (i ? ctx.lineTo : ctx.moveTo).call(ctx, (x - ox) * s, (y - oy) * s)); ctx.closePath(); };
+    const hide = () => { if (visible) { cv.style.display = "none"; visible = false; } };
+    return {
+      draw(idx, dt, ptr, fading) {
+        const fit = getFit();
+        if (!data || !fit || fading || document.body.dataset.shade && document.body.dataset.shade !== "rendered") return hide();
+        makeTex();
+        const F = near(idx);
+        if (!F || !tex || !tex.re || !tex.le) return hide();
+        const s = fit.s, k = main.width / innerWidth;          // frame px -> canvas px -> css px
+        // canvas region: both eyes + margin (in frame px)
+        const [x0, y0, x1, y1] = F.box;
+        const W = Math.ceil((x1 - x0) * s), H = Math.ceil((y1 - y0) * s);
+        const key = `${W}|${H}`;
+        if (key !== regKey) { cv.width = tmp.width = msk.width = W; cv.height = tmp.height = msk.height = H; cv.style.width = `${W / k}px`; cv.style.height = `${H / k}px`; regKey = key; }
+        cv.style.transform = `translate3d(${(fit.x + x0 * s) / k}px, ${(y0 * s) / k}px, 0)`;
+        if (!visible) { cv.style.display = "block"; visible = true; last = ""; }
+        if (!bb) bb = box.getBoundingClientRect();
+        // gaze first; skip the repaint entirely when nothing visibly changed
+        for (const key2 of ["re", "le"]) {
+          const e = F[key2], { ew, eh } = e.g;
+          let tx = 0, ty = 0;
+          if (ptr) {
+            const ex = bb.left + (fit.x + e.c[0] * s) / k, ey = bb.top + (e.c[1] * s) / k;
+            tx = Math.tanh((ptr.x - ex) / 380) * ew * 0.2;
+            ty = Math.tanh((ptr.y - ey) / 320) * eh * 0.22;
+          }
+          const g = gaze[key2], a = 1 - Math.exp(-dt * 14);
+          g[0] += (tx - g[0]) * a; g[1] += (ty - g[1]) * a;
+        }
+        const sig = `${F.box[0]}|${F.box[1]}|${fit.x}|${s}|${gaze.re[0].toFixed(1)}|${gaze.re[1].toFixed(1)}|${gaze.le[0].toFixed(1)}|${gaze.le[1].toFixed(1)}`;
+        lastF = F;
+        if (sig === last) return;
+        last = sig;
+        c.clearRect(0, 0, W, H);
+        for (const key2 of ["re", "le"]) {
+          const e = F[key2], T = tex[key2];
+          const { ew, cx, cy, top, bot } = e.g;
+          const g = gaze[key2];
+          // 1) eye contents on tmp (frame px * s, origin x0,y0)
+          tc.setTransform(1, 0, 0, 1, 0, 0); tc.clearRect(0, 0, W, H);
+          const [sr, sg, sb] = e.s;
+          const sc = tc.createRadialGradient((cx - x0) * s, (cy - y0) * s, 0, (cx - x0) * s, (cy - y0) * s, ew * 0.55 * s);
+          sc.addColorStop(0, `rgb(${sr},${sg},${sb})`);
+          sc.addColorStop(0.55, `rgb(${sr * 0.9 | 0},${sg * 0.86 | 0},${sb * 0.84 | 0})`);
+          sc.addColorStop(1, `rgb(${sr * 0.58 | 0},${sg * 0.5 | 0},${sb * 0.47 | 0})`);
+          tc.fillStyle = sc; tc.fillRect(0, 0, W, H);
+          const ir = e.r / T.r, R = T.R * ir;
+          const ix = e.c[0] + g[0], iy = e.c[1] + g[1];
+          tc.drawImage(T.cv, (ix - R - x0) * s, (iy - R - y0) * s, R * 2 * s, R * 2 * s);
+          // upper-lid shadow over the iris, lower-lid soft shade
+          const lg = tc.createLinearGradient(0, (top - y0) * s, 0, (bot - y0) * s);
+          lg.addColorStop(0, "rgba(40,18,10,.62)"); lg.addColorStop(0.42, "rgba(40,18,10,0)");
+          lg.addColorStop(0.85, "rgba(40,18,10,0)"); lg.addColorStop(1, "rgba(40,18,10,.3)");
+          tc.fillStyle = lg; tc.fillRect(0, 0, W, H);
+          // 2) feathered mask of the opening (slightly inside the landmark line)
+          mc.clearRect(0, 0, W, H);
+          mc.fillStyle = "#000";
+          for (const [pts, al] of e.rings) { mc.globalAlpha = al; path(mc, pts, x0, y0, s); mc.fill(); }
+          mc.globalAlpha = 1;
+          tc.globalCompositeOperation = "destination-in"; tc.drawImage(msk, 0, 0); tc.globalCompositeOperation = "source-over";
+          c.drawImage(tmp, 0, 0);
+        }
+      },
+    };
+  }
+
   function rigHero(box, h) {
     const r = h.rig;
     const fps = r.fps || 15, n = r.frames;
-    const sweep = r.sweep && r.sweep.map((s) => s * fps);
+    // v4.1: the head only turns a little (headRange, frame indices around front-facing);
+    // the eyes do the rest (see eyeLayer below)
+    const sweep = r.headRange ? r.headRange.slice() : r.sweep && r.sweep.map((s) => s * fps);
     const cols = (r.columns || []).map((c) => c.map((s) => s * fps));
     const rail = $("#rail");
     const speed = (r.speed || 5) * fps * 1.6;  // frames of footage per real second (v2: snappier cap)
@@ -558,13 +707,14 @@
     bootLoader(() => Math.min(keysLoaded / keys.length, canBmp ? bmpCount / Math.min(keys.length, BMP_CAP) : 1), () => `Loading rig ${loaded}/${n}`,
       () => frames.reduce((a, f) => a + (f.bmp ? f.bmp.width * f.bmp.height * 4 : f.img ? f.img.naturalWidth * f.img.naturalHeight * 4 : 0), 0) / 1048576);
     const has = (f) => f && f.ok && (f.bmp || f.img);
+    let lastIdx = 0;
     const nearest = (i) => {
       const now = performance.now();
       // decode the wanted frame and its neighbours ahead of the cursor
       for (const d of [0, 1, -1, 2, -2]) { const f = frames[i + d]; if (f && f.ok) { f.used = now - Math.abs(d); promote(f); } }
       for (let d = 0; d < n; d++) {
-        if (has(frames[i - d])) { frames[i - d].used = now; return frames[i - d].bmp || frames[i - d].img; }
-        if (has(frames[i + d])) { frames[i + d].used = now; return frames[i + d].bmp || frames[i + d].img; }
+        if (has(frames[i - d])) { frames[i - d].used = now; lastIdx = i - d; return frames[i - d].bmp || frames[i - d].img; }
+        if (has(frames[i + d])) { frames[i + d].used = now; lastIdx = i + d; return frames[i + d].bmp || frames[i + d].img; }
       }
       return null;
     };
@@ -659,6 +809,7 @@
     // v3: the landing scrolls; stop drawing while the first screen is out of view
     let offscreen = false;
     if ("IntersectionObserver" in window) new IntersectionObserver(([e]) => { offscreen = !e.isIntersecting; }).observe(box);
+    const eyes = r.eyes && !reduceMotion ? eyeLayer(r, box, canvas, frames, () => fit) : null;
     let head = target(0.5, 0.5), from = head, fadeT = 1, last = performance.now(), hold = [0.5, 0.5], painted = "";
     let lastHx = null, lastTop = null, lastW = null, lastRead = "";
     measure();
@@ -698,7 +849,8 @@
       }
       fadeT = Math.min(1, fadeT + dt / 0.22);
 
-      const cur = nearest(Math.round(head)), prev = fadeT < 1 ? nearest(Math.round(from)) : null;
+      const prev = fadeT < 1 ? nearest(Math.round(from)) : null;
+      const cur = nearest(Math.round(head)), curIdx = lastIdx;
       if (cur !== painted || prev || fadeT < 1) {
         if (prev) { if (!draw(prev, 1)) draw(poster, 1); draw(cur, fadeT); }
         else if (!draw(cur, 1)) draw(poster, 1);
@@ -706,6 +858,7 @@
         hook.onPaint && hook.onPaint(cur, Math.round(head));
       }
       window.hvRigState = { head, want, fadeT };
+      eyes && eyes.draw(curIdx, dt, pointer.moved && !railHover ? pointer : null, fadeT < 1);
       if (sweep) {
         const p = clamp((head - sweep[0]) / (sweep[1] - sweep[0]), 0, 1);
         const hx = Math.round(p * footW);
@@ -755,10 +908,20 @@
   };
   function stats(list) {
     const d = el("div", "stats");
-    for (const { value, label, plus } of list) {
+    for (const { value, label, plus, reel } of list) {
       if (value == null || value === "" || Number.isNaN(value)) continue;
       const box = el("div", "stat reveal");
       const b = el("b", "", String(value));
+      // v4.1: slot-machine reel cycling 1→9 nonstop (static value under reduced motion)
+      if (reel && !reduceMotion) {
+        b.replaceChildren();
+        b.classList.add("reel");
+        b.setAttribute("aria-label", String(value));
+        const strip = el("span", "reel-strip");
+        strip.setAttribute("aria-hidden", "true");
+        for (let i = 1; i <= 10; i++) strip.append(el("span", "", String(i > 9 ? 1 : i)));
+        b.append(strip);
+      }
       if (plus) b.append(el("sup", "", "+"));
       box.append(b, el("span", "", label));
       d.append(box);
@@ -792,8 +955,8 @@
     const years = yearsIn(items);
     h.append(stats([
       { value: items.length, label: s.countLabel || "Institutions" },
-      { value: items.filter(isNow).length || null, label: s.currentLabel || "Teaching now" },
-      { value: years.length ? Math.min(...years) : null, label: "Since" },
+      { value: items.filter(isNow).length || null, label: s.currentLabel || "Teaching now", reel: true },
+      { value: Number(s.since) || (years.length ? Math.min(...years) : null), label: "Since" },
     ]));
 
     const names = items.map((it) => it.title).filter(Boolean);
@@ -1018,7 +1181,10 @@
 
     const bar = el("div", "summary");
     const sumText = el("p", "summary-text");
-    const send = el("a", "btn-send", s.ctaLabel || "Request this session");
+    const send = el("button", "btn-send", s.ctaLabel || "Request this session");
+    send.type = "button";
+    let mail = { su: "", body: "" };
+    send.addEventListener("click", () => composeMail(email, mail.su, mail.body, bar));
     bar.append(sumText, send);
 
     function sync() {
@@ -1031,14 +1197,18 @@
         sumText.append(el("b", "", f || "Any format"));
         if (t.length) sumText.append(el("span", "muted", " — " + t.join(", ")));
       }
-      const subject = `1:1 session request${f ? " — " + f : ""}`;
+      const fm = state.format ? [state.format.subtitle, state.format.meta].filter(Boolean).join(" · ") : "";
+      const subject = `1:1 session request${f ? " — " + f : ""}${t.length ? " (" + t.join(", ") + ")" : ""}`;
       const body = [
         "Hi Harshvir,", "",
-        `I'd like to book: ${f || "(not sure yet)"}`,
-        t.length ? `I want to work on: ${t.join(", ")}` : "",
+        "I'd like to request a 1:1 session.", "",
+        `Format: ${f || "(not sure yet)"}${fm ? " — " + fm : ""}`,
+        `Topics: ${t.length ? t.join(", ") : "(open to suggestions)"}`,
         "", "A bit about me and my current level:", "", "",
+        "Preferred days / times:", "", "",
+        "Thanks!",
       ].join("\n");
-      send.href = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+      mail = { su: subject, body };
       bar.classList.toggle("ready", Boolean(f || t.length));
     }
     sync();
@@ -1484,7 +1654,7 @@
         reply.value.trim() ? `You can reach me at ${reply.value.trim()}.` : "",
         "", "",
       ].join("\n");
-      location.href = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+      composeMail(email, subject, body, send);
     });
 
     const lines = el("div", "contact-lines reveal");
