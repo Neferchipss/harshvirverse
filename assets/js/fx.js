@@ -13,7 +13,8 @@
      Asset Bay turntable and a render-settings easter egg (press R).
    Heavy work waits for the first paint / end of the loader, pauses when the tab
    is hidden or the effect is off screen, and prefers-reduced-motion gets a calm
-   version (no opening, static light, no pullback, no wipes). */
+   version (a short, gentle pixel-to-photo opening without noise or head turn,
+   static light, no pullback, no wipes). */
 (() => {
   const $ = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -371,6 +372,13 @@
     $("select", panel).focus();
   }
   document.addEventListener("keydown", (e) => {
+    // v4.1: plain F12 also toggles the panel (DevTools shortcuts with modifiers are untouched;
+    // if the browser still opens DevTools, the panel opens too)
+    if ((e.key === "F12" || e.keyCode === 123) && !e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey) {
+      e.preventDefault();
+      if (!e.repeat) openPanel();
+      return;
+    }
     if (e.ctrlKey || e.metaKey || e.altKey) return;
     const t = e.target;
     if (t.closest && t.closest("input, textarea, select, [contenteditable], .modal, dialog[open]") && !(panel && panel.contains(t) && e.key === "Escape")) return;
@@ -402,7 +410,13 @@
     const rim = mk("canvas", "lt-rim"), rctx = rim.getContext("2d");
     const grain = mk("i", "lt-grain");
     lights.append(shadeL, keyL, rim, grain);
+    // small Blender-status-bar style hint for the render settings easter egg (shown after the opening)
+    const hint = mk("button", "rset-hint");
+    hint.type = "button";
+    hint.innerHTML = 'Press <kbd>R</kbd> or <kbd>F12</kbd> for render settings';
+    hint.addEventListener("click", () => openPanel());
     box.append(lights, fx, status);
+    (stage || box).append(hint);
 
     // current frame edge map (frame space), refreshed at most every 160 ms
     const EW = 328, EH = 216;
@@ -455,7 +469,9 @@
     };
 
     // ---- opening ----
-    let phase = RM ? "done" : "wire", t0 = 0, opening = !RM;
+    // v4.1: with "Reduce motion" on (macOS System Settings > Accessibility > Display)
+    // the opening used to be skipped entirely; it now plays a short, gentle version.
+    let phase = RM ? "idle" : "wire", t0 = 0, opening = true;
     const FW = 720, FH = 450;
     fx.width = FW; fx.height = FH;
     const small = own(mk("canvas")), sctx = small.getContext("2d");
@@ -469,13 +485,18 @@
       else if (haveEdges) fctx.drawImage(edgeCv, l * FW, 0, w * FW, FH);
       fctx.globalAlpha = 1;
     };
-    if (RM) fx.remove();
+    if (RM) fx.hidden = true;
     else document.body.classList.add("opening");
+    let waited = 0;
     const startRender = () => {
       if (phase === "render") return;
+      // never start on an empty canvas: wait (up to ~3 s) until the rig has painted a frame
+      if (!cur && waited++ < 60) { setTimeout(startRender, 50); return; }
       phase = "render"; t0 = performance.now(); opening = true;
       fx.style.opacity = "1"; fx.hidden = false;
-      document.body.classList.add("opening", "rendering");
+      document.body.classList.add("rendering");
+      if (RM) return;                          // gentle version: no head turn, caption stays put
+      document.body.classList.add("opening");
       // the head starts looking away and turns to face the visitor
       const ht0 = performance.now();
       hook.override = (now) => {
@@ -484,9 +505,10 @@
         return [0.08 + 0.42 * ease(k), 0.38 + 0.12 * ease(k)];
       };
     };
-    replay = () => { if (!RM) { phase = "wire"; startRender(); } };
+    replay = () => { phase = RM ? "idle" : "wire"; startRender(); };
     document.addEventListener("hv:booted", () => setTimeout(startRender, RM ? 0 : 180), { once: true });
-    if (!$("#boot")) setTimeout(startRender, 50);   // loader already gone
+    const bootEl = $("#boot");
+    if (!bootEl || bootEl.classList.contains("done")) setTimeout(startRender, 50);   // loader already gone / finishing
 
     // ---- 3D name ----
     const name = $(".stage-caption h1");
@@ -562,15 +584,16 @@
       // opening overlay
       if (phase === "wire") drawWire(1);
       else if (phase === "render") {
-        const k = (now - t0) / 1700;           // 0..1 over 1.7 s
+        const k = (now - t0) / (RM ? 1000 : 1700);   // 0..1 over 1.7 s (1 s when reduced)
         if (k >= 1.25) {
           phase = "done"; opening = false; fx.hidden = true;
           if (!sprite) { if ("requestIdleCallback" in window) requestIdleCallback(loadSprite, { timeout: 1500 }); else setTimeout(loadSprite, 300); }
           document.body.classList.remove("opening", "rendering");
+          setTimeout(() => hint.classList.add("on"), 600);
           status.textContent = "";
         } else {
           // progressive samples: coarse blocks → fine, noise fades, wire lines fade
-          const levels = [48, 32, 20, 12, 8, 5, 3, 2, 1];
+          const levels = RM ? [24, 12, 6, 3, 1] : [48, 32, 20, 12, 8, 5, 3, 2, 1];
           const blk = levels[Math.min(levels.length - 1, Math.floor(clamp(k) * levels.length))];
           const sw = Math.max(1, Math.round(FW / blk)), sh = Math.max(1, Math.round(FH / blk));
           if (small.width !== sw) { small.width = sw; small.height = sh; }
@@ -578,7 +601,7 @@
           fctx.imageSmoothingEnabled = blk <= 2;
           fctx.globalAlpha = 1;
           fctx.drawImage(small, 0, 0, FW, FH);
-          const nz = clamp(0.55 * (1 - k * 1.1), 0, 0.55);
+          const nz = RM ? 0 : clamp(0.55 * (1 - k * 1.1), 0, 0.55);
           if (nz > 0) {
             fctx.globalAlpha = nz; fctx.globalCompositeOperation = "overlay";
             const ox = Math.random() * 128, oy = Math.random() * 128;
@@ -586,7 +609,7 @@
             fctx.translate(-ox, -oy); fctx.fillRect(ox, oy, FW, FH); fctx.setTransform(1, 0, 0, 1, 0, 0);
             fctx.globalCompositeOperation = "source-over";
           }
-          const wa = clamp(1 - k * 2.2);
+          const wa = RM ? 0 : clamp(1 - k * 2.2);
           if (wa > 0 && haveEdges) { fctx.globalAlpha = wa; const l = +(fx.dataset.l || 0), w = +(fx.dataset.w || 1); fctx.drawImage(edgeCv, l * FW, 0, w * FW, FH); }
           fctx.globalAlpha = 1;
           fx.style.opacity = String(clamp(1 - (k - 1) * 4));

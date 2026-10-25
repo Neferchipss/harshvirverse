@@ -10,6 +10,8 @@ The v4 home page used too much memory, so Safari killed the tab, mostly after a 
   - The object's DPR is capped at 1.5 and the workspace's at 1.25, with no antialiasing.
   - The workspace scene runs one loop, and only while it is on screen.
   - It is skipped on devices that report 4 GB of memory or less.
+- **Opening with "Reduce motion" / Windows "Animation effects" off:** the pixel-to-photo opening used to be skipped completely. Its canvas was removed under `prefers-reduced-motion: reduce`. It now plays a short, gentle version: 1 s, no noise, no wireframe, no head turn. The full opening also waits until the hero has painted a real frame, and it still starts if the loader is already finishing when fx.js attaches.
+- **Render settings:** plain F12 now toggles the panel as well as R and ? (DevTools shortcuts with modifiers are untouched). A small status-bar style hint, "Press R or F12 for render settings", appears bottom-right of the hero after the opening, and clicking it opens the panel.
 
 # harshvirverse.com — v4 "wow" (branch `v4-wow`, built on `v3-redesign`, not published)
 

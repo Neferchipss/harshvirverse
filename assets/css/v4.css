@@ -216,3 +216,17 @@
 @media (prefers-reduced-motion: reduce) {
   .cred-track { flex-wrap: nowrap; }
 }
+
+/* v4.1: render-settings hint (bottom-right of the hero, above the credits strip, Blender status-bar style) */
+.rset-hint {
+  position: absolute; right: 96px; bottom: 112px; z-index: 30;
+  font: 500 11px/1 ui-monospace, Consolas, monospace; letter-spacing: .02em; color: #ffffff8c;
+  background: #16171acc; border: 1px solid #ffffff1f; border-radius: 6px; padding: 6px 9px;
+  opacity: 0; transform: translateY(4px); transition: opacity .6s var(--ease), transform .6s var(--ease), color .2s;
+  pointer-events: none; cursor: pointer;
+}
+.rset-hint.on { opacity: 1; transform: none; pointer-events: auto; }
+.rset-hint:hover, .rset-hint:focus-visible { color: #fff; border-color: #ffa03380; }
+.rset-hint kbd {
+  font: inherit; color: #ffa033; border: 1px solid #ffa03366; border-bottom-width: 2px; border-radius: 4px; padding: 1px 5px; margin: 0 2px;
+}
