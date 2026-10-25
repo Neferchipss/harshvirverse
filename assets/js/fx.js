@@ -475,8 +475,18 @@
     // v4.3: the opening is the site's signature, so it always plays in full, even when the OS
     // asks for reduced motion (Windows "Animation effects" off). Only ambient extras respect it.
     let phase = "wire", t0 = 0, opening = true;
-    const FW = 720, FH = 450;
-    fx.width = FW; fx.height = FH;
+    // v4.5: the overlay canvas has the hero canvas's exact aspect ratio (both are laid out with the
+    // same object-fit), so the wireframe and the pixel blocks sit exactly on the final photo:
+    // same position, same size, square blocks. (It used to be a fixed 720×450 = 16:10 canvas
+    // shown with object-fit: cover, which zoomed and stretched the head during the opening.)
+    let FW = 720, FH = 450;
+    const sizeFx = () => {
+      const a = main.width && main.height ? main.width / main.height : innerWidth / innerHeight;
+      FH = 450; FW = Math.max(1, Math.round(FH * a));
+      if (fx.width !== FW || fx.height !== FH) { fx.width = FW; fx.height = FH; }
+    };
+    sizeFx();
+    addEventListener("resize", () => requestAnimationFrame(sizeFx));
     const small = own(mk("canvas")), sctx = small.getContext("2d");
     const noise = own(mk("canvas")); noise.width = noise.height = 128;
     (() => { const c = noise.getContext("2d"), d = c.createImageData(128, 128); for (let i = 0; i < d.data.length; i += 4) { const v = Math.random() * 255; d.data[i] = d.data[i + 1] = d.data[i + 2] = v; d.data[i + 3] = 255; } c.putImageData(d, 0, 0); })();
@@ -583,6 +593,7 @@
       if (sprite && edgesDirty) { edgesDirty = false; rimKey = ""; }
 
       // opening overlay
+      if (phase !== "done" && main.width && Math.abs(FW / FH - main.width / main.height) > 0.002) sizeFx();
       if (phase === "wire") drawWire(1);
       else if (phase === "render") {
         const k = (now - t0) / 1700;   // 0..1 over 1.7 s

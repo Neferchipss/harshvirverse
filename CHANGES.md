@@ -293,3 +293,10 @@ On the owner's Windows laptop, Chrome reports "prefers reduced motion" because W
 
 - The cursor-following eye layer looked painted on, so it has been removed: the hero shows the original photo eyes. The eye canvas, its code and `assets/hero/eyes.json` are gone.
 - The head still turns with the cursor, within frames 19–38 (about 20° each way).
+
+# v4.5 — opening keeps the hero's exact framing
+
+- **Problem:** during the wireframe and pixelation opening the head looked bigger and stretched taller, then "snapped" to normal size.
+- **Cause:** the opening overlay canvas was a fixed 720×450 (16:10) drawing surface, but it sits on a 16:9 (screen-shaped) stage and is shown with `object-fit: cover`. The hero picture was squeezed into 16:10 and then zoomed back out to cover, so the head came out enlarged and vertically stretched.
+- **Fix (`fx.js`):** the overlay's drawing surface now always has exactly the hero canvas's aspect ratio (450 px tall, width from the hero canvas; updated on resize), so it maps onto the screen exactly like the final photo. Pixel blocks are square, there is no zoom, no stretch and no jump at handoff; only the pixelation resolves. The full opening still plays regardless of reduced-motion settings.
+- Verified at 1536×864 @1.25, 1366×768, 1920×1080 and 1440×900 @2 with reduced motion emulated: late-pixelation vs final hero face alignment is scale 1.00, 0 px offset.
