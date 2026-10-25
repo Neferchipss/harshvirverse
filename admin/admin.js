@@ -259,6 +259,17 @@
     ["campus", "Campus photo (Universities: unrolls on hover)", "media", "image/*"],
     ["campusCaption", "Campus photo caption"], ["campusCredit", "Photo credit (if not yours)"], ["campusCreditUrl", "Photo credit link"],
   ];
+  const SHOP_SPECS = [
+    ["title", "Product name"], ["sku", "Product code (shown in the UPI payment note)"],
+    ["category", "Category", "select", ["3D Assets", "Blender Add-ons", "Photoshop Brushes", "Other"]],
+    ["pitch", "One-line pitch"], ["price", "Price in ₹ (numbers only)"],
+    ["includes", "What's included"], ["formats", "File formats (e.g. .blend, .fbx, .abr)"],
+    ["compatibility", "Works with (e.g. Blender 4.2+, Photoshop CC 2021+)"], ["licence", "Licence (personal / commercial)"],
+    ["description", "Description", "textarea"], ["image", "Main preview", "media", "image/*"],
+    ["images", "More previews", "gallery", "image/*"], ["gumroad", "Gumroad link (optional)"],
+    ["draft", "Hidden draft? (\"yes\" = not shown on the site)", "select", ["no", "yes"]],
+  ];
+  const BLANK_PRODUCT = { title: "New product", sku: "", category: "Other", pitch: "", price: "", includes: "", formats: "", compatibility: "", licence: "", description: "", image: "", images: [], gumroad: "" };
   const BLANK_ITEM = { title: "New item", subtitle: "", meta: "", description: "", image: "", link: "" };
 
   const views = {
@@ -300,12 +311,19 @@
         ["nav", "Menu name (icon tooltip)"], ["icon", "Menu icon", "select", Object.keys(window.HV_ICONS)],
         ["eyebrow", "Small heading"], ["title", "Page title"],
         ["intro", "Intro text", "textarea"], ["ctaLabel", "Link text (optional)"], ["ctaHref", "Link goes to"],
-        ["layout", "Page style", "select", ["auto", "grid", "list", "showcase", "timeline", "tickets", "builder"]],
+        ["layout", "Page style", "select", ["auto", "grid", "list", "showcase", "timeline", "tickets", "builder", "shop"]],
         ["status", "Status badge (optional, e.g. \"Open for collaborations\")"],
+        ["years", "Timeline: years of experience shown (optional, e.g. 11)"],
         ["model", "3D object (top right)", "select", ["auto", "university", "gear", "easel", "teapot", "bulb", "rocket", "plane", "cube"]],
         ["tools", "Builder: software (comma separated)", "textarea"], ["topics", "Builder: topics to pick (comma separated)", "textarea"],
       ], () => drawSide()),
-      list({ title: "Entries", arr: (s.items ??= []), specs: ITEM_SPECS, blank: BLANK_ITEM, thumb: (it) => it.image || it.images?.[0], addText: "Add entry" }),
+      // v2: shop pages get payment settings and product fields
+      ...(s.layout === "shop" ? [
+        el("h3", {}, "Payment (UPI)"),
+        el("p", { class: "hint" }, "Buyers scan a UPI QR (or copy the UPI ID), then send the UTR through a form. Form endpoint: a Formspree-style URL; leave TODO to receive orders as a pre-filled email."),
+        fields((s.payment ??= {}), [["upiId", "UPI ID"], ["payeeName", "Payee name"], ["formEndpoint", "Order form endpoint (URL)"], ["deliveryNote", "Delivery note shown after ordering", "textarea"]]),
+      ] : []),
+      list({ title: s.layout === "shop" ? "Products" : "Entries", arr: (s.items ??= []), specs: s.layout === "shop" ? SHOP_SPECS : ITEM_SPECS, blank: s.layout === "shop" ? BLANK_PRODUCT : BLANK_ITEM, thumb: (it) => it.image || it.images?.[0], addText: s.layout === "shop" ? "Add product" : "Add entry" }),
       el("div", { class: "danger-zone" },
         el("button", { class: "btn", disabled: i === 0, onclick: () => move(-1) }, "Move section up"), " ",
         el("button", { class: "btn", disabled: i === content.sections.length - 1, onclick: () => move(1) }, "Move section down"), " ",

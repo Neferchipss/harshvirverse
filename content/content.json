@@ -14,7 +14,8 @@
         "label": "Vimeo",
         "url": "https://vimeo.com/843414694"
       }
-    ]
+    ],
+    "url": "https://harshvirverse.com/"
   },
   "hero": {
     "headlineTop": "Harshvir",
@@ -45,10 +46,53 @@
         0.66,
         0.95
       ],
-      "pathHi": "assets/hero/sweep-2/"
-    }
+      "pathHi": "assets/hero/sweep-2/",
+      "pathFast": "assets/hero/sweep-2-1080-q70/",
+      "keyFrames": 16
+    },
+    "ctaLabel": "Enter Asset Bay",
+    "ctaHref": "page.html?s=shop"
   },
   "sections": [
+    {
+      "id": "shop",
+      "nav": "Asset Bay",
+      "icon": "spark",
+      "layout": "shop",
+      "model": "bulb",
+      "eyebrow": "Digital goods for 3D artists & creators",
+      "title": "Asset Bay",
+      "intro": "3D assets, Blender add-ons and Photoshop brushes for artists and creators. Pay by UPI, get the files by email.",
+      "status": "",
+      "ctaLabel": "",
+      "ctaHref": "",
+      "payment": {
+        "upiId": "harshvirwankhede-1@oksbi",
+        "payeeName": "Harshvir Wankhade",
+        "formEndpoint": "",
+        "deliveryNote": "Your download link arrives by email once the payment is checked."
+      },
+      "items": [
+        {
+          "title": "Character Concept Art Brushes",
+          "sku": "HV-BRUSH-01",
+          "category": "Photoshop Brushes",
+          "pitch": "Photoshop brushes for character and environment concept art.",
+          "includes": "",
+          "formats": "",
+          "compatibility": "",
+          "licence": "",
+          "price": "",
+          "description": "The showcase painting (3840×2160) was built with 31 brushes from this pack: 17 character brushes, the ogre hide and cracked leather skins, and 12 environment and effects brushes. It shows an ogre warlord, a swordsman and his cloaked companion on an ember-lit crag, with goblin squads, a drake and a tentacled horror in the misty mountains behind.\n\nThe breakdown strip shows the five stages from silhouette to final, and which brushes went into each one.",
+          "image": "assets/uploads/1792925675436-whatsapp-image-2026-10-25-at-4.21.21-pm-2-.jpeg",
+          "images": [
+            "assets/uploads/1792926103505-whatsapp-image-2026-10-25-at-4.21.21-pm.jpeg"
+          ],
+          "gumroad": "https://harshvirverse.gumroad.com/l/9",
+          "link": ""
+        }
+      ]
+    },
     {
       "id": "universities",
       "nav": "Universities",
@@ -131,7 +175,7 @@
           "subtitle": "Lecturer",
           "meta": "",
           "description": "",
-          "image": "assets/uploads/1792666914050-screenshot-2026-10-22-163127.png",
+          "image": "assets/uploads/1792666914050-screenshot-2026-10-22-163127.webp",
           "link": ""
         },
         {
@@ -142,18 +186,10 @@
           "description": "",
           "image": "",
           "link": "",
-          "campus": "assets/uploads/1792667518422-campus-image-banner-2-.png",
+          "campus": "assets/uploads/1792667518422-campus-image-banner-2-.webp",
           "campusCaption": "Symbiosis International University, S. B. Road campus",
           "campusCredit": "DesiBoy101 · CC BY 4.0",
           "campusCreditUrl": "https://commons.wikimedia.org/wiki/File:Symbiosis_International_University,_S._B._Road_campus.jpg"
-        },
-        {
-          "title": "",
-          "subtitle": "",
-          "meta": "",
-          "description": "",
-          "image": "",
-          "link": ""
         }
       ]
     },
@@ -164,7 +200,7 @@
       "layout": "timeline",
       "eyebrow": "Industry experience",
       "title": "From industry production to classroom",
-      "intro": "Seven+ years of production work in 3D animation, modelling, texturing and motion graphics — for advertising, engineering and training.",
+      "intro": "11+ years of production work in 3D animation, modelling, texturing and motion graphics — for advertising, engineering and training.",
       "status": "",
       "ctaLabel": "",
       "ctaHref": "",
@@ -205,7 +241,8 @@
           "image": "",
           "link": ""
         }
-      ]
+      ],
+      "years": "11"
     },
     {
       "id": "workshops",
@@ -226,7 +263,8 @@
           "tag": "",
           "description": "Short description of the workshop.",
           "image": "",
-          "link": ""
+          "link": "",
+          "draft": "yes"
         },
         {
           "title": "Workshop title",
@@ -235,7 +273,8 @@
           "tag": "",
           "description": "Short description of the workshop.",
           "image": "",
-          "link": ""
+          "link": "",
+          "draft": "yes"
         }
       ]
     },
@@ -342,34 +381,10 @@
           "tag": "",
           "description": "Short description of the project.",
           "image": "",
-          "link": ""
+          "link": "",
+          "draft": "yes"
         }
       ]
-    },
-    {
-      "id": "new-section",
-      "nav": "Shop for Artist|Creators",
-      "icon": "spark",
-      "eyebrow": "Save Time & Better Workflow",
-      "title": "Photoshop Brushes",
-      "intro": "",
-      "ctaLabel": "Get the brushes on Gumroad",
-      "ctaHref": "https://harshvirverse.gumroad.com/l/9",
-      "layout": "auto",
-      "items": [
-        {
-          "title": "Character  Concept Art Brushes",
-          "subtitle": "",
-          "meta": "",
-          "description": "The showcase painting is done, at 3840×2160. An ogre warlord raises his club at a lunging swordsman and his cloaked companion on an ember-lit crag. Goblin squads march across the ridge, and a drake and a tentacled horror loom in the misty mountains behind them. Every shape comes from stamping 31 of your Brussy brushes: 17 character brushes, the ogre hide and cracked leather skins, and 12 environment and effects brushes.\n\nTo be honest about how it was made, I painted it with code that imitates Photoshop's brush behaviour, not by hand. So the figures stay fairly simple silhouettes, the ogre reads a bit blobby, and the harness across his belly is muddy. It shows the mood, lighting and texture the brushes can build. Painting by hand in Photoshop with the same brushes would get you much more refined detail.\n\nThe breakdown strip shows the five stages from silhouette to final and which brushes went into each one. The texture stage is a re-render rather than a true in-between snapshot, so it looks a little lighter than the final.",
-          "image": "assets/uploads/1792925675436-whatsapp-image-2026-10-25-at-4.21.21-pm-2-.jpeg",
-          "link": "",
-          "images": [
-            "assets/uploads/1792926103505-whatsapp-image-2026-10-25-at-4.21.21-pm.jpeg"
-          ]
-        }
-      ],
-      "model": "bulb"
     }
   ],
   "contact": {

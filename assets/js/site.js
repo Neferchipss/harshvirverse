@@ -11,10 +11,15 @@
   const csv = (s) => (s || "").split(",").map((x) => x.trim()).filter(Boolean);
   // An entry's pictures: the main image (or campus photo on showcase pages) plus its "More pictures"
   const pics = (it, first = it.image) => [first, ...(it.images || [])].filter(Boolean);
+  // v2: entries with no title, or marked as a draft in the admin, are never shown
+  const isDraft = (it) => it.draft === true || /^(yes|true)$/i.test(String(it.draft || ""));
+  const visible = (items) => (items || []).filter((it) => it && String(it.title || "").trim() && !isDraft(it));
   const params = new URLSearchParams(location.search);
   const preview = params.has("preview");
   const isHome = document.body.classList.contains("home");
-  const current = isHome ? "home" : params.get("s") || "";
+  // v2: old shop URL (?s=new-section) keeps working
+  const ALIASES = { "new-section": "shop" };
+  const current = isHome ? "home" : ALIASES[params.get("s")] || params.get("s") || "";
   const finePointer = matchMedia("(hover: hover) and (pointer: fine)").matches;
   const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const pointer = { x: innerWidth / 2, y: innerHeight / 2 };
@@ -46,11 +51,13 @@
 
     const links = [
       { id: "home", label: "Home", icon: "home", url: href("./") },
-      ...c.sections.map((s) => ({ id: s.id, label: s.nav || s.title, icon: s.icon, url: pageUrl(s.id) })),
+      // v2: the shop sits right after Home; sections marked as drafts stay out of the menu
+      ...[...c.sections].filter((s) => !isDraft(s)).sort((a, b) => (b.layout === "shop") - (a.layout === "shop"))
+        .map((s) => ({ id: s.id, label: s.nav || s.title, icon: s.icon, url: pageUrl(s.id), shop: s.layout === "shop" })),
       { id: "contact", label: "Contact", icon: "send", url: pageUrl("contact") },
     ];
     $("#rail").replaceChildren(...links.map((l) => {
-      const a = el("a", l.id === current ? "active" : "");
+      const a = el("a", [l.id === current ? "active" : "", l.shop ? "shop-link" : ""].filter(Boolean).join(" "));
       a.href = l.url;
       a.setAttribute("aria-label", l.label);
       if (l.id === current) a.setAttribute("aria-current", "page");
@@ -74,7 +81,8 @@
      Landing
      ========================================================= */
   function renderHome(c) {
-    document.title = [c.hero.headlineTop, c.hero.headlineBottom].filter(Boolean).join(" ") || c.site.name;
+    // v2: keep the descriptive <title> from index.html (better for search results)
+    if (!document.title) document.title = [c.hero.headlineTop, c.hero.headlineBottom].filter(Boolean).join(" ") || c.site.name;
     // "A × B × C" — separators get the accent colour
     const tag = $("#tagline");
     (c.hero.tagline || "").split(/\s*×\s*/).filter(Boolean).forEach((part, i) => {
@@ -82,12 +90,22 @@
       tag.append(el("span", "", part));
     });
     heroMedia(c.hero);
+    // v2: shop call-to-action on the landing page
+    const shopSec = c.sections.find((x) => x.layout === "shop" && !isDraft(x));
+    const label = c.hero.ctaLabel || (shopSec ? `Enter ${shopSec.nav || shopSec.title}` : "");
+    if (label) {
+      const a = el("a", "hero-cta", label);
+      a.append(el("span", "arrow", "→"));
+      a.href = c.hero.ctaHref ? href(c.hero.ctaHref) : pageUrl(shopSec.id);
+      $(".stage-caption").append(a);
+    }
   }
 
   /* Cursor-reactive character.
      Video: cursor X scrubs the clip (left edge = first frame, right edge = last),
      so a "looking left → right" clip makes him follow the cursor.
      Image: subtle parallax until the video exists. */
+  const c_name = (h) => [h.headlineTop, h.headlineBottom].filter(Boolean).join(" ");
   function heroMedia(h) {
     const box = $("#stage-media");
     if (h.mediaType === "rig" && h.rig) return rigHero(box, h);
@@ -117,7 +135,7 @@
     } else {
       const img = el("img");
       img.src = h.media;
-      img.alt = "";
+      img.alt = c_name(h);
       box.append(img);
       if (reduceMotion) return;
       let cy = 0.5;
@@ -199,76 +217,91 @@
     const sweep = r.sweep && r.sweep.map((s) => s * fps);
     const cols = (r.columns || []).map((c) => c.map((s) => s * fps));
     const rail = $("#rail");
-    const speed = (r.speed || 5) * fps;      // frames of footage per real second
+    const speed = (r.speed || 5) * fps * 1.6;  // frames of footage per real second (v2: snappier cap)
     const jump = (r.jump || 5) * fps;        // beyond this distance: crossfade
     const canvas = el("canvas");
-    const ctx = canvas.getContext("2d");
+    canvas.setAttribute("role", "img");
+    canvas.setAttribute("aria-label", `${h.headlineTop || ""} ${h.headlineBottom || ""} — portrait that turns to follow the cursor`.trim());
+    const ctx = canvas.getContext("2d", { alpha: false, desynchronized: true });
     box.append(canvas);
     document.body.classList.add("rig");
 
     // Locked X axis across the screen, with a double-arrow handle riding it.
-    // The handle sits wherever his head actually is, so it lags like a drag.
     const axis = el("div", "x-axis");
     const handle = el("div", "x-handle");
     handle.innerHTML = '<svg viewBox="0 0 120 50" aria-hidden="true">' +
       '<path d="M3 25 32 3v12h56V3l29 22-29 22V35H32v12z"/></svg><b>CTRL_head · X lock</b><i></i>';
+    handle.setAttribute("aria-hidden", "true");
+    axis.setAttribute("aria-hidden", "true");
     const readout = handle.querySelector("i");
     document.body.append(axis, handle);
 
     const poster = new Image();
     poster.src = h.media;
 
-    // Frames: a lighter set by default, the sharper one only for tall/HiDPI
-    // screens. Loaded coarse → fine (every 8th, 4th, 2nd, then the rest) so
-    // the whole sweep is usable after a handful of downloads, and each one is
-    // decoded off the main thread before it's used, so drawing never stalls.
-    const base = r.pathHi && innerHeight * Math.min(devicePixelRatio || 1, 2) > 1200 ? r.pathHi : r.path;
-    const frames = Array.from({ length: n }, () => ({ img: new Image(), ok: false }));
+    // v2: frames. Optimised set by default (r.pathFast), the sharper one only for
+    // tall/HiDPI desktop screens. Key frames (~16, evenly spread over the sweep)
+    // load first and end the boot loader; the rest stream in afterwards.
+    // Each frame becomes an ImageBitmap (decoded once, off the main thread) so
+    // drawing never triggers a decode while the cursor moves.
+    const tall = innerHeight * Math.min(devicePixelRatio || 1, 2) > 1200;
+    const base = r.pathHi && tall ? r.pathHi : r.pathFast || r.path;
+    const frames = Array.from({ length: n }, () => ({ bmp: null, ok: false }));
     let loaded = 0;
-    const order = [];
-    const lo = sweep ? Math.floor(sweep[0]) : 0, hi = sweep ? Math.ceil(sweep[1]) : n - 1;
-    for (const step of [8, 4, 2, 1]) for (let i = lo; i <= hi; i += step) if (!order.includes(i)) order.push(i);
+    // v2: clamp to the last real frame (the old code asked for a non-existent f_062)
+    const lo = sweep ? Math.max(0, Math.floor(sweep[0])) : 0, hi = sweep ? Math.min(n - 1, Math.ceil(sweep[1])) : n - 1;
+    const keyCount = Math.min(r.keyFrames || 16, hi - lo + 1);
+    const keys = [...new Set(Array.from({ length: keyCount }, (_, k) => Math.round(lo + (hi - lo) * (k / (keyCount - 1)))))];
+    const order = [...keys];
+    for (const step of [4, 2, 1]) for (let i = lo; i <= hi; i += step) if (!order.includes(i)) order.push(i);
     for (let i = 0; i < n; i++) if (!order.includes(i)) order.push(i);
+    let keysLoaded = 0;
+    const toBitmap = (img) => (window.createImageBitmap ? createImageBitmap(img).catch(() => img) : img.decode().then(() => img, () => img));
     const fetchNext = () => {
       const i = order.shift();
       if (i == null) return;
       const f = frames[i];
-      const done = () => {
-        f.ok = f.img.complete && f.img.naturalWidth > 0;
+      const img = new Image();
+      img.decoding = "async";
+      const done = (bmp) => {
+        if (bmp && (bmp.width || bmp.naturalWidth)) { f.bmp = bmp; f.ok = true; painted = ""; }
         loaded++;
-        fetchNext();
+        if (keys.includes(i)) keysLoaded++;
+        // after the key frames, stream the rest at a gentler pace
+        if (keysLoaded >= keys.length && "requestIdleCallback" in window) requestIdleCallback(fetchNext, { timeout: 300 });
+        else fetchNext();
       };
-      // decode off-thread, but never let a slow/deferred decode block loading
-      f.img.onload = () => Promise.race([f.img.decode().catch(() => {}), new Promise((res) => setTimeout(res, 800))]).then(done);
-      f.img.onerror = done;
-      f.img.src = `${base}f_${String(i).padStart(3, "0")}.${r.ext || "webp"}`;
+      img.onload = () => toBitmap(img).then(done, () => done(null));
+      img.onerror = () => done(null);
+      img.src = `${base}f_${String(i).padStart(3, "0")}.${r.ext || "webp"}`;
     };
     for (let k = 0; k < 6; k++) fetchNext();
-    // Mem = decoded size of the frames loaded so far, like Blender's render readout
-    bootLoader(() => loaded / n, () => `Loading rig ${loaded}/${n}`,
-      () => frames.reduce((a, f) => a + (f.ok ? f.img.naturalWidth * f.img.naturalHeight * 4 : 0), 0) / 1048576);
-    // Nearest frame that's ready (so the head never sticks while loading)
+    bootLoader(() => keysLoaded / keys.length, () => `Loading rig ${loaded}/${n}`,
+      () => frames.reduce((a, f) => a + (f.ok ? f.bmp.width * f.bmp.height * 4 : 0), 0) / 1048576);
     const nearest = (i) => {
       for (let d = 0; d < n; d++) {
-        if (frames[i - d] && frames[i - d].ok) return frames[i - d].img;
-        if (frames[i + d] && frames[i + d].ok) return frames[i + d].img;
+        if (frames[i - d] && frames[i - d].ok) return frames[i - d].bmp;
+        if (frames[i + d] && frames[i + d].ok) return frames[i + d].bmp;
       }
       return null;
     };
 
-    // Fit the frame's full height (never crop his neck/shoulders). If the
-    // screen is wider than the frame, pin it left and extend the viewport to
-    // the right with mirrored copies of an empty grid strip from the frame;
-    // if narrower (phones), crop the sides around r.focus.
-    let fit = null;
-    const size = () => {
+    // Geometry is measured only on resize (never inside the animation loop)
+    let fit = null, railBox = null, railHover = false;
+    const measure = () => {
       const dpr = Math.min(devicePixelRatio || 1, 2);
-      canvas.width = innerWidth * dpr;
-      canvas.height = innerHeight * dpr;
-      fit = null;
+      canvas.width = Math.round(innerWidth * dpr);
+      canvas.height = Math.round(innerHeight * dpr);
+      fit = null; painted = "";
+      railBox = rail ? rail.getBoundingClientRect() : null;
     };
+    if (rail) {
+      rail.addEventListener("pointerenter", () => { railHover = true; });
+      rail.addEventListener("pointerleave", () => { railHover = false; });
+    }
+    const dims = (img) => [img.naturalWidth || img.width, img.naturalHeight || img.height];
     const cover = (img) => {
-      const iw = img.naturalWidth, ih = img.naturalHeight;
+      const [iw, ih] = dims(img);
       if (fit && fit.iw === iw && fit.ih === ih) return fit;
       const s = canvas.height / ih;
       const w = iw * s;
@@ -276,11 +309,9 @@
       fit = { x, y: 0, w, h: canvas.height, s, iw, ih };
       return fit;
     };
-    size();
-    addEventListener("resize", size);
 
-    const [ga, gb] = r.gridStrip || [0.66, 0.95];   // empty-grid columns of the frame
-    const ready = (img) => img && img.complete && img.naturalWidth;
+    const [ga, gb] = r.gridStrip || [0.66, 0.95];
+    const ready = (img) => img && (img.width || img.naturalWidth) && (img.complete !== false);
     const draw = (img, alpha) => {
       if (!ready(img)) return false;
       const f = cover(img);
@@ -290,19 +321,16 @@
         const sx = f.iw * ga, sw = f.iw * (gb - ga), dw = sw * f.s;
         let x = f.x + f.w * gb, flip = true;
         while (x < canvas.width) {
-          ctx.save();
-          if (flip) { ctx.translate(x + dw, 0); ctx.scale(-1, 1); ctx.drawImage(img, sx, 0, sw, f.ih, 0, 0, dw, f.h); }
+          if (flip) { ctx.setTransform(-1, 0, 0, 1, x + dw, 0); ctx.drawImage(img, sx, 0, sw, f.ih, 0, 0, dw, f.h); ctx.setTransform(1, 0, 0, 1, 0, 0); }
           else ctx.drawImage(img, sx, 0, sw, f.ih, x, 0, dw, f.h);
-          ctx.restore();
           x += dw; flip = !flip;
         }
       }
+      ctx.globalAlpha = 1;
       return true;
     };
     const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
-    // Frames that show the requested pose (one per sweep of that column)
     const targets = (tx, ty) => {
-      // Sweep mode: one left → right turn, cursor X only
       if (sweep) return [clamp(sweep[0] + (sweep[1] - sweep[0]) * clamp(tx, 0, 1), 0, n - 1)];
       const [top, bottom, top2] = cols[clamp(Math.floor(tx * cols.length), 0, cols.length - 1)];
       const y = clamp(ty, 0, 1);
@@ -310,7 +338,6 @@
       if (top2 != null) out.push(top2 - (top2 - bottom) * y);
       return out.map((f) => clamp(f, 0, n - 1));
     };
-    // Frames showing the same pose as f (itself, plus its twin in the other sweep)
     const twins = (f) => {
       const out = [f];
       for (const [top, bottom, top2] of cols) {
@@ -331,25 +358,21 @@
     const colOf = (f) => cols.findIndex((c) => f >= Math.min(...c) - 1 && f <= Math.max(...c) + 1);
 
     let head = target(0.5, 0.5), from = head, fadeT = 1, last = performance.now(), hold = [0.5, 0.5], painted = "";
+    let lastHx = null, lastTop = null, lastW = null, lastRead = "";
+    measure();
+    addEventListener("resize", () => { measure(); lastHx = lastTop = lastW = null; });
     const tick = (now) => {
+      requestAnimationFrame(tick);
+      if (document.hidden) { last = now; return; }
       const dt = Math.min(64, now - last) / 1000;
       last = now;
+      // The rail isn't part of the interactive area: map X across the space to its left
+      const railLeft = railBox && railBox.height > railBox.width ? railBox.left : innerWidth;
+      const footW = fit ? Math.min(railLeft, fit.w * innerWidth / canvas.width) : railLeft;
       let tx, ty;
-      if (rail && rail.matches(":hover")) {
-        // Choosing a menu item: the character holds still
-        tx = hold[0]; ty = hold[1];
-      } else if (pointer.moved && !document.hidden) {
-        // The rail isn't part of the interactive area: map X across the
-        // space to its left (full width when it's the phone bottom bar)
-        const rb = rail && rail.getBoundingClientRect();
-        let w = rb && rb.height > rb.width ? rb.left : innerWidth;
-        // On ultrawide screens the footage is pinned left and the rest is
-        // mirrored backdrop: sweep across the footage's own width, not the screen's
-        if (fit) w = Math.min(w, fit.w * innerWidth / canvas.width);
-        tx = pointer.x / w;
-        ty = pointer.y / innerHeight;
-      } else {
-        // Idle / touch: drift slowly between the columns
+      if (railHover) { tx = hold[0]; ty = hold[1]; }
+      else if (pointer.moved) { tx = pointer.x / footW; ty = pointer.y / innerHeight; }
+      else {
         const t = now / 1000;
         tx = 0.5 + Math.sin(t * 0.23) * 0.45;
         ty = 0.5 + Math.sin(t * 0.61) * 0.4;
@@ -357,46 +380,43 @@
       if (reduceMotion) { tx = 0.5; ty = 0.5; }
       hold = [tx, ty];
       const [start, want] = route(tx, ty);
-      head = start;                          // hop to the twin frame (same pose)
+      head = start;
       const gap = want - head;
-      // Separate clips per column (r.linked === false): no footage between
-      // columns, so switching column is always a crossfade
       const switched = r.linked === false && colOf(want) !== colOf(head);
       if (switched || Math.abs(gap) > jump) {
         from = head; head = want; fadeT = 0;
+      } else if (Math.abs(gap) < 0.02) {
+        head = want;
       } else {
-        // ease in, capped travel speed: a rig being dragged through its keys
-        head += clamp(gap * Math.min(1, dt * 9), -speed * dt, speed * dt);
+        // frame-rate independent exponential ease with a capped travel speed
+        head += clamp(gap * (1 - Math.exp(-dt * 16)), -speed * dt, speed * dt);
       }
       fadeT = Math.min(1, fadeT + dt / 0.22);
 
-      // Only repaint when the picture actually changes
       const cur = nearest(Math.round(head)), prev = fadeT < 1 ? nearest(Math.round(from)) : null;
-      const key = `${cur && cur.src}|${prev && prev.src}|${fadeT.toFixed(2)}|${canvas.width}x${canvas.height}`;
-      if (key !== painted) {
-        painted = key;
-        if (prev) {
-          if (!draw(prev, 1)) draw(poster, 1);
-          draw(cur, fadeT);
-        } else if (!draw(cur, 1)) draw(poster, 1);
+      if (cur !== painted || prev || fadeT < 1) {
+        if (prev) { if (!draw(prev, 1)) draw(poster, 1); draw(cur, fadeT); }
+        else if (!draw(cur, 1)) draw(poster, 1);
+        painted = cur;
       }
       window.hvRigState = { head, want, fadeT };
       if (sweep) {
-        const rb = rail && rail.getBoundingClientRect();
-        const w = rb && rb.height > rb.width ? rb.left : innerWidth;
         const p = clamp((head - sweep[0]) / (sweep[1] - sweep[0]), 0, 1);
-        const hw = fit ? Math.min(w, fit.w * innerWidth / canvas.width) : w;
-        axis.style.width = `${w}px`;
-        axis.style.setProperty("--hx", `${p * hw}px`);
-        handle.style.transform = `translate(${p * hw}px, 0)`;
-        // ride at his eye level (fraction of the frame height)
-        if (fit) {
-          const ey = `${(fit.y + (r.eye ? r.eye[1] : 0.5) * fit.h) / (canvas.height / innerHeight)}px`;
-          axis.style.top = ey; handle.style.top = ey;
+        const hx = Math.round(p * footW);
+        // write to the DOM only when something visibly changed
+        if (lastW !== railLeft) { axis.style.width = `${railLeft}px`; lastW = railLeft; }
+        if (hx !== lastHx) {
+          axis.style.setProperty("--hx", `${hx}px`);
+          handle.style.transform = `translate3d(${hx}px, 0, 0)`;
+          lastHx = hx;
         }
-        readout.textContent = loaded < n ? `loading ${loaded}/${n}` : `X ${(p * 2 - 1).toFixed(2)}`;
+        if (fit) {
+          const ey = Math.round((fit.y + (r.eye ? r.eye[1] : 0.5) * fit.h) / (canvas.height / innerHeight));
+          if (ey !== lastTop) { axis.style.top = handle.style.top = `${ey}px`; lastTop = ey; }
+        }
+        const txt = loaded < n ? `loading ${loaded}/${n}` : `X ${(p * 2 - 1).toFixed(2)}`;
+        if (txt !== lastRead) { readout.textContent = txt; lastRead = txt; }
       }
-      requestAnimationFrame(tick);
     };
     requestAnimationFrame(tick);
   }
@@ -442,13 +462,20 @@
   const isNow = (it) => /present|now|current/i.test(it.meta || "");
   const yearsIn = (items) => items.flatMap((it) => (it.meta || "").match(/\b(19|20)\d{2}\b/g) || []).map(Number);
 
-  const LAYOUTS = { showcase, timeline, tickets, builder, grid, list };
+  const LAYOUTS = { showcase, timeline, tickets, builder, grid, list, shop };
 
   function renderSection(c, s) {
     document.title = `${s.nav || s.title} — ${c.site.name}`;
-    const items = s.items || [];
+    if (s.intro) $('meta[name="description"]').content = s.intro;
+    const items = visible(s.items);
     // "auto" (or unknown) = grid when entries have images, list otherwise
     const layout = LAYOUTS[s.layout] ? s.layout : items.some((it) => pics(it).length) ? "grid" : "list";
+    // v2: a page whose entries are all drafts shows its heading + call to action only
+    if (!items.length && layout !== "builder" && layout !== "shop") {
+      $("#page").replaceChildren(...[head(s), bigCta(s) || (s.ctaLabel ? linkCta(s) : null)].filter(Boolean));
+      document.body.dataset.layout = "empty";
+      return;
+    }
     document.body.dataset.layout = layout;
     LAYOUTS[layout](s, items);
   }
@@ -483,7 +510,7 @@
       const name = el("h3", "roster-name");
       if (it.image) {
         const logo = el("img");
-        logo.src = it.image; logo.alt = ""; logo.loading = "lazy";
+        logo.src = it.image; logo.alt = `${it.title || ""} logo`; logo.loading = "lazy";
         name.append(logo);
       }
       name.append(el("span", "", it.title || ""));
@@ -564,7 +591,8 @@
     const years = yearsIn(items);
     const since = years.length ? Math.min(...years) : null;
     h.append(stats([
-      { value: since ? new Date().getFullYear() - since : null, label: "Years in production", plus: true },
+      // s.years (set in admin) overrides the count worked out from the listed dates
+      { value: Number(s.years) || (since ? new Date().getFullYear() - since : null), label: "Years in production", plus: true },
       { value: items.length, label: s.countLabel || "Studios" },
       { value: new Set(items.map((it) => it.tag).filter(Boolean)).size || null, label: "Sectors" },
     ]));
@@ -864,6 +892,226 @@
     });
   }
 
+  /* ---------- Shop (v2): "Asset Bay" — digital products, paid by UPI ----------
+     Payment is a UPI QR code + copyable UPI ID (desktop-first), with an
+     "Open in UPI app" link as a secondary option. After paying, the buyer sends
+     the UTR (UPI transaction reference) through a short form; the files are then
+     delivered by email. A static site can't verify payments by itself — every
+     order is checked by hand against the UPI app's history. */
+  const SHOP_CATS = ["3D Assets", "Blender Add-ons", "Photoshop Brushes", "Other"];
+  const todo = (v) => !v || /\bTODO\b/i.test(String(v));
+  const inr = (v) => {
+    const n = Number(String(v || "").replace(/[^\d.]/g, ""));
+    return todo(v) || !n ? null : n;
+  };
+  const fmtInr = (n) => "₹" + n.toLocaleString("en-IN", { maximumFractionDigits: 2 });
+
+  function shop(s, items) {
+    const h = head(s);
+    const pay = s.payment || {};
+    const cats = [...SHOP_CATS, ...new Set(items.map((it) => it.category).filter((c) => c && !SHOP_CATS.includes(c)))];
+    const catOf = (it) => (cats.includes(it.category) ? it.category : "Other");
+
+    const filters = el("div", "filters shop-filters reveal");
+    filters.setAttribute("role", "toolbar");
+    filters.setAttribute("aria-label", "Filter products");
+    const wrap = el("div", "products");
+    const empty = el("p", "shop-empty", "Nothing in this category yet — check back soon.");
+    empty.hidden = true;
+    const setCat = (cat) => {
+      $$(".filter", filters).forEach((x) => x.setAttribute("aria-pressed", String(x.dataset.cat === cat)));
+      let shown = 0;
+      $$(".product", wrap).forEach((t) => { const on = cat === "All" || t.dataset.cat === cat; t.classList.toggle("hidden", !on); shown += on; });
+      empty.hidden = shown > 0;
+    };
+    ["All", ...cats].forEach((cat) => {
+      const count = cat === "All" ? items.length : items.filter((it) => catOf(it) === cat).length;
+      if (!count) return;   // categories with no products are not shown
+      const b = el("button", "filter");
+      b.type = "button";
+      b.dataset.cat = cat;
+      b.append(cat, el("sup", "", String(count)));
+      b.addEventListener("click", () => setCat(cat));
+      filters.append(b);
+    });
+
+    items.forEach((it, i) => {
+      const card = el("article", "product reveal");
+      card.dataset.cat = catOf(it);
+      const media = el("div", "product-media");
+      const photos = pics(it);
+      if (photos.length) {
+        photos.forEach((src, j) => {
+          const img = el("img");
+          img.src = src; img.alt = `${it.title} — preview ${j + 1}`; img.loading = "lazy";
+          if (j) img.classList.add("off");
+          media.append(img);
+        });
+        if (photos.length > 1) slides(media, photos.length);
+      } else {
+        media.classList.add("empty");
+        media.append(window.hvIcon("cube"));
+      }
+      media.append(el("span", "render-tag", `Render · ${String(i + 1).padStart(3, "0")}`));
+      const body = el("div", "product-body");
+      body.append(el("span", "chip", catOf(it)), el("h3", "", it.title));
+      if (it.pitch) body.append(el("p", "pitch", it.pitch));
+      const specs = el("dl", "specs");
+      [["Includes", it.includes], ["Formats", it.formats], ["Works with", it.compatibility], ["Licence", it.licence]]
+        .filter(([, v]) => !todo(v))
+        .forEach(([k, v]) => specs.append(el("dt", "", k), el("dd", "", v)));
+      if (specs.children.length) body.append(specs);
+      const price = inr(it.price);
+      const foot = el("div", "product-foot");
+      if (price) foot.append(el("span", "price", fmtInr(price)));   // no price set → nothing shown
+      const buy = el("button", "btn-buy", todo(pay.upiId) ? "Details" : "Buy with UPI");
+      buy.type = "button";
+      buy.addEventListener("click", () => productBox(s, it, pay));
+      foot.append(buy);
+      body.append(foot);
+      card.append(media, body);
+      card.addEventListener("click", (e) => { if (!e.target.closest("button, a")) productBox(s, it, pay); });
+      card.dataset.cursor = "View";
+      wrap.append(card);
+    });
+
+    const how = el("ol", "how reveal");
+    [["Pick", "Choose a product and open it."], ["Pay", "Scan the UPI QR with any UPI app (GPay, PhonePe, Paytm…)."],
+     ["Send the UTR", "Paste the 12-digit UPI reference in the short form."],
+     ["Download", pay.deliveryNote || "Your download link arrives by email once the payment is checked."]]
+      .forEach(([t, d], k) => { const li = el("li"); li.append(el("b", "", `0${k + 1} ${t}`), el("span", "", d)); how.append(li); });
+
+    $("#page").classList.add("wide");
+    $("#page").replaceChildren(...[h, filters, wrap, empty, how, bigCta(s)].filter(Boolean));
+  }
+
+  function upiLink(pay, it, ref) {
+    const q = new URLSearchParams({ pa: pay.upiId, pn: pay.payeeName || siteContent.site.name, cu: "INR", tn: `${it.sku || it.title} ${ref}`.slice(0, 50) });
+    const price = inr(it.price);
+    if (price) q.set("am", price.toFixed(2));
+    return "upi://pay?" + q.toString().replace(/\+/g, "%20").replace(/%40/g, "@");   // UPI apps expect a literal @ in pa=
+  }
+  function qrSvg(text) {
+    if (typeof window.qrcode !== "function") return null;
+    const qr = window.qrcode(0, "M");
+    qr.addData(text);
+    qr.make();
+    const wrap = el("div", "qr");
+    wrap.innerHTML = qr.createSvgTag({ cellSize: 6, margin: 3, scalable: true });
+    const svg = wrap.querySelector("svg");
+    svg.setAttribute("role", "img");
+    svg.setAttribute("aria-label", "UPI payment QR code");
+    return wrap;
+  }
+
+  function productBox(s, it, pay) {
+    const ref = "HV" + Date.now().toString(36).toUpperCase().slice(-6);
+    const price = inr(it.price);
+    const frame = el("div", "lightbox-shop");
+    const left = el("div", "ls-info");
+    left.append(el("span", "chip", it.category || "Other"), el("h2", "", it.title));
+    const photos = pics(it);
+    if (photos.length) {
+      const media = el("div", "ls-media");
+      photos.forEach((src, j) => { const img = el("img"); img.src = src; img.alt = `${it.title} — preview ${j + 1}`; if (j) img.classList.add("off"); media.append(img); });
+      if (photos.length > 1) slides(media, photos.length);
+      left.append(media);
+    }
+    if (it.description) it.description.split(/\n{2,}/).forEach((para) => left.append(el("p", "ls-desc", para)));
+    const specs = el("dl", "specs");
+    [["Includes", it.includes], ["Formats", it.formats], ["Works with", it.compatibility], ["Licence", it.licence]]
+      .filter(([, v]) => !todo(v)).forEach(([k, v]) => specs.append(el("dt", "", k), el("dd", "", v)));
+    if (specs.children.length) left.append(specs);
+
+    const right = el("div", "ls-pay");
+    const canPay = !todo(pay.upiId);   // works with or without a price
+    if (canPay) {
+      const link = upiLink(pay, it, ref);
+      right.append(el("p", "eyebrow", "Step 1 · Pay with UPI"));
+      if (price) right.append(el("p", "ls-price", fmtInr(price)));
+      const qr = qrSvg(link);
+      if (qr) right.append(qr);
+      if (price) right.append(el("p", "ls-hint", "Scan with any UPI app — the amount fills in by itself."));
+      else {
+        const hint = el("p", "ls-hint", "Scan with any UPI app and enter the amount. Questions? ");
+        const ask = el("a", "", "Get in touch");
+        ask.href = "page.html?s=contact";
+        hint.append(ask);
+        right.append(hint);
+      }
+      const idRow = el("div", "upi-id");
+      idRow.append(el("span", "", "UPI ID"), el("code", "", pay.upiId));
+      const copy = el("button", "btn-copy", "Copy");
+      copy.type = "button";
+      copy.addEventListener("click", async () => {
+        try { await navigator.clipboard.writeText(pay.upiId); copy.textContent = "Copied ✓"; }
+        catch (_) { copy.textContent = "Select & copy"; }
+        setTimeout(() => { copy.textContent = "Copy"; }, 1800);
+      });
+      idRow.append(copy);
+      right.append(idRow, el("p", "ls-ref", `Payment note: ${it.sku || it.title} ${ref}`));
+      const open = el("a", "link-cta small", "Open in UPI app");
+      open.href = link;
+      right.append(open);
+
+      // Step 2: "I've paid" → UTR form
+      const paid = el("button", "btn-send", "I've paid");
+      paid.type = "button";
+      right.append(paid);
+      paid.addEventListener("click", () => right.replaceChildren(...paidForm(s, it, pay, ref, price)));
+    } else {
+      right.append(el("p", "eyebrow", "Coming soon"), el("p", "ls-hint", "UPI checkout for this product opens soon."));
+    }
+    if (it.gumroad || it.link) {
+      const g = el("a", "link-cta small", "Or buy on Gumroad");
+      external(g, it.gumroad || it.link);
+      right.append(g);
+    }
+    frame.append(left, right);
+    lightbox(frame, it.title);
+  }
+
+  function paidForm(s, it, pay, ref, price) {
+    const email = siteContent.site.email || siteContent.contact.email;
+    const form = el("form", "utr-form");
+    const fld = (name, label, attrs = {}) => {
+      const l = el("label", "", label);
+      const i = el("input");
+      Object.assign(i, { name, required: true, ...attrs });
+      l.append(i);
+      return [l, i];
+    };
+    const [lName, iName] = fld("name", "Your name", { autocomplete: "name" });
+    const [lMail, iMail] = fld("email", "Email for the download link", { type: "email", autocomplete: "email" });
+    const [lUtr, iUtr] = fld("utr", "UPI reference (UTR, 12 digits)", { inputMode: "numeric", pattern: "\\d{12}", maxLength: 12, placeholder: "e.g. 412345678901" });
+    const note = el("p", "ls-hint", `Product: ${it.title}${price ? " · " + fmtInr(price) : ""} · Ref ${ref}`);
+    const send = el("button", "btn-send", "Send for delivery");
+    send.type = "submit";
+    const status = el("p", "ls-status");
+    status.setAttribute("role", "status");
+    form.append(lName, lMail, lUtr, note, send, status);
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const data = { product: it.title, sku: it.sku || "", price: price ? fmtInr(price) : "", reference: ref, name: iName.value.trim(), email: iMail.value.trim(), utr: iUtr.value.trim() };
+      const ok = () => form.replaceChildren(el("p", "eyebrow", "Received"), el("h3", "", "Thanks — order received."),
+        el("p", "ls-hint", pay.deliveryNote || "Your download link arrives by email once the payment is checked."));
+      // TODO(owner): set payment.formEndpoint in content.json (e.g. a Formspree URL).
+      // Until then the order opens as a pre-filled email instead.
+      if (!todo(pay.formEndpoint)) {
+        send.disabled = true; status.textContent = "Sending…";
+        try {
+          const res = await fetch(pay.formEndpoint, { method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json" }, body: JSON.stringify(data) });
+          if (!res.ok) throw new Error(res.status);
+          return ok();
+        } catch (_) { send.disabled = false; status.textContent = "Couldn't send — opening your email app instead."; }
+      }
+      const body = Object.entries(data).filter(([, v]) => v).map(([k, v]) => `${k}: ${v}`).join("\n");
+      location.href = `mailto:${email}?subject=${encodeURIComponent(`Order ${ref} — ${it.title}`)}&body=${encodeURIComponent(body)}`;
+      ok();
+    });
+    return [el("p", "eyebrow", "Step 2 · Confirm your payment"), form];
+  }
+
   /* ---------- List: plain rows ---------- */
   function list(s, items) {
     const h = head(s);
@@ -964,24 +1212,22 @@
     document.dispatchEvent(new Event("hv:page"));
   }
 
-  // Cursor ring that grows over anything clickable and can carry a label ("Play", "Open")
+  // Cursor ring (v2): the normal mouse arrow always stays visible; the ring is a
+  // light overlay that sits exactly on the pointer (no trailing lag), grows over
+  // anything clickable and can carry a label ("Play", "Open"). Off on touch
+  // screens, with reduced motion, and on the landing page (the rig has its own handle).
   function cursor() {
-    if (!finePointer || reduceMotion) return;
+    if (!finePointer || reduceMotion || document.body.classList.contains("rig")) return;
     const ring = el("div", "cursor");
+    ring.setAttribute("aria-hidden", "true");
     const label = el("span");
     ring.append(label);
     document.body.append(ring);
-    // On the rig landing the cursor is just a small free dot; the X-lock
-    // handle on the axis (drawn by rigHero) shows what it's driving
-    if (document.body.classList.contains("rig")) ring.classList.add("rig-dot");
-    let x = pointer.x, y = pointer.y;
-    const tick = () => {
-      x += (pointer.x - x) * 0.2;
-      y += (pointer.y - y) * 0.2;
-      ring.style.transform = `translate(${x}px, ${y}px)`;
-      requestAnimationFrame(tick);
-    };
-    requestAnimationFrame(tick);
+    let queued = false;
+    const place = () => { queued = false; ring.style.transform = `translate3d(${pointer.x}px, ${pointer.y}px, 0)`; };
+    if (!pointer.moved) ring.classList.add("gone");   // hidden until the mouse actually moves
+    addEventListener("pointermove", () => { ring.classList.remove("gone"); if (!queued) { queued = true; requestAnimationFrame(place); } }, { passive: true });
+    place();
     document.addEventListener("pointerover", (e) => {
       const t = e.target.closest("a, button, select, input, [data-cursor], #rail");
       ring.classList.toggle("hover", Boolean(t));
