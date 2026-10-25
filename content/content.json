@@ -52,11 +52,7 @@
       "headRange": [
         19,
         38
-      ],
-      "eyes": {
-        "path": "assets/hero/eyes.json",
-        "source": 28
-      }
+      ]
     },
     "intro": "3D artist and educator in Mumbai. 11+ years across 3D animation, modelling, texturing and motion graphics; lecturer at leading art & design schools.",
     "ctas": "View work | page.html?s=portfolio\nEnter Asset Bay | page.html?s=shop\nBook a 1:1 class | page.html?s=classes\nWorkshops | page.html?s=workshops"

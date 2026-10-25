@@ -221,8 +221,6 @@
   font: inherit; color: #ffa033; border: 1px solid #ffa03366; border-bottom-width: 2px; border-radius: 4px; padding: 1px 5px; margin: 0 2px;
 }
 
-/* v4.1: cursor-following eyes (canvas over the face, under the light layers) */
-.stage-media canvas.eyes-cv { position: absolute; left: 0; top: 0; display: none; pointer-events: none; transform-origin: 0 0; will-change: transform; }
 
 /* v4.1: email fallback under send buttons */
 .mail-fallback { flex-basis: 100%; margin-top: 10px; font-size: 13px; color: var(--muted, #9a9ba1); }

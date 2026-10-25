@@ -288,3 +288,8 @@ On the owner's Windows laptop, Chrome reports "prefers reduced motion" because W
 - At the owner's request, the OS reduced-motion setting no longer disables any effect: the opening, head turn, eye tracking, reel, plane, count-ups, cursor light, scroll pullback, turntable, page wipes, reveals and marquees all play. The only exception is the Asset Bay page, which keeps its original reduced-motion behaviour.
 - "Fine pointer" checks now use `any-hover`/`any-pointer`, so touchscreen laptops with a mouse still get the cursor effects.
 - Contact: if WebGL is unavailable (for example, hardware acceleration is off), a 2D SVG paper plane flies the same figure-8.
+
+# v4.4 — eye tracking removed
+
+- The cursor-following eye layer looked painted on, so it has been removed: the hero shows the original photo eyes. The eye canvas, its code and `assets/hero/eyes.json` are gone.
+- The head still turns with the cursor, within frames 19–38 (about 20° each way).
