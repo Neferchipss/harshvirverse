@@ -26,6 +26,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,400..800&family=Inter+Tight:wght@300;400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/css/site.css?v=42">
   <link rel="stylesheet" href="assets/css/v3.css?v=1">
+  <link rel="stylesheet" href="assets/css/v4.css?v=3">
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -57,6 +58,9 @@
   </header>
 
   <main id="main">
+  <div class="pull" id="pull">
+  <div class="pull-sticky">
+  <div class="ws" id="ws"><div class="ws-3d" aria-hidden="true"></div></div>
   <section class="stage" id="stage">
     <div class="stage-media" id="stage-media"></div>
     <div class="stage-shade"></div>
@@ -66,6 +70,8 @@
     </div>
     <a class="scroll-cue" href="#home-more" aria-label="Scroll to more">Scroll</a>
   </section>
+  </div>
+  </div>
   <div class="home-more" id="home-more"></div>
   </main>
   <footer class="footer">
@@ -97,7 +103,14 @@
     </div>
   </noscript>
 
+  <script type="importmap">
+    { "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+    } }
+  </script>
   <script src="assets/js/icons.js?v=38"></script>
-  <script src="assets/js/site.js?v=42"></script>
+  <script src="assets/js/site.js?v=43"></script>
+  <script src="assets/js/fx.js?v=4"></script>
 </body>
 </html>

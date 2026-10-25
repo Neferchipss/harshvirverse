@@ -236,3 +236,81 @@ function start(id, override) {
 const go = () => start(document.body.dataset.section, document.body.dataset.model);
 if (document.body.dataset.section) go();
 else document.addEventListener("hv:page", go, { once: true });
+
+/* v4: the landing "workspace". As the visitor scrolls, the camera pulls back from
+   the portrait to a Blender-like scene: a floor grid with the X/Y axes and the
+   site's wireframe objects floating around the viewport. Loaded on demand (first
+   scroll, after the opening), rendered only while the pullback is on screen. */
+function fitted(name, size) {
+  const model = MODELS[name]();
+  model.updateMatrixWorld(true);
+  const box = new THREE.Box3().setFromObject(model.userData.fit || model);
+  const dim = box.getSize(new THREE.Vector3());
+  const s = size / Math.max(dim.x, dim.y, dim.z);
+  model.scale.setScalar(s);
+  model.position.copy(box.getCenter(new THREE.Vector3()).multiplyScalar(-s));
+  const pivot = new THREE.Group();
+  pivot.add(model);
+  pivot.userData.model = model;
+  return pivot;
+}
+export function workspace(host) {
+  const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, powerPreference: "low-power" });
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
+  host.append(renderer.domElement);
+  const scene = new THREE.Scene();
+  scene.fog = new THREE.Fog(0x0c0d10, 14, 42);
+  const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 200);
+
+  const grid = new THREE.GridHelper(80, 80, 0x4a4a4f, 0x26272c);
+  grid.position.y = -2.4;
+  scene.add(grid);
+  const axisX = line([[-40, -2.39, 0], [40, -2.39, 0]], new THREE.LineBasicMaterial({ color: 0xff3352, transparent: true, opacity: 0.7 }));
+  const axisY = line([[0, -2.39, -40], [0, -2.39, 40]], new THREE.LineBasicMaterial({ color: 0x8bdc00, transparent: true, opacity: 0.7 }));
+  scene.add(axisX, axisY);
+
+  const spots = [
+    ["teapot", -7.2, 1.6, -2, 1.9], ["bulb", 7.4, 2.2, -2.5, 1.7], ["gear", -6.4, -1.3, 1, 1.6],
+    ["university", 6.6, -1.2, 0.8, 2.0], ["rocket", -3.6, 3.6, -5, 1.6], ["plane", 3.8, 3.8, -5.5, 1.7],
+    ["easel", 0.2, -1.6, -7, 1.8],
+  ];
+  const objs = spots.map(([name, x, y, z, size], i) => {
+    const o = fitted(name, size);
+    o.position.set(x, y, z);
+    o.userData.base = [x, y, z];
+    o.userData.phase = i * 1.3;
+    scene.add(o);
+    return o;
+  });
+
+  let p = 0, on = false, w = 0, h = 0;
+  const size = () => {
+    w = host.clientWidth; h = host.clientHeight;
+    renderer.setSize(w, h, false);
+    camera.aspect = w / Math.max(1, h);
+    camera.updateProjectionMatrix();
+  };
+  size();
+  addEventListener("resize", size);
+  const clock = new THREE.Clock();
+  const tick = () => {
+    requestAnimationFrame(tick);
+    if (!on || document.hidden) return;
+    const t = clock.getElapsedTime();
+    const e = 1 - Math.pow(1 - p, 3);
+    camera.position.set(Math.sin(t * 0.1) * 0.6 * e, 0.4 + 2.4 * e, 3.2 + 10 * e);
+    camera.lookAt(0, 0.4, 0);
+    objs.forEach((o) => {
+      const [x, y, z] = o.userData.base;
+      o.position.set(x, y + Math.sin(t * 0.8 + o.userData.phase) * 0.18, z);
+      o.rotation.y = t * 0.25 + o.userData.phase;
+      o.userData.model.userData.update?.(t);
+    });
+    renderer.render(scene, camera);
+  };
+  tick();
+  return {
+    set(v) { p = v; },
+    active(v) { on = v; host.classList.toggle("on", v); },
+  };
+}

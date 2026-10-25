@@ -1,3 +1,74 @@
+# harshvirverse.com — v4 "wow" (branch `v4-wow`, built on `v3-redesign`, not published)
+
+Everything from v2 and v3 is kept. That includes Asset Bay, the UPI QR at harshvirwankhede-1@oksbi with no amount and no prices, empty categories hidden, 11+ years, the `content/content.json` and `/admin/` setup, and the desktop-only target.
+The new effects live in two new files, `assets/js/fx.js` and `assets/css/v4.css`. They hook into `site.js` through small hooks: `window.hvRig`, the `hv:rig`, `hv:booted` and `hv:ready` events, `window.hvWipe` and `window.hvPull`.
+
+## Landing
+- **Cinematic opening:**
+  - after the Cycles tile loader, the head is shown as a wireframe made from an edge map of the real frame
+  - it then "renders": coarse noisy samples sharpen to the clean photo, with a "Sample n/128" readout
+  - meanwhile the head turns to face the visitor
+- **Cursor light (2D, honestly faked):** the portrait is a sequence of photos, not a 3D model, so there is no real relighting. Two parts make up the effect:
+  - a low-resolution radial falloff (a warm core fading into shadow) that follows the pointer
+  - a warm rim glow taken from `assets/hero/rim-edges.webp`, a precomputed edge sprite of every second frame (177 KB, loaded when the browser is idle). It is drawn only in a small window around the cursor.
+  - With no mouse, the light slowly orbits. With reduced motion, it stays fixed.
+- **3D extruded name:** it uses stacked text shadows, tilts toward the light, and has a sheen that follows the light.
+- **Scroll pullback:**
+  - the hero viewport tilts back and shrinks into a Blender-style 3D workspace
+  - a Three.js grid and axes, with floating wireframe teapot, bulb, gear, rocket, plane, university and easel
+  - panels fly in:
+    - an Outliner that mirrors the nav, with item counts
+    - Object Properties: Name, Location, 11+ years, 7 institutions, 4 studios
+    - an industry timeline built from the existing studio data
+    - a tool strip
+  - a camera frame label
+- **Count-up stats.**
+
+## Everywhere
+- **Wireframe to final reveal** on portfolio and work thumbnails: an edge-map overlay wipes away behind an orange scan line.
+- **Magnetic buttons.**
+- **"Switching viewport" wipe** on internal page changes.
+- **Hover sounds:** made with WebAudio, OFF by default. Toggle them with the speaker button in the header or in the render panel; the choice is saved in localStorage.
+- **Asset Bay turntable** on the home page and in the shop:
+  - the painting and 5 breakdown crops sit on a carousel you can drag to rotate, with inertia
+  - it auto-rotates and pauses when off screen
+  - a drag does not trigger a click
+- **Easter egg: press R (or ?)** for a Render Properties panel:
+  - engine: Cycles, EEVEE (adds a soft-light key bloom) or Workbench
+  - viewport shading: Wireframe (live line art of the head), Solid or Rendered
+  - samples: below 128 adds grain
+  - light power and colour (warm, cool or white)
+  - hover sounds
+  - Render Image replays the opening
+  - Reset
+  - Esc closes the panel
+
+## Performance and accessibility
+- Heavy work waits until the loader finishes and the first paint:
+  - the rim sprite loads when the browser is idle
+  - Three.js for the workspace is imported on the first scroll
+- Animation loops pause when the tab is hidden or the effect is off screen.
+- No per-frame GPU readback:
+  - edge maps are computed once per frame change at low resolution
+  - the rim sprite is converted in a Worker
+- There are no blend-mode layers by default (soft-light only in EEVEE, grain only below 128 samples).
+- `prefers-reduced-motion` gets a calm version:
+  - no opening and a fixed light
+  - no pullback transform (`.pull.calm`)
+  - no wipes, magnets or count-ups
+  - the institutions strip stays on one static line
+- Measured with the same method as v3: local, 1440×900, CPU 4× slower, mouse sweeps, back-to-back, 2 runs each.
+
+  | Version | fps | Frames >33 ms | Long tasks | Boot | Bytes before boot |
+  |---|---|---|---|---|---|
+  | live | ~20 | 54% | ~15.7 s | ~6.6 s | 7.45 MB |
+  | v3 | ~34 | 22–35% | 0–0.1 s | ~2.67 s | 2.73 MB |
+  | v4 | ~30 | ~42% | 0 | ~2.81 s | 2.96 MB |
+
+  The headless software-GL test browser penalises full-screen overlays; real GPUs are much less affected.
+
+---
+
 # harshvirverse.com — v3 "fresh redesign" (branch `v3-redesign`, built on `v2`, not published)
 
 Everything from v2 is kept: Asset Bay, the UPI QR at harshvirwankhede-1@oksbi with no amount and no price shown, empty shop categories hidden, and 11+ years.

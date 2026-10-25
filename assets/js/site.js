@@ -436,6 +436,7 @@
         finished = true;
         boot.addEventListener("transitionend", () => boot.remove(), { once: true });
         boot.classList.add("done");                    // fades after a short beat (CSS delay)
+        document.dispatchEvent(new CustomEvent("hv:booted", { detail: { again } }));   // v4: cinematic opening starts here
         setTimeout(() => boot.remove(), 1500);         // fallback
         return;
       }
@@ -468,6 +469,9 @@
     const ctx = canvas.getContext("2d", { alpha: false, desynchronized: true });
     box.append(canvas);
     document.body.classList.add("rig");
+    // v4: hooks for fx.js (opening, cursor light, render-settings panel)
+    const hook = window.hvRig = { canvas, box, override: null, onPaint: null };
+    document.dispatchEvent(new Event("hv:rig"));
 
     // Locked X axis across the screen, with a double-arrow handle riding it.
     const axis = el("div", "x-axis");
@@ -550,6 +554,7 @@
       const w = iw * s;
       const x = w >= canvas.width ? (canvas.width - w) * (r.focus ? r.focus[0] : 0.5) : 0;
       fit = { x, y: 0, w, h: canvas.height, s, iw, ih };
+      if (window.hvRig) window.hvRig.fit = fit;
       return fit;
     };
 
@@ -617,13 +622,15 @@
       const footW = fit ? Math.min(railLeft, fit.w * innerWidth / canvas.width) : railLeft;
       let tx, ty;
       if (railHover) { tx = hold[0]; ty = hold[1]; }
-      else if (pointer.moved) { tx = pointer.x / footW; ty = (pointer.y + scrollY) / innerHeight; }
+      else if (pointer.moved) { tx = pointer.x / footW; ty = (pointer.y + (window.hvPull ? 0 : scrollY)) / innerHeight; }
       else {
         const t = now / 1000;
         tx = 0.5 + Math.sin(t * 0.23) * 0.45;
         ty = 0.5 + Math.sin(t * 0.61) * 0.4;
       }
       if (reduceMotion) { tx = 0.5; ty = 0.5; }
+      const o = hook.override && hook.override(now);   // v4: scripted head turn during the opening
+      if (o) { tx = o[0]; ty = o[1]; } else hook.override = null;
       hold = [tx, ty];
       const [start, want] = route(tx, ty);
       head = start;
@@ -644,6 +651,7 @@
         if (prev) { if (!draw(prev, 1)) draw(poster, 1); draw(cur, fadeT); }
         else if (!draw(cur, 1)) draw(poster, 1);
         painted = cur;
+        hook.onPaint && hook.onPaint(cur, Math.round(head));
       }
       window.hvRigState = { head, want, fadeT };
       if (sweep) {
@@ -1456,6 +1464,7 @@
     if (!s && current !== "contact") return;
     document.body.dataset.section = current;
     document.body.dataset.model = (s ? s.model : c.contact.model) || "";
+    if (s && s.layout === "shop") return;   // v4: Asset Bay shows the drag-to-rotate turntable instead
     document.dispatchEvent(new Event("hv:page"));
   }
 
@@ -1540,8 +1549,10 @@
       const url = new URL(a.href, location.href);
       if (url.origin !== location.origin || /^(mailto|tel):/.test(a.href) || (url.pathname === location.pathname && url.search === location.search)) return;
       e.preventDefault();
-      document.body.classList.add("leaving");
-      setTimeout(() => { location.href = a.href; }, reduceMotion ? 0 : 220);
+      // v4: viewport-switch wipe (fx.js), else the soft fade
+      const wait = !reduceMotion && window.hvWipe ? window.hvWipe(a) : 0;
+      if (!wait) document.body.classList.add("leaving");
+      setTimeout(() => { location.href = a.href; }, reduceMotion ? 0 : wait || 220);
     });
     addEventListener("pageshow", () => document.body.classList.remove("leaving"));
   }
@@ -1558,6 +1569,8 @@
       reveal();
       transitions();
       protectMedia();
+      window.hvContent = c;
+      document.dispatchEvent(new Event("hv:ready"));   // v4: fx.js starts its page effects
     })
     .catch((err) => {
       console.error(err);
