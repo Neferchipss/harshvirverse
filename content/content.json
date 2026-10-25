@@ -345,6 +345,29 @@
           "link": ""
         }
       ]
+    },
+    {
+      "id": "new-section",
+      "nav": "Shop for Artist|Creators",
+      "icon": "spark",
+      "eyebrow": "Save Time & Better Workflow",
+      "title": "Photoshop Brushes",
+      "intro": "",
+      "ctaLabel": "",
+      "ctaHref": "page.html?s=contact",
+      "layout": "auto",
+      "items": [
+        {
+          "title": "Character  Concept Art Brushes",
+          "subtitle": "",
+          "meta": "",
+          "description": "The showcase painting is done, at 3840×2160. An ogre warlord raises his club at a lunging swordsman and his cloaked companion on an ember-lit crag. Goblin squads march across the ridge, and a drake and a tentacled horror loom in the misty mountains behind them. Every shape comes from stamping 31 of your Brussy brushes: 17 character brushes, the ogre hide and cracked leather skins, and 12 environment and effects brushes.\n\nTo be honest about how it was made, I painted it with code that imitates Photoshop's brush behaviour, not by hand. So the figures stay fairly simple silhouettes, the ogre reads a bit blobby, and the harness across his belly is muddy. It shows the mood, lighting and texture the brushes can build. Painting by hand in Photoshop with the same brushes would get you much more refined detail.\n\nThe breakdown strip shows the five stages from silhouette to final and which brushes went into each one. The texture stage is a re-render rather than a true in-between snapshot, so it looks a little lighter than the final.",
+          "image": "assets/uploads/1792925675436-whatsapp-image-2026-10-25-at-4.21.21-pm-2-.jpeg",
+          "link": "",
+          "campus": "assets/uploads/1792925692433-whatsapp-image-2026-10-25-at-4.21.21-pm-1-.jpeg"
+        }
+      ],
+      "model": "bulb"
     }
   ],
   "contact": {
