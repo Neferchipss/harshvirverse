@@ -205,17 +205,7 @@
 .rset .rset-go:disabled { opacity: .45; cursor: not-allowed; }
 .rset kbd { font: 500 10px/1 ui-monospace, monospace; padding: 2px 4px; margin-left: 4px; border-radius: 3px; background: #0003; }
 
-@media (prefers-reduced-motion: reduce) {
-  .pull { height: auto; }
-  .pull-sticky { position: relative; height: auto; overflow: visible; }
-  .ws { display: none; }
-  .v4 .home-more .reveal { transform: none; }
-  .x3d span::after { display: none; }
-}
-/* reduced motion: keep the institutions strip on one static line (v3 let it wrap over the band) */
-@media (prefers-reduced-motion: reduce) {
-  .cred-track { flex-wrap: nowrap; }
-}
+/* v4.3: reduced-motion overrides removed (owner wants the effects on every machine) */
 
 /* v4.1: render-settings hint (bottom-right of the hero, above the credits strip, Blender status-bar style) */
 .rset-hint {
@@ -248,4 +238,5 @@
 .stat b.reel .reel-strip { all: unset; display: flex; flex-direction: column; animation: reel-spin 1.5s linear infinite; will-change: transform; filter: blur(.4px); }
 .stat b.reel .reel-strip > span { all: unset; display: block; height: .9em; line-height: .9; text-align: center; }
 @keyframes reel-spin { from { transform: translateY(0); } to { transform: translateY(-90%); } }
-@media (prefers-reduced-motion: reduce) { .stat b.reel .reel-strip { animation: none; filter: none; } }
+.obj-wrap.obj-fly-2d { height: 140px; }
+.obj-wrap.obj-fly-2d svg { display: block; width: 100% !important; height: 100% !important; transition: transform .25s linear; }

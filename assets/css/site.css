@@ -610,9 +610,10 @@ body.leaving { opacity: 0; }
   .row .meta { text-align: left; }
   .row .desc { margin-top: 6px; }
 }
+/* v4.3: OS "reduce motion" no longer switches the site's effects off (owner's choice);
+   Asset Bay keeps its original reduced-motion behaviour */
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation: none !important; transition: none !important; }
-  .marquee-track { flex-wrap: wrap; width: auto; }
+  body[data-layout="shop"] *, body[data-layout="shop"] *::before, body[data-layout="shop"] *::after { animation: none !important; transition: none !important; }
 }
 
 /* Bigger icon rail (desktop, all pages) */
@@ -655,7 +656,6 @@ body.leaving { opacity: 0; }
 .boot-l { overflow: hidden; text-overflow: ellipsis; }
 .boot-r { color: #ffa033; }
 .boot-progress { position: absolute; left: 0; top: -1px; height: 2px; width: 0; background: #ffa033; transition: width .2s linear; }
-@media (prefers-reduced-motion: reduce) { .boot-tiles b.active::after { animation: none; } }
 
 /* Icon rail (desktop, all pages): bare white icons beside a thin vertical rule */
 @media (min-width: 701px) {

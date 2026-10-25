@@ -21,8 +21,9 @@
   const mk = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; };
   const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
   const ease = (t) => 1 - Math.pow(1 - clamp(t), 3);
-  const RM = matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const FINE = matchMedia("(hover: hover) and (pointer: fine)").matches;
+  // v4.3: effects play regardless of the OS "reduce motion" setting (owner's choice); Asset Bay unchanged
+  const RM = new URLSearchParams(location.search).get("s") === "shop" && matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const FINE = matchMedia("(any-hover: hover) and (any-pointer: fine)").matches;
   const HOME = document.body.classList.contains("home");
   const P = { x: innerWidth * 0.6, y: innerHeight * 0.4, moved: false };
   addEventListener("pointermove", (e) => { P.x = e.clientX; P.y = e.clientY; P.moved = true; }, { passive: true });
@@ -305,7 +306,7 @@
         vel *= Math.pow(0.04, dt);
         ang += vel + (RM ? 0 : 9 * dt);
       }
-      const tiltX = FINE && P.moved && !RM ? clamp((P.y / innerHeight - 0.5) * -10, -8, 8) : -6;
+      const tiltX = FINE && P.moved ? clamp((P.y / innerHeight - 0.5) * -10, -8, 8) : -6;
       ring.style.transform = `translateZ(calc(var(--r) * -1)) rotateX(${tiltX - 8}deg) rotateY(${ang}deg)`;
     };
     requestAnimationFrame(tick);
@@ -471,7 +472,9 @@
     // ---- opening ----
     // v4.1: with "Reduce motion" on (macOS System Settings > Accessibility > Display)
     // the opening used to be skipped entirely; it now plays a short, gentle version.
-    let phase = RM ? "idle" : "wire", t0 = 0, opening = true;
+    // v4.3: the opening is the site's signature, so it always plays in full, even when the OS
+    // asks for reduced motion (Windows "Animation effects" off). Only ambient extras respect it.
+    let phase = "wire", t0 = 0, opening = true;
     const FW = 720, FH = 450;
     fx.width = FW; fx.height = FH;
     const small = own(mk("canvas")), sctx = small.getContext("2d");
@@ -485,8 +488,7 @@
       else if (haveEdges) fctx.drawImage(edgeCv, l * FW, 0, w * FW, FH);
       fctx.globalAlpha = 1;
     };
-    if (RM) fx.hidden = true;
-    else document.body.classList.add("opening");
+    document.body.classList.add("opening");
     let waited = 0;
     const startRender = () => {
       if (phase === "render") return;
@@ -495,7 +497,6 @@
       phase = "render"; t0 = performance.now(); opening = true;
       fx.style.opacity = "1"; fx.hidden = false;
       document.body.classList.add("rendering");
-      if (RM) return;                          // gentle version: no head turn, caption stays put
       document.body.classList.add("opening");
       // the head starts looking away and turns to face the visitor
       const ht0 = performance.now();
@@ -505,8 +506,8 @@
         return [0.08 + 0.42 * ease(k), 0.38 + 0.12 * ease(k)];
       };
     };
-    replay = () => { phase = RM ? "idle" : "wire"; startRender(); };
-    document.addEventListener("hv:booted", () => setTimeout(startRender, RM ? 0 : 180), { once: true });
+    replay = () => { phase = "wire"; startRender(); };
+    document.addEventListener("hv:booted", () => setTimeout(startRender, 180), { once: true });
     const bootEl = $("#boot");
     if (!bootEl || bootEl.classList.contains("done")) setTimeout(startRender, 50);   // loader already gone / finishing
 
@@ -529,7 +530,7 @@
     const loadWs = () => {
       if (wsLoading || !ws) return;
       wsLoading = true;
-      import("./objects.js?v=42").then((m) => { wsApi = m.workspace($(".ws-3d", ws)); wsApi.set(pullP); wsApi.active(pullP > 0.005); }).catch(() => {});
+      import("./objects.js?v=43").then((m) => { wsApi = m.workspace($(".ws-3d", ws)); wsApi.set(pullP); wsApi.active(pullP > 0.005); }).catch(() => {});
     };
     const onPull = () => {
       if (!pull) return;
@@ -584,7 +585,7 @@
       // opening overlay
       if (phase === "wire") drawWire(1);
       else if (phase === "render") {
-        const k = (now - t0) / (RM ? 1000 : 1700);   // 0..1 over 1.7 s (1 s when reduced)
+        const k = (now - t0) / 1700;   // 0..1 over 1.7 s
         if (k >= 1.25) {
           phase = "done"; opening = false; fx.hidden = true;
           if (!sprite) { if ("requestIdleCallback" in window) requestIdleCallback(loadSprite, { timeout: 1500 }); else setTimeout(loadSprite, 300); }
@@ -593,7 +594,7 @@
           status.textContent = "";
         } else {
           // progressive samples: coarse blocks → fine, noise fades, wire lines fade
-          const levels = RM ? [24, 12, 6, 3, 1] : [48, 32, 20, 12, 8, 5, 3, 2, 1];
+          const levels = [48, 32, 20, 12, 8, 5, 3, 2, 1];
           const blk = levels[Math.min(levels.length - 1, Math.floor(clamp(k) * levels.length))];
           const sw = Math.max(1, Math.round(FW / blk)), sh = Math.max(1, Math.round(FH / blk));
           if (small.width !== sw) { small.width = sw; small.height = sh; }
@@ -601,7 +602,7 @@
           fctx.imageSmoothingEnabled = blk <= 2;
           fctx.globalAlpha = 1;
           fctx.drawImage(small, 0, 0, FW, FH);
-          const nz = RM ? 0 : clamp(0.55 * (1 - k * 1.1), 0, 0.55);
+          const nz = clamp(0.55 * (1 - k * 1.1), 0, 0.55);
           if (nz > 0) {
             fctx.globalAlpha = nz; fctx.globalCompositeOperation = "overlay";
             const ox = Math.random() * 128, oy = Math.random() * 128;
@@ -609,7 +610,7 @@
             fctx.translate(-ox, -oy); fctx.fillRect(ox, oy, FW, FH); fctx.setTransform(1, 0, 0, 1, 0, 0);
             fctx.globalCompositeOperation = "source-over";
           }
-          const wa = RM ? 0 : clamp(1 - k * 2.2);
+          const wa = clamp(1 - k * 2.2);
           if (wa > 0 && haveEdges) { fctx.globalAlpha = wa; const l = +(fx.dataset.l || 0), w = +(fx.dataset.w || 1); fctx.drawImage(edgeCv, l * FW, 0, w * FW, FH); }
           fctx.globalAlpha = 1;
           fx.style.opacity = String(clamp(1 - (k - 1) * 4));
@@ -629,8 +630,8 @@
       const br = box.getBoundingClientRect();
       const sc = br.width / box.offsetWidth || 1;
       let tx, ty;
-      if (RM) { tx = innerWidth * 0.66; ty = innerHeight * 0.28; }
-      else if (P.moved) { tx = (P.x - br.left) / sc; ty = (P.y - br.top) / sc; }
+      if (P.moved) { tx = (P.x - br.left) / sc; ty = (P.y - br.top) / sc; }
+      else if (RM) { tx = innerWidth * 0.66; ty = innerHeight * 0.28; }
       else { const t = now / 1000; tx = box.offsetWidth * (0.55 + Math.sin(t * 0.5) * 0.2); ty = box.offsetHeight * (0.35 + Math.cos(t * 0.37) * 0.15); }
       L.x += (tx - L.x) * 0.2; L.y += (ty - L.y) * 0.2;
       const lx = Math.round(L.x), ly = Math.round(L.y);

@@ -281,3 +281,10 @@ Raw data: /workspace/perf/before2.json, /workspace/perf/after.json
 - **Contact:** the wireframe paper plane flies a continuous figure-8 over the page and banks into its turns. It can't be clicked, fades over text and pauses when the tab is hidden. It reuses the page's single WebGL renderer and stays still under reduced motion.
 - **Universities:** "Since" is now 2021 (editable in admin). "Teaching now" spins like a slot-machine reel (1→9, looping) in orange, using CSS transforms only; reduced motion shows the plain number.
 - **Asset Bay:** unchanged.
+
+# v4.3 — the laptop sees what the phone sees
+
+On the owner's Windows laptop, Chrome reports "prefers reduced motion" because Windows "Animation effects" is off. The site treated that as "switch effects off", so the head was pinned facing forward, the eye layer and the slot reel were disabled, the plane didn't fly, and wipes, slide-ins, reveals and marquees were frozen. A global CSS rule (`animation/transition: none`) did the same for everything else.
+- At the owner's request, the OS reduced-motion setting no longer disables any effect: the opening, head turn, eye tracking, reel, plane, count-ups, cursor light, scroll pullback, turntable, page wipes, reveals and marquees all play. The only exception is the Asset Bay page, which keeps its original reduced-motion behaviour.
+- "Fine pointer" checks now use `any-hover`/`any-pointer`, so touchscreen laptops with a mouse still get the cursor effects.
+- Contact: if WebGL is unavailable (for example, hardware acceleration is off), a 2D SVG paper plane flies the same figure-8.

@@ -20,8 +20,11 @@
   // v2: old shop URL (?s=new-section) keeps working
   const ALIASES = { "new-section": "shop" };
   const current = isHome ? "home" : ALIASES[params.get("s")] || params.get("s") || "";
-  const finePointer = matchMedia("(hover: hover) and (pointer: fine)").matches;
-  const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const finePointer = matchMedia("(any-hover: hover) and (any-pointer: fine)").matches;
+  // v4.3: the site owner wants the full experience everywhere, so the OS "reduce motion" setting
+  // (Windows "Animation effects" off) no longer disables the site's effects. Asset Bay keeps its
+  // original behaviour (see body[data-layout="shop"] in site.css).
+  const reduceMotion = new URLSearchParams(location.search).get("s") === "shop" && matchMedia("(prefers-reduced-motion: reduce)").matches;
   const pointer = { x: innerWidth / 2, y: innerHeight / 2 };
   addEventListener("pointermove", (e) => { pointer.x = e.clientX; pointer.y = e.clientY; pointer.moved = true; }, { passive: true });
 
@@ -809,7 +812,7 @@
     // v3: the landing scrolls; stop drawing while the first screen is out of view
     let offscreen = false;
     if ("IntersectionObserver" in window) new IntersectionObserver(([e]) => { offscreen = !e.isIntersecting; }).observe(box);
-    const eyes = r.eyes && !reduceMotion ? eyeLayer(r, box, canvas, frames, () => fit) : null;
+    const eyes = r.eyes ? eyeLayer(r, box, canvas, frames, () => fit) : null;
     let head = target(0.5, 0.5), from = head, fadeT = 1, last = performance.now(), hold = [0.5, 0.5], painted = "";
     let lastHx = null, lastTop = null, lastW = null, lastRead = "";
     measure();
@@ -831,7 +834,6 @@
         tx = 0.5 + Math.sin(t * 0.23) * 0.45;
         ty = 0.5 + Math.sin(t * 0.61) * 0.4;
       }
-      if (reduceMotion) { tx = 0.5; ty = 0.5; }
       const o = hook.override && hook.override(now);   // v4: scripted head turn during the opening
       if (o) { tx = o[0]; ty = o[1]; } else hook.override = null;
       hold = [tx, ty];
@@ -913,7 +915,7 @@
       const box = el("div", "stat reveal");
       const b = el("b", "", String(value));
       // v4.1: slot-machine reel cycling 1→9 nonstop (static value under reduced motion)
-      if (reel && !reduceMotion) {
+      if (reel) {   // v4.3: plays even with OS reduced motion (site owner's choice)
         b.replaceChildren();
         b.classList.add("reel");
         b.setAttribute("aria-label", String(value));

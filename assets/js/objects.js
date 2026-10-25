@@ -196,6 +196,40 @@ const makeRenderer = (opts) => {
   try { return new THREE.WebGLRenderer(opts); } catch (_) { return null; }   // no WebGL: skip the object
 };
 
+/* v4.3: Contact-page fallback when WebGL is unavailable (e.g. Chrome with hardware
+   acceleration off): a flat wireframe paper plane (SVG) flies the same figure-8. */
+function svgFly(wrap) {
+  wrap.classList.add("obj-fly-2d");
+  wrap.innerHTML = `<svg viewBox="-60 -40 120 80" width="100%" height="100%" fill="none" stroke="#ff7a1a" stroke-width="1.6" stroke-linejoin="round">
+    <path d="M-50 0 L50 -28 L18 30 Z" fill="#ff7a1a22"/><path d="M-50 0 L50 -28 L4 6 Z"/><path d="M4 6 L18 30"/><path d="M4 6 L-6 20 L18 30" fill="#ff7a1a14"/></svg>`;
+  const svg = wrap.firstElementChild;
+  let dead = false, op = "", avoid = [], at = 0, ang = 0;
+  addEventListener("pagehide", () => { dead = true; }, { once: true });
+  const pos = (t) => {
+    const W = innerWidth, H = innerHeight, S = wrap.offsetWidth || 160, a = (2 * Math.PI) / 28;
+    return [W / 2 + (W / 2 - S * 0.6) * Math.sin(a * t), H * 0.3 + H * 0.17 * Math.sin(2 * a * t) + Math.sin(t * 1.7) * 6, S];
+  };
+  const t0 = performance.now();
+  const tick = (now) => {
+    if (dead) return;
+    requestAnimationFrame(tick);
+    if (document.hidden) return;
+    const t = (now - t0) / 1000;
+    const [x, y, S] = pos(t), [x2, y2] = pos(t + 0.15);
+    const dx = x2 - x, dy = y2 - y, right = dx >= 0;
+    const want = Math.atan2(dy, Math.abs(dx)) * (right ? 1 : -1);
+    ang += (want - ang) * 0.08;
+    wrap.style.transform = `translate3d(${(x - S / 2).toFixed(1)}px, ${(y - S / 2).toFixed(1)}px, 0)`;
+    // the SVG nose points left: mirror it when flying right, tilt with the climb/dive
+    svg.style.transform = `scaleX(${right ? -1 : 1}) rotate(${(-ang * 57.3 * (right ? -1 : 1)).toFixed(1)}deg)`;
+    if (t - at > 0.5) { at = t; avoid = [...document.querySelectorAll("#page h1, #page h2, #page p, #page form, .contact-lines")].map((e) => e.getBoundingClientRect()); }
+    const over = avoid.some((r) => x > r.left - 30 && x < r.right + 30 && y > r.top - 30 && y < r.bottom + 30);
+    const o = over ? "0.28" : "0.92";
+    if (o !== op) { wrap.style.opacity = o; op = o; }
+  };
+  requestAnimationFrame(tick);
+}
+
 function start(id, override) {
   const name = MODELS[override] ? override : DEFAULTS[id] || "cube";
   const wrap = document.createElement("div");
@@ -203,13 +237,13 @@ function start(id, override) {
   wrap.setAttribute("aria-hidden", "true");
   // v4.1: on the Contact page the paper plane flies a slow loop over the whole page
   // (same renderer, the wrapper just moves; never blocks clicks)
-  const fly = name === "plane" && id === "contact" && !matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const fly = name === "plane" && id === "contact";   // v4.3: flies regardless of OS reduced motion
   if (fly) wrap.classList.add("obj-fly");
   document.body.append(wrap);
 
   const size = wrap.clientWidth || 220;
   const renderer = makeRenderer({ alpha: true, antialias: !lowMem });
-  if (!renderer) { wrap.remove(); return; }
+  if (!renderer) { if (fly) svgFly(wrap); else wrap.remove(); return; }   // v4.3: no WebGL → 2D plane still flies
   renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
   renderer.setSize(size, size);
   wrap.append(renderer.domElement);
@@ -233,7 +267,8 @@ function start(id, override) {
   pivot.add(model);
   scene.add(pivot);
 
-  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  // v4.3: objects turn regardless of OS reduced motion; Asset Bay keeps its original behaviour
+  const reduce = id === "shop" && matchMedia("(prefers-reduced-motion: reduce)").matches;
   const pointer = { x: 0.5, y: 0.5 };
   addEventListener("pointermove", (e) => { pointer.x = e.clientX / innerWidth; pointer.y = e.clientY / innerHeight; }, { passive: true });
 

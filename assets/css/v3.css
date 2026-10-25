@@ -322,12 +322,7 @@ a.tile:hover h3 { color: var(--accent-2); }
 .roster-row:hover .roster-name, .tl-item:hover .tl-body h3 { color: var(--accent-2); }
 
 /* ---------- Motion preferences ---------- */
-@media (prefers-reduced-motion: reduce) {
-  html { scroll-behavior: auto; }
-  @view-transition { navigation: none; }
-  .cred-track { animation: none; flex-wrap: wrap; }
-  .scroll-cue::after { animation: none; }
-}
+/* v4.3: reduced-motion overrides removed (owner wants the effects on every machine) */
 
 /* ---------- Narrow windows: nothing breaks (desktop is the target) ---------- */
 @media (max-width: 1180px) {
