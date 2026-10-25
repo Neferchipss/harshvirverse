@@ -287,7 +287,10 @@
         ["headlineTop", "First name"], ["headlineBottom", "Last name"], ["tagline", "Small line under the name"],
         ["mediaType", "Background type", "select", ["image", "video", "rig"]],
         ["media", "Background image / video", "media", "image/*,video/mp4,video/webm"],
+        ["intro", "Short intro under the name (optional)", "textarea"],
+        ["ctas", "Landing buttons, one per line: Label | link (first one is the main button)", "textarea"],
       ]),
+      el("p", { class: "hint" }, "Below the first screen the landing page also shows: a credibility strip (years, institutions and studios, counted from the Universities and Industry pages), the first Portfolio entries, the Asset Bay products and the 1:1 Classes formats."),
     ],
     contact: () => [
       el("h2", {}, "Contact"),

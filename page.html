@@ -21,10 +21,15 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,400..800&family=Inter+Tight:wght@300;400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/css/site.css?v=41">
+  <link rel="stylesheet" href="assets/css/site.css?v=42">
+  <link rel="stylesheet" href="assets/css/v3.css?v=1">
 </head>
 <body class="inner">
-  <a class="mark" href="./" data-bind="site.initials" aria-label="Home">HW</a>
+  <header class="topbar" id="topbar">
+    <a class="brand" href="./" aria-label="Home"><b data-bind="site.initials">HW</b><span data-bind="site.name">Harshvir Wankhade</span></a>
+    <nav id="rail" class="nav" aria-label="Main"></nav>
+    <a class="nav-cta" href="page.html?s=contact">Contact<span class="arrow" aria-hidden="true">→</span></a>
+  </header>
 
   <main class="page" id="page">
     <noscript>
@@ -43,22 +48,26 @@
     </noscript>
   </main>
 
-  <nav class="rail" id="rail" aria-label="Main"></nav>
-
   <footer class="footer">
-    <span>© <span id="year"></span> <span data-bind="site.name"></span></span>
-    <span class="socials" id="socials"></span>
+    <div class="footer-top">
+      <a class="footer-brand" href="./"><b data-bind="site.initials">HW</b> <span data-bind="site.name"></span></a>
+      <nav class="footer-nav" id="footer-nav" aria-label="Footer"></nav>
+    </div>
+    <div class="footer-bottom">
+      <span>© <span id="year"></span> <span data-bind="site.name"></span> · <span data-bind="contact.location"></span></span>
+      <span class="socials" id="socials"></span>
+    </div>
   </footer>
 
   <script src="assets/js/icons.js?v=38"></script>
   <script src="assets/js/vendor/qrcode.js?v=1"></script>
-  <script src="assets/js/site.js?v=41"></script>
+  <script src="assets/js/site.js?v=42"></script>
   <script type="importmap">
     { "imports": {
       "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
       "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
     } }
   </script>
-  <script type="module" src="assets/js/objects.js?v=37"></script>
+  <script type="module" src="assets/js/objects.js?v=38"></script>
 </body>
 </html>

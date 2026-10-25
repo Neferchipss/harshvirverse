@@ -56,14 +56,46 @@
         .map((s) => ({ id: s.id, label: s.nav || s.title, icon: s.icon, url: pageUrl(s.id), shop: s.layout === "shop" })),
       { id: "contact", label: "Contact", icon: "send", url: pageUrl("contact") },
     ];
-    $("#rail").replaceChildren(...links.map((l) => {
-      const a = el("a", [l.id === current ? "active" : "", l.shop ? "shop-link" : ""].filter(Boolean).join(" "));
+    // v3: labelled top navigation. Order: Work and Asset Bay first, the rest as in the admin,
+    // Contact as the button on the right. Home is the name/logo on the left.
+    const PRIORITY = ["grid", "shop", "builder"];
+    const rank = (l) => {
+      const s = c.sections.find((x) => x.id === l.id);
+      if (!s) return 99;
+      const i = PRIORITY.indexOf(s.layout);
+      // pages that only show a heading (every entry still a draft) go to the end
+      return (i < 0 ? 9 : i) + (visible(s.items).length || s.layout === "builder" || s.layout === "shop" ? 0 : 50);
+    };
+    const navLinks = links.filter((l) => l.id !== "home" && l.id !== "contact")
+      .map((l, i) => ({ ...l, i })).sort((a, b) => rank(a) - rank(b) || a.i - b.i);
+    const nav = $("#rail");
+    nav.className = "nav";
+    const mk = (l, cls) => {
+      const a = el("a", [cls, l.id === current ? "active" : "", l.shop ? "shop-link" : ""].filter(Boolean).join(" "));
       a.href = l.url;
-      a.setAttribute("aria-label", l.label);
       if (l.id === current) a.setAttribute("aria-current", "page");
-      a.append(window.hvIcon(l.icon, l.id), el("span", "tip", l.label));
+      a.append(el("span", "", l.label));
       return a;
-    }));
+    };
+    nav.replaceChildren(...navLinks.map((l) => mk(l, "nav-link")));
+    const bar = $(".topbar");
+    if (bar) {
+      const brand = $(".brand", bar);
+      if (brand) {
+        brand.href = href("./");
+        brand.replaceChildren(el("b", "", c.site.initials || "HW"), el("span", "", c.site.name || ""));
+        if (current === "home") brand.setAttribute("aria-current", "page");
+      }
+      const cta = $(".nav-cta", bar);
+      if (cta) { cta.href = pageUrl("contact"); cta.classList.toggle("active", current === "contact"); cta.firstChild.textContent = "Contact"; }
+      // the bar gets a solid backdrop once the page scrolls
+      const onScroll = () => bar.classList.toggle("scrolled", scrollY > 24);
+      addEventListener("scroll", onScroll, { passive: true });
+      onScroll();
+    }
+    // footer navigation (same links, as text)
+    const fnav = $("#footer-nav");
+    if (fnav) fnav.replaceChildren(...[links[0], ...navLinks, links[links.length - 1]].map((l) => { const a = el("a", "", l.label); a.href = l.url; return a; }));
 
     const socials = $("#socials");
     if (socials) {
@@ -90,15 +122,226 @@
       tag.append(el("span", "", part));
     });
     heroMedia(c.hero);
-    // v2: shop call-to-action on the landing page
+    const cap = $(".stage-caption");
+    if (c.hero.intro) cap.append(el("p", "hero-intro", c.hero.intro));
+    // v3: landing buttons ("Label | link" per line in the admin); v2's single ctaLabel still works
     const shopSec = c.sections.find((x) => x.layout === "shop" && !isDraft(x));
-    const label = c.hero.ctaLabel || (shopSec ? `Enter ${shopSec.nav || shopSec.title}` : "");
-    if (label) {
-      const a = el("a", "hero-cta", label);
-      a.append(el("span", "arrow", "→"));
-      a.href = c.hero.ctaHref ? href(c.hero.ctaHref) : pageUrl(shopSec.id);
-      $(".stage-caption").append(a);
+    let ctas = (c.hero.ctas || "").split("\n").map((l) => l.split("|").map((x) => x.trim())).filter(([l, u]) => l && u);
+    if (!ctas.length && (c.hero.ctaLabel || shopSec)) ctas = [[c.hero.ctaLabel || `Enter ${shopSec.nav || shopSec.title}`, c.hero.ctaHref || `page.html?s=${shopSec.id}`]];
+    if (ctas.length) {
+      const row = el("div", "hero-ctas");
+      ctas.forEach(([label, url], i) => {
+        const a = el("a", i ? "btn ghost" : "btn primary", label);
+        a.append(el("span", "arrow", "→"));
+        ctaHref(a, url);
+        row.append(a);
+      });
+      cap.append(row);
     }
+    homeSections(c);
+  }
+
+  /* v3: below the first screen — credibility strip, selected work, Asset Bay,
+     1:1 classes, and a contact band. Everything is read from the existing
+     sections, so the admin keeps editing it. */
+  function homeSections(c) {
+    const root = $("#home-more");
+    if (!root) return;
+    const sec = (id) => c.sections.find((x) => x.id === id && !isDraft(x));
+    const byLayout = (l) => c.sections.find((x) => x.layout === l && !isDraft(x));
+    const out = [];
+
+    // credibility strip
+    const uni = byLayout("showcase"), ind = byLayout("timeline");
+    const uniItems = uni ? visible(uni.items) : [], indItems = ind ? visible(ind.items) : [];
+    const yrs = ind ? Number(ind.years) || null : null;
+    const cred = el("section", "cred");
+    cred.setAttribute("aria-label", "At a glance");
+    const nums = el("div", "cred-nums");
+    [[yrs, "Years in production", true, ind], [uniItems.length || null, "Institutions taught at", false, uni], [indItems.length || null, "Studios & companies", false, ind]]
+      .forEach(([v, label, plus, s]) => {
+        if (!v) return;
+        const a = el("a", "cred-num");
+        a.href = pageUrl(s.id);
+        const b = el("b", "", String(v));
+        if (plus) b.append(el("sup", "", "+"));
+        a.append(b, el("span", "", label));
+        nums.append(a);
+      });
+    const names = [...uniItems.map((x) => x.title), ...indItems.map((x) => x.title)];
+    cred.append(nums);
+    if (names.length) {
+      const m = el("div", "cred-names");
+      m.setAttribute("aria-label", names.join(", "));
+      const track = el("div", "cred-track");
+      track.setAttribute("aria-hidden", "true");
+      [...names, ...names].forEach((n) => track.append(el("span", "", n)));
+      m.append(track);
+      cred.append(m);
+    }
+    // the strip sits along the bottom of the first screen, like Blender's timeline
+    $("#stage").append(cred);
+
+    const block = (s, kicker, title, more) => {
+      const b = el("section", "home-block");
+      const hd = el("div", "home-block-head reveal");
+      const left = el("div");
+      left.append(el("p", "eyebrow", kicker), el("h2", "", title));
+      hd.append(left);
+      if (more) { const a = el("a", "link-cta", more); a.href = pageUrl(s.id); hd.append(a); }
+      b.append(hd);
+      return b;
+    };
+
+    // selected work
+    const work = byLayout("grid");
+    const workItems = work ? visible(work.items).slice(0, 3) : [];
+    if (workItems.length) {
+      const b = block(work, work.eyebrow || work.nav, work.title, `All ${String(work.nav || "work").toLowerCase()}`);
+      const g = el("div", "work-cards");
+      workItems.forEach((it, i) => g.append(workCard(it, i)));
+      b.append(g);
+      out.push(b);
+    }
+
+    // Asset Bay
+    const shopS = byLayout("shop");
+    const prods = shopS ? visible(shopS.items) : [];
+    if (shopS && prods.length) {
+      const b = block(shopS, shopS.eyebrow || "Shop", shopS.title, `Enter ${shopS.nav || shopS.title}`);
+      const row = el("div", "bay-row");
+      const intro = el("p", "bay-intro reveal", shopS.intro || "");
+      row.append(intro);
+      prods.slice(0, 2).forEach((it) => {
+        const a = el("a", "bay-card reveal");
+        a.href = pageUrl(shopS.id);
+        const m = el("div", "bay-media");
+        const src = pics(it)[0];
+        if (src) { const img = el("img"); img.alt = `${it.title} — preview`; later(img, src); m.append(img); }
+        const body = el("div", "bay-body");
+        body.append(el("span", "chip", it.category || "Other"), el("h3", "", it.title));
+        if (it.pitch) body.append(el("p", "", it.pitch));
+        body.append(el("span", "bay-go", "Pay by UPI · view →"));
+        a.append(m, body);
+        row.append(a);
+      });
+      b.append(row);
+      out.push(b);
+    }
+
+    // 1:1 classes
+    const cls = byLayout("builder");
+    const fmts = cls ? visible(cls.items) : [];
+    if (fmts.length) {
+      const b = block(cls, cls.eyebrow || cls.nav, cls.title, cls.nav ? `Book ${cls.nav}` : "Book a session");
+      const g = el("div", "class-cards");
+      fmts.forEach((it, i) => {
+        const a = el("a", "class-card reveal");
+        a.href = pageUrl(cls.id);
+        a.append(el("span", "class-no", String(i + 1).padStart(2, "0")), el("h3", "", it.title));
+        const meta = [it.subtitle, it.meta].filter(Boolean).join(" · ");
+        if (meta) a.append(el("span", "class-meta", meta));
+        if (it.description) a.append(el("p", "", it.description));
+        g.append(a);
+      });
+      b.append(g);
+      if (cls.tools) {
+        const t = el("p", "class-tools reveal");
+        t.append(el("span", "", "Software"), document.createTextNode(csv(cls.tools).join(" · ")));
+        b.append(t);
+      }
+      out.push(b);
+    }
+
+    // contact band
+    const k = c.contact || {};
+    const band = el("section", "contact-band reveal");
+    const l = el("div");
+    l.append(el("p", "eyebrow", k.eyebrow || "Contact"), el("h2", "", k.title || "Get in touch"));
+    if (k.text) l.append(el("p", "muted", k.text));
+    const r = el("div", "contact-band-actions");
+    const go = el("a", "btn primary", "Start a conversation");
+    go.append(el("span", "arrow", "→"));
+    go.href = pageUrl("contact");
+    r.append(go);
+    const mail = k.email || c.site.email;
+    if (mail) { const m = el("a", "contact-mail", mail); m.href = "mailto:" + mail; r.append(m); }
+    const card = el("div", "contact-card");
+    card.append(l, r);
+    band.append(card);
+    out.push(band);
+
+    root.replaceChildren(...out);
+  }
+
+  // v3: landing images below the first screen load only when they're about to scroll
+  // into view, so they never compete with the rig frames during the boot render
+  const laterIO = "IntersectionObserver" in window ? new IntersectionObserver((es) => es.forEach((e) => {
+    if (e.isIntersecting) { e.target.src = e.target.dataset.src; laterIO.unobserve(e.target); }
+  }), { rootMargin: "400px 0px" }) : null;
+  // start watching on the first scroll, or a moment after the boot render has finished
+  let laterOn = false;
+  const laterQ = [];
+  const startLater = () => { if (laterOn) return; laterOn = true; laterQ.forEach((i) => laterIO.observe(i)); };
+  const later = (img, src) => {
+    img.decoding = "async";
+    if (!laterIO) { img.src = src; return; }
+    img.dataset.src = src;
+    if (laterOn) laterIO.observe(img); else laterQ.push(img);
+    if (laterQ.length === 1) {
+      addEventListener("scroll", startLater, { once: true, passive: true });
+      const waitBoot = () => ($("#boot") ? setTimeout(waitBoot, 400) : setTimeout(startLater, 2500));
+      waitBoot();
+    }
+  };
+
+  // Portfolio card: still image, and on hover (after a short pause) a muted
+  // preview of the actual video; click opens the full player in a lightbox.
+  function workCard(it, i) {
+    const video = embedUrl(it.link);
+    const a = el(it.link ? "a" : "div", "work-card reveal");
+    if (it.link) external(a, it.link);
+    const m = el("div", "work-media");
+    const src = pics(it)[0];
+    if (src) { const img = el("img"); img.alt = it.title; later(img, src); m.append(img); }
+    if (video) {
+      m.append(el("span", "work-play", "▶"));
+      a.dataset.cursor = "Play";
+      a.addEventListener("click", (e) => { e.preventDefault(); videoBox(video, it.title); });
+      if (finePointer && !reduceMotion) hoverPreview(a, m, it.link);
+    }
+    m.append(el("span", "work-idx", String(i + 1).padStart(2, "0")));
+    const cap = el("div", "work-cap");
+    cap.append(el("h3", "", it.title));
+    const sub = [it.subtitle, it.meta].filter(Boolean).join(" · ");
+    if (sub) cap.append(el("p", "", sub));
+    a.append(m, cap);
+    return a;
+  }
+  function previewUrl(link) {
+    const yt = (link || "").match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/)([\w-]{11})/);
+    if (yt) return `https://www.youtube-nocookie.com/embed/${yt[1]}?autoplay=1&mute=1&controls=0&loop=1&playlist=${yt[1]}&modestbranding=1&playsinline=1&rel=0`;
+    const vm = (link || "").match(/vimeo\.com\/(?:video\/)?(\d+)/);
+    if (vm) return `https://player.vimeo.com/video/${vm[1]}?background=1&muted=1`;
+    return null;
+  }
+  function hoverPreview(card, media, link) {
+    const url = previewUrl(link);
+    if (!url) return;
+    let timer = 0, frame = null;
+    card.addEventListener("pointerenter", () => {
+      timer = setTimeout(() => {
+        frame = el("iframe", "work-preview");
+        frame.src = url;
+        frame.title = "Preview";
+        frame.tabIndex = -1;
+        frame.setAttribute("aria-hidden", "true");
+        frame.allow = "autoplay; encrypted-media";
+        frame.addEventListener("load", () => frame && frame.classList.add("on"));
+        media.append(frame);
+      }, 450);
+    });
+    card.addEventListener("pointerleave", () => { clearTimeout(timer); if (frame) { frame.remove(); frame = null; } });
   }
 
   /* Cursor-reactive character.
@@ -234,7 +477,7 @@
     handle.setAttribute("aria-hidden", "true");
     axis.setAttribute("aria-hidden", "true");
     const readout = handle.querySelector("i");
-    document.body.append(axis, handle);
+    box.append(axis, handle);   // v3: inside the stage, so they scroll with it
 
     const poster = new Image();
     poster.src = h.media;
@@ -357,21 +600,24 @@
     const target = (tx, ty) => targets(tx, ty)[0];
     const colOf = (f) => cols.findIndex((c) => f >= Math.min(...c) - 1 && f <= Math.max(...c) + 1);
 
+    // v3: the landing scrolls; stop drawing while the first screen is out of view
+    let offscreen = false;
+    if ("IntersectionObserver" in window) new IntersectionObserver(([e]) => { offscreen = !e.isIntersecting; }).observe(box);
     let head = target(0.5, 0.5), from = head, fadeT = 1, last = performance.now(), hold = [0.5, 0.5], painted = "";
     let lastHx = null, lastTop = null, lastW = null, lastRead = "";
     measure();
     addEventListener("resize", () => { measure(); lastHx = lastTop = lastW = null; });
     const tick = (now) => {
       requestAnimationFrame(tick);
-      if (document.hidden) { last = now; return; }
+      if (document.hidden || offscreen) { last = now; return; }
       const dt = Math.min(64, now - last) / 1000;
       last = now;
       // The rail isn't part of the interactive area: map X across the space to its left
-      const railLeft = railBox && railBox.height > railBox.width ? railBox.left : innerWidth;
+      const railLeft = innerWidth;
       const footW = fit ? Math.min(railLeft, fit.w * innerWidth / canvas.width) : railLeft;
       let tx, ty;
       if (railHover) { tx = hold[0]; ty = hold[1]; }
-      else if (pointer.moved) { tx = pointer.x / footW; ty = pointer.y / innerHeight; }
+      else if (pointer.moved) { tx = pointer.x / footW; ty = (pointer.y + scrollY) / innerHeight; }
       else {
         const t = now / 1000;
         tx = 0.5 + Math.sin(t * 0.23) * 0.45;
@@ -784,6 +1030,7 @@
         if (video) tile.addEventListener("click", (e) => { e.preventDefault(); videoBox(video, it.title); });
       }
       const media = el("div", "tile-media tilt");
+      if (video && finePointer && !reduceMotion) hoverPreview(tile, media, it.link);
       const photos = pics(it);
       if (photos.length) {
         photos.forEach((src, i) => {

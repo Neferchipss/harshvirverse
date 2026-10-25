@@ -1,3 +1,61 @@
+# harshvirverse.com — v3 "fresh redesign" (branch `v3-redesign`, built on `v2`, not published)
+
+Everything from v2 is kept: Asset Bay, the UPI QR at harshvirwankhede-1@oksbi with no amount and no price shown, empty shop categories hidden, and 11+ years.
+The site is still driven by `content/content.json` and edited in `/admin/`. GitHub Pages publishes only from `main`, so none of this is live.
+
+## Look and feel
+- New design system in `assets/css/v3.css`, loaded after `site.css`:
+  - colour, type-scale, spacing, radius and easing tokens
+  - one accent colour everywhere: Blender orange `#ff7a1a`. The old red is gone, including on the 3D wireframes in `objects.js`.
+- Labelled top navigation styled like Blender's header bar, replacing the icon-only rail:
+  - the name and logo go home
+  - text links come from each section's "Menu label" in the admin
+  - an underline marks the active page, and a dot marks Asset Bay
+  - a "Contact" button sits on the right
+  - Order: Portfolio, Asset Bay and 1:1 Classes first. Pages whose entries are all still drafts go last.
+- New footer with the same links, location and socials.
+- Smooth page changes through cross-document View Transitions, plus the existing fade.
+- Hover and press micro-interactions on buttons, cards and nav.
+- All motion is off under `prefers-reduced-motion`.
+
+## Landing page
+- The rigged head that follows the cursor and the Cycles-style tile loader are unchanged.
+  The 3D viewport now sits under the header bar, the way Blender's viewport sits under its header.
+- A right-hand panel holds:
+  - the roles label and the name as a Blender text object
+  - a short intro (new optional admin field "Short intro under the name")
+  - four buttons: View work, Enter Asset Bay, Book a 1:1 class, Workshops. They are set in the new admin field "Landing buttons", one per line as `Label | link`.
+- Credibility strip along the bottom, styled like Blender's timeline. It is computed only from existing content:
+  - 11+ years in production (from Industry → years)
+  - institutions taught at (count of Universities entries)
+  - studios and companies (count of Industry entries)
+  - a scrolling list of all those names
+- The landing now scrolls, with these sections below the first screen:
+  - Selected work: the first 3 Portfolio entries
+  - Asset Bay: the products
+  - 1:1 Classes: the formats, plus the software taught
+  - a contact band
+- The rig stops drawing while it is scrolled out of view.
+- Images below the fold load only after the boot render finishes, or on the first scroll.
+- The axis and handle overlays live inside the stage, so they scroll with it.
+
+## Portfolio and Asset Bay
+- Portfolio entries are video cards. Hovering one for about half a second plays a muted inline preview of the real Vimeo/YouTube video, and moving away removes it. Clicking opens the full player in the lightbox.
+- Previews are off on touch screens and when reduced motion is set.
+- Asset Bay cards are restyled. A shop with a single product shows it as one wide card.
+
+## Performance
+Measured at 1440x900, DPR 2, CPU ×4 and 10 Mbps, averaging 2 runs:
+
+| Version | Boot | Before open | FPS | Frames >33 ms | Long tasks |
+|---|---|---|---|---|---|
+| v3 | ~2.70 s | 2.73 MB | ~37 | ~23% | 0 |
+| v2 | ~2.65 s | 2.70 MB | ~37 | ~25% | 0 |
+| Live | 6.6 s | 7.45 MB | 17 | — | — |
+
+
+---
+
 # harshvirverse.com — v2 changes (branch `v2`, not published until merged into `main`)
 
 The architecture is unchanged: `index.html` + `page.html` render everything from

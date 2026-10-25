@@ -24,7 +24,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,400..800&family=Inter+Tight:wght@300;400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/css/site.css?v=41">
+  <link rel="stylesheet" href="assets/css/site.css?v=42">
+  <link rel="stylesheet" href="assets/css/v3.css?v=1">
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -49,18 +50,34 @@
       <i class="boot-progress"></i>
     </div>
   </div>
-  <a class="mark" href="index.html" data-bind="site.initials" aria-label="Home">HW</a>
+  <header class="topbar" id="topbar">
+    <a class="brand" href="./" aria-label="Home"><b data-bind="site.initials">HW</b><span data-bind="site.name">Harshvir Wankhade</span></a>
+    <nav id="rail" class="nav" aria-label="Main"></nav>
+    <a class="nav-cta" href="page.html?s=contact">Contact<span class="arrow" aria-hidden="true">→</span></a>
+  </header>
 
-  <main class="stage" id="stage">
+  <main id="main">
+  <section class="stage" id="stage">
     <div class="stage-media" id="stage-media"></div>
     <div class="stage-shade"></div>
     <div class="stage-caption">
       <h1><span data-bind="hero.headlineTop">Harshvir</span> <span data-bind="hero.headlineBottom">Wankhade</span></h1>
       <p id="tagline"></p>
     </div>
+    <a class="scroll-cue" href="#home-more" aria-label="Scroll to more">Scroll</a>
+  </section>
+  <div class="home-more" id="home-more"></div>
   </main>
-
-  <nav class="rail" id="rail" aria-label="Main"></nav>
+  <footer class="footer">
+    <div class="footer-top">
+      <a class="footer-brand" href="./"><b data-bind="site.initials">HW</b> <span data-bind="site.name"></span></a>
+      <nav class="footer-nav" id="footer-nav" aria-label="Footer"></nav>
+    </div>
+    <div class="footer-bottom">
+      <span>© <span id="year"></span> <span data-bind="site.name"></span> · <span data-bind="contact.location"></span></span>
+      <span class="socials" id="socials"></span>
+    </div>
+  </footer>
 
   <noscript>
     <style>.boot { display: none; } .stage { position: static; } .noscript { padding: 40px; max-width: 720px; }</style>
@@ -81,6 +98,6 @@
   </noscript>
 
   <script src="assets/js/icons.js?v=38"></script>
-  <script src="assets/js/site.js?v=41"></script>
+  <script src="assets/js/site.js?v=42"></script>
 </body>
 </html>

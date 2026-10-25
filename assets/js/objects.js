@@ -3,7 +3,7 @@
 import * as THREE from "three";
 import { TeapotGeometry } from "three/addons/geometries/TeapotGeometry.js";
 
-const ACCENT = 0xd70202;
+const ACCENT = 0xff7a1a;
 const DEFAULTS = {
   universities: "university", industry: "gear", workshops: "easel", portfolio: "teapot",
   classes: "bulb", projects: "rocket", contact: "plane",
