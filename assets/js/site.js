@@ -1254,7 +1254,7 @@
      the UTR (UPI transaction reference) through a short form; the files are then
      delivered by email. A static site can't verify payments by itself — every
      order is checked by hand against the UPI app's history. */
-  const SHOP_CATS = ["3D Assets", "Blender Add-ons", "Photoshop Brushes", "Other"];
+  const SHOP_CATS = ["Brushes", "Blender Shaders", "Blender Add-ons", "Coming soon"];
   const todo = (v) => !v || /\bTODO\b/i.test(String(v));
   const inr = (v) => {
     const n = Number(String(v || "").replace(/[^\d.]/g, ""));
@@ -1266,7 +1266,8 @@
     const h = head(s);
     const pay = s.payment || {};
     const cats = [...SHOP_CATS, ...new Set(items.map((it) => it.category).filter((c) => c && !SHOP_CATS.includes(c)))];
-    const catOf = (it) => (cats.includes(it.category) ? it.category : "Other");
+    const comingOf = (it) => String(it.status || "").toLowerCase() === "coming" || it.category === "Coming soon";
+    const catOf = (it) => (comingOf(it) ? "Coming soon" : (cats.includes(it.category) ? it.category : "Other"));
 
     const filters = el("div", "filters shop-filters reveal");
     filters.setAttribute("role", "toolbar");
@@ -1292,7 +1293,8 @@
     });
 
     items.forEach((it, i) => {
-      const card = el("article", "product reveal");
+      const coming = comingOf(it);
+      const card = el("article", "product reveal" + (coming ? " coming" : ""));
       card.dataset.cat = catOf(it);
       const media = el("div", "product-media");
       const photos = pics(it);
@@ -1308,7 +1310,7 @@
         media.classList.add("empty");
         media.append(window.hvIcon("cube"));
       }
-      media.append(el("span", "render-tag", `Render · ${String(i + 1).padStart(3, "0")}`));
+      media.append(el("span", "render-tag", coming ? "Coming soon" : `Render · ${String(i + 1).padStart(3, "0")}`));
       const body = el("div", "product-body");
       body.append(el("span", "chip", catOf(it)), el("h3", "", it.title));
       if (it.pitch) body.append(el("p", "pitch", it.pitch));
@@ -1317,17 +1319,20 @@
         .filter(([, v]) => !todo(v))
         .forEach(([k, v]) => specs.append(el("dt", "", k), el("dd", "", v)));
       if (specs.children.length) body.append(specs);
-      const price = inr(it.price);
+      const avg = reviewAvg(it);
+      if (avg) body.append(starsRow(avg.avg, avg.count));
+      const price = coming ? null : inr(it.price);
       const foot = el("div", "product-foot");
-      if (price) foot.append(el("span", "price", fmtInr(price)));   // no price set → nothing shown
-      const buy = el("button", "btn-buy", todo(pay.upiId) ? "Details" : "Buy with UPI");
+      if (price) foot.append(el("span", "price", fmtInr(price)));
+      else if (coming) foot.append(el("span", "price muted", "Coming soon"));
+      const buy = el("button", "btn-buy", coming ? "Notify me" : (todo(pay.upiId) ? "Details" : "Buy with UPI"));
       buy.type = "button";
-      buy.addEventListener("click", () => productBox(s, it, pay));
+      buy.addEventListener("click", (e) => { e.stopPropagation(); productBox(s, it, pay); });
       foot.append(buy);
       body.append(foot);
       card.append(media, body);
       card.addEventListener("click", (e) => { if (!e.target.closest("button, a")) productBox(s, it, pay); });
-      card.dataset.cursor = "View";
+      card.dataset.cursor = coming ? "Notify" : "View";
       wrap.append(card);
     });
 
@@ -1339,6 +1344,59 @@
 
     $("#page").classList.add("wide");
     $("#page").replaceChildren(...[h, filters, wrap, empty, how, bigCta(s)].filter(Boolean));
+    injectShopJsonLd(items);
+  }
+
+  function isComing(it) {
+    return String(it.status || "").toLowerCase() === "coming" || it.category === "Coming soon";
+  }
+  function reviewList(it) {
+    return (it.reviews || []).filter((r) => r && Number(r.rating) >= 1 && String(r.text || "").trim());
+  }
+  function reviewAvg(it) {
+    const rs = reviewList(it);
+    if (!rs.length) return null;
+    const sum = rs.reduce((a, r) => a + Math.min(5, Math.max(1, Number(r.rating) || 0)), 0);
+    return { avg: sum / rs.length, count: rs.length };
+  }
+  function starsRow(avg, count, cls = "stars") {
+    const row = el("div", cls);
+    const full = Math.round(avg);
+    row.append(el("span", "star-glyphs", "★".repeat(full) + "☆".repeat(5 - full)));
+    row.append(el("span", "star-meta", `${avg.toFixed(1)} · ${count} review${count === 1 ? "" : "s"}`));
+    row.setAttribute("aria-label", `${avg.toFixed(1)} out of 5 from ${count} reviews`);
+    return row;
+  }
+  function injectShopJsonLd(items) {
+    document.querySelectorAll('script[data-shop-jsonld]').forEach((n) => n.remove());
+    items.forEach((it) => {
+      const avg = reviewAvg(it);
+      if (!avg || isComing(it)) return;
+      const price = inr(it.price);
+      const data = {
+        "@context": "https://schema.org",
+        "@type": "Product",
+        name: it.title,
+        sku: it.sku || undefined,
+        description: it.pitch || it.description || undefined,
+        image: pics(it).map((u) => new URL(u, location.href).href),
+        aggregateRating: {
+          "@type": "AggregateRating",
+          ratingValue: Number(avg.avg.toFixed(2)),
+          reviewCount: avg.count,
+          bestRating: 5,
+          worstRating: 1,
+        },
+      };
+      if (price) {
+        data.offers = { "@type": "Offer", priceCurrency: "INR", price: String(price), availability: "https://schema.org/InStock" };
+      }
+      const sc = document.createElement("script");
+      sc.type = "application/ld+json";
+      sc.dataset.shopJsonld = "1";
+      sc.textContent = JSON.stringify(data);
+      document.head.appendChild(sc);
+    });
   }
 
   function upiLink(pay, it, ref) {
@@ -1361,11 +1419,12 @@
   }
 
   function productBox(s, it, pay) {
+    const coming = isComing(it);
     const ref = "HV" + Date.now().toString(36).toUpperCase().slice(-6);
-    const price = inr(it.price);
+    const price = coming ? null : inr(it.price);
     const frame = el("div", "lightbox-shop");
     const left = el("div", "ls-info");
-    left.append(el("span", "chip", it.category || "Other"), el("h2", "", it.title));
+    left.append(el("span", "chip", coming ? "Coming soon" : (it.category || "Other")), el("h2", "", it.title));
     const photos = pics(it);
     if (photos.length) {
       const media = el("div", "ls-media");
@@ -1378,57 +1437,141 @@
     [["Includes", it.includes], ["Formats", it.formats], ["Works with", it.compatibility], ["Licence", it.licence]]
       .filter(([, v]) => !todo(v)).forEach(([k, v]) => specs.append(el("dt", "", k), el("dd", "", v)));
     if (specs.children.length) left.append(specs);
+    left.append(reviewsBlock(it));
 
     const right = el("div", "ls-pay");
-    const canPay = !todo(pay.upiId);   // works with or without a price
-    if (canPay) {
-      const link = upiLink(pay, it, ref);
-      right.append(el("p", "eyebrow", "Step 1 · Pay with UPI"));
-      if (price) right.append(el("p", "ls-price", fmtInr(price)));
-      const qr = qrSvg(link);
-      if (qr) right.append(qr);
-      if (price) right.append(el("p", "ls-hint", "Scan with any UPI app — the amount fills in by itself."));
-      else {
-        const hint = el("p", "ls-hint", "Scan with any UPI app and enter the amount. Questions? ");
-        const ask = el("a", "", "Get in touch");
-        ask.href = "page.html?s=contact";
-        hint.append(ask);
-        right.append(hint);
-      }
-      const idRow = el("div", "upi-id");
-      idRow.append(el("span", "", "UPI ID"), el("code", "", pay.upiId));
-      const copy = el("button", "btn-copy", "Copy");
-      copy.type = "button";
-      copy.addEventListener("click", async () => {
-        try { await navigator.clipboard.writeText(pay.upiId); copy.textContent = "Copied ✓"; }
-        catch (_) { copy.textContent = "Select & copy"; }
-        setTimeout(() => { copy.textContent = "Copy"; }, 1800);
+    if (coming) {
+      right.append(el("p", "eyebrow", "Coming soon"), el("p", "ls-hint", "This product is not for sale yet. Ask to be notified when it opens."));
+      const notify = el("button", "btn-send", "Notify me");
+      notify.type = "button";
+      notify.addEventListener("click", () => {
+        const email = siteContent.site.email || DEFAULT_MAIL;
+        const su = `Notify me — ${it.title}${it.sku ? " (" + it.sku + ")" : ""}`;
+        const body = `Hi Harshvir,\n\nPlease notify me when ${it.title}${it.sku ? " (" + it.sku + ")" : ""} is available in Asset Bay.\n\nThanks.`;
+        composeMail(email, su, body, notify);
       });
-      idRow.append(copy);
-      right.append(idRow, el("p", "ls-ref", `Payment note: ${it.sku || it.title} ${ref}`));
-      const open = el("a", "link-cta small", "Open in UPI app");
-      open.href = link;
-      right.append(open);
-
-      // Step 2: "I've paid" → UTR form
-      const paid = el("button", "btn-send", "I've paid");
-      paid.type = "button";
-      right.append(paid);
-      paid.addEventListener("click", () => right.replaceChildren(...paidForm(s, it, pay, ref, price)));
+      right.append(notify);
     } else {
-      right.append(el("p", "eyebrow", "Coming soon"), el("p", "ls-hint", "UPI checkout for this product opens soon."));
-    }
-    if (it.gumroad || it.link) {
-      const g = el("a", "link-cta small", "Or buy on Gumroad");
-      external(g, it.gumroad || it.link);
-      right.append(g);
+      const canPay = !todo(pay.upiId);   // works with or without a price
+      if (canPay) {
+        const link = upiLink(pay, it, ref);
+        right.append(el("p", "eyebrow", "Step 1 · Pay with UPI"));
+        if (price) right.append(el("p", "ls-price", fmtInr(price)));
+        const qr = qrSvg(link);
+        if (qr) right.append(qr);
+        if (price) right.append(el("p", "ls-hint", "Scan with any UPI app — the amount fills in by itself."));
+        else {
+          const hint = el("p", "ls-hint", "Scan with any UPI app and enter the amount. Questions? ");
+          const ask = el("a", "", "Get in touch");
+          ask.href = "page.html?s=contact";
+          hint.append(ask);
+          right.append(hint);
+        }
+        const idRow = el("div", "upi-id");
+        idRow.append(el("span", "", "UPI ID"), el("code", "", pay.upiId));
+        const copy = el("button", "btn-copy", "Copy");
+        copy.type = "button";
+        copy.addEventListener("click", async () => {
+          try { await navigator.clipboard.writeText(pay.upiId); copy.textContent = "Copied ✓"; }
+          catch (_) { copy.textContent = "Select & copy"; }
+          setTimeout(() => { copy.textContent = "Copy"; }, 1800);
+        });
+        idRow.append(copy);
+        right.append(idRow, el("p", "ls-ref", `Payment note: ${it.sku || it.title} ${ref}`));
+        const open = el("a", "link-cta small", "Open in UPI app");
+        open.href = link;
+        right.append(open);
+
+        // Step 2: "I've paid" → UTR form
+        const paid = el("button", "btn-send", "I've paid");
+        paid.type = "button";
+        right.append(paid);
+        paid.addEventListener("click", () => right.replaceChildren(...paidForm(s, it, pay, ref, price)));
+      } else {
+        right.append(el("p", "eyebrow", "Coming soon"), el("p", "ls-hint", "UPI checkout for this product opens soon."));
+      }
+      if (it.gumroad || it.link) {
+        const g = el("a", "link-cta small", "Or buy on Gumroad");
+        external(g, it.gumroad || it.link);
+        right.append(g);
+      }
     }
     frame.append(left, right);
     lightbox(frame, it.title);
   }
 
+  function reviewsBlock(it) {
+    const wrap = el("div", "reviews");
+    wrap.append(el("p", "eyebrow", "Reviews"));
+    const avg = reviewAvg(it);
+    const rs = reviewList(it);
+    if (avg) wrap.append(starsRow(avg.avg, avg.count, "stars reviews-avg"));
+    else wrap.append(el("p", "ls-hint", "No reviews yet — be the first."));
+    rs.forEach((r) => {
+      const card = el("blockquote", "review");
+      const head = el("div", "review-head");
+      const rating = Math.min(5, Math.max(1, Number(r.rating) || 0));
+      head.append(el("span", "star-glyphs", "★".repeat(rating) + "☆".repeat(5 - rating)));
+      head.append(el("strong", "", r.name || "Buyer"));
+      if (r.verified) head.append(el("span", "chip", "Verified"));
+      if (r.date) head.append(el("time", "", r.date));
+      card.append(head, el("p", "", r.text));
+      wrap.append(card);
+    });
+    const write = el("button", "btn-copy", "Write a review");
+    write.type = "button";
+    write.addEventListener("click", () => {
+      const form = reviewForm(it, write);
+      write.replaceWith(form);
+    });
+    wrap.append(write);
+    return wrap;
+  }
+
+  function reviewForm(it, after) {
+    const email = siteContent.site.email || DEFAULT_MAIL;
+    const form = el("form", "review-form");
+    form.append(el("p", "eyebrow", "Write a review"));
+    const stars = el("div", "star-pick");
+    let rating = 5;
+    for (let n = 1; n <= 5; n++) {
+      const b = el("button", "star-btn", "★");
+      b.type = "button";
+      b.dataset.n = String(n);
+      b.setAttribute("aria-label", `${n} star${n > 1 ? "s" : ""}`);
+      b.addEventListener("click", () => {
+        rating = n;
+        $$(".star-btn", stars).forEach((x) => x.classList.toggle("on", Number(x.dataset.n) <= rating));
+      });
+      stars.append(b);
+    }
+    $$(".star-btn", stars).forEach((x) => x.classList.add("on"));
+    const name = el("input"); Object.assign(name, { name: "name", required: true, placeholder: "Your name", autocomplete: "name" });
+    const text = el("textarea"); Object.assign(text, { name: "text", required: true, rows: 4, placeholder: "Your review", maxlength: 1000 });
+    const utr = el("input"); Object.assign(utr, { name: "utr", placeholder: "UTR / order ref (optional)", inputMode: "numeric", maxlength: 32 });
+    const send = el("button", "btn-send", "Send review");
+    send.type = "submit";
+    form.append(stars, name, text, utr, send);
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const su = `Review — ${it.title}${it.sku ? " (" + it.sku + ")" : ""} · ${rating}/5`;
+      const body = [
+        `Product: ${it.title}`,
+        it.sku ? `SKU: ${it.sku}` : "",
+        `Rating: ${rating}/5`,
+        `Name: ${name.value.trim()}`,
+        utr.value.trim() ? `UTR / order: ${utr.value.trim()}` : "",
+        "",
+        text.value.trim(),
+      ].filter((l) => l !== null).join("\n");
+      composeMail(email, su, body, send);
+      form.replaceChildren(el("p", "eyebrow", "Sent"), el("p", "ls-hint", "Thanks — your review will appear after Harshvir approves it in /admin/."));
+    });
+    return form;
+  }
+
   function paidForm(s, it, pay, ref, price) {
-    const email = siteContent.site.email || siteContent.contact.email;
+    const email = siteContent.site.email || siteContent.contact.email || DEFAULT_MAIL;
     const form = el("form", "utr-form");
     const fld = (name, label, attrs = {}) => {
       const l = el("label", "", label);
@@ -1440,7 +1583,7 @@
     const [lName, iName] = fld("name", "Your name", { autocomplete: "name" });
     const [lMail, iMail] = fld("email", "Email for the download link", { type: "email", autocomplete: "email" });
     const [lUtr, iUtr] = fld("utr", "UPI reference (UTR, 12 digits)", { inputMode: "numeric", pattern: "\\d{12}", maxLength: 12, placeholder: "e.g. 412345678901" });
-    const note = el("p", "ls-hint", `Product: ${it.title}${price ? " · " + fmtInr(price) : ""} · Ref ${ref}`);
+    const note = el("p", "ls-hint", `Product: ${it.title}${it.sku ? " · " + it.sku : ""}${price ? " · " + fmtInr(price) : ""} · Ref ${ref}`);
     const send = el("button", "btn-send", "Send for delivery");
     send.type = "submit";
     const status = el("p", "ls-status");
@@ -1459,10 +1602,18 @@
           const res = await fetch(pay.formEndpoint, { method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json" }, body: JSON.stringify(data) });
           if (!res.ok) throw new Error(res.status);
           return ok();
-        } catch (_) { send.disabled = false; status.textContent = "Couldn't send — opening your email app instead."; }
+        } catch (_) { send.disabled = false; status.textContent = "Couldn't send — opening Gmail instead."; }
       }
-      const body = Object.entries(data).filter(([, v]) => v).map(([k, v]) => `${k}: ${v}`).join("\n");
-      location.href = `mailto:${email}?subject=${encodeURIComponent(`Order ${ref} — ${it.title}`)}&body=${encodeURIComponent(body)}`;
+      const body = [
+        `Product: ${data.product}`,
+        data.sku ? `SKU: ${data.sku}` : "",
+        data.price ? `Price: ${data.price}` : "",
+        `Reference: ${data.reference}`,
+        `Name: ${data.name}`,
+        `Email: ${data.email}`,
+        `UTR: ${data.utr}`,
+      ].filter(Boolean).join("\n");
+      composeMail(email, `Order ${ref} — ${it.title}`, body, send);
       ok();
     });
     return [el("p", "eyebrow", "Step 2 · Confirm your payment"), form];

@@ -802,3 +802,24 @@ img, video, canvas, .tile, .campus-float, .stage {
   .ls-info { border-right: 0; border-bottom: 1px solid var(--faint); }
   .how { grid-template-columns: 1fr 1fr; }
 }
+
+
+/* Asset Bay v5 — reviews + coming soon */
+.product.coming { border-style: dashed; }
+.product.coming .btn-buy { background: transparent; border: 1px solid var(--faint); color: var(--text); }
+.product.coming .btn-buy:hover { border-color: #ffa033; color: #ffa033; }
+.price.muted { color: var(--muted); font-size: 15px; font-weight: 500; }
+.stars, .reviews-avg { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+.star-glyphs { color: #ffa033; letter-spacing: 1px; font-size: 14px; }
+.reviews { margin-top: 28px; display: flex; flex-direction: column; gap: 14px; }
+.review { margin: 0; padding: 14px 16px; border: 1px solid var(--faint); border-radius: 10px; background: #141518; }
+.review-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-bottom: 8px; font-size: 13px; }
+.review-head time { color: var(--muted); margin-left: auto; }
+.review-form { display: flex; flex-direction: column; gap: 10px; padding: 14px; border: 1px solid var(--faint); border-radius: 10px; }
+.review-form input, .review-form textarea {
+  width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--faint);
+  background: #0e0f12; color: var(--text); font: inherit;
+}
+.star-pick { display: flex; gap: 4px; }
+.star-btn { background: none; border: 0; color: #ffffff33; font-size: 22px; cursor: pointer; padding: 0 2px; line-height: 1; }
+.star-btn.on { color: #ffa033; }
