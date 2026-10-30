@@ -261,17 +261,15 @@
   ];
   const SHOP_SPECS = [
     ["title", "Product name"], ["sku", "Product code (shown in the UPI payment note)"],
-    ["category", "Category", "select", ["Brushes", "Blender Shaders", "Blender Add-ons", "Coming soon", "Other"]],
+    ["category", "Category", "select", ["3D Assets", "Blender Add-ons", "Photoshop Brushes", "Other"]],
     ["pitch", "One-line pitch"], ["price", "Price in ₹ (numbers only)"],
     ["includes", "What's included"], ["formats", "File formats (e.g. .blend, .fbx, .abr)"],
     ["compatibility", "Works with (e.g. Blender 4.2+, Photoshop CC 2021+)"], ["licence", "Licence (personal / commercial)"],
     ["description", "Description", "textarea"], ["image", "Main preview", "media", "image/*"],
     ["images", "More previews", "gallery", "image/*"], ["gumroad", "Gumroad link (optional)"],
     ["draft", "Hidden draft? (\"yes\" = not shown on the site)", "select", ["no", "yes"]],
-    ["status", "Sale status (\"coming\" = Coming soon — Notify me, no buy)", "select", ["", "coming"]],
   ];
-  const BLANK_PRODUCT = { title: "New product", sku: "", category: "Other", pitch: "", price: "", includes: "", formats: "", compatibility: "", licence: "", description: "", image: "", images: [], gumroad: "", status: "", reviews: [] };
-  const BLANK_REVIEW = { name: "", rating: "5", text: "", date: "", verified: "" };
+  const BLANK_PRODUCT = { title: "New product", sku: "", category: "Other", pitch: "", price: "", includes: "", formats: "", compatibility: "", licence: "", description: "", image: "", images: [], gumroad: "" };
   const BLANK_ITEM = { title: "New item", subtitle: "", meta: "", description: "", image: "", link: "" };
 
   const views = {
@@ -302,41 +300,6 @@
     ],
   };
 
-
-  function shopProductsList(arr) {
-    const wrap = el("div");
-    const openSet = new Set();
-    const draw = () => {
-      wrap.replaceChildren(
-        el("div", { class: "list-head" },
-          el("h3", {}, `Products (${arr.length})`),
-          el("button", { class: "btn", onclick: () => { arr.push(structuredClone(BLANK_PRODUCT)); openSet.add(arr.length - 1); setDirty(true); draw(); } }, "+ Add product")),
-        el("div", { class: "items" }, arr.map((it, i) => {
-          it.reviews = Array.isArray(it.reviews) ? it.reviews : [];
-          const head = el("div", { class: "item-head", onclick: () => { openSet.has(i) ? openSet.delete(i) : openSet.add(i); draw(); } },
-            el("span", { class: "thumb", style: (it.image || it.images?.[0]) && !isVideo(it.image || it.images?.[0]) ? `background-image:url("${mediaUrl(it.image || it.images?.[0])}")` : "" }),
-            el("span", { class: "title" }, it.title || "Untitled"),
-            el("span", { class: "ctrl", onclick: (e) => e.stopPropagation() },
-              el("button", { class: "btn btn-sm", title: "Move up", disabled: i === 0, onclick: () => { [arr[i - 1], arr[i]] = [arr[i], arr[i - 1]]; setDirty(true); draw(); } }, "↑"),
-              el("button", { class: "btn btn-sm", title: "Move down", disabled: i === arr.length - 1, onclick: () => { [arr[i + 1], arr[i]] = [arr[i], arr[i + 1]]; setDirty(true); draw(); } }, "↓"),
-              el("button", { class: "btn btn-sm btn-danger", title: "Remove", onclick: () => { if (confirmRemove(it.title || "product")) { arr.splice(i, 1); openSet.clear(); setDirty(true); draw(); } } }, "✕")));
-          const body = el("div", { class: "item-body" },
-            fields(it, SHOP_SPECS, () => { head.querySelector(".title").textContent = it.title || "Untitled"; }),
-            el("h4", {}, "Approved reviews (shown on the site)"),
-            el("p", { class: "hint" }, "Only add reviews you have approved from buyer emails. Never invent ratings."),
-            list({ title: "Reviews", arr: it.reviews, specs: [
-              ["name", "Reviewer name"], ["rating", "Stars (1–5)", "select", ["5", "4", "3", "2", "1"]],
-              ["text", "Review text", "textarea"], ["date", "Date (YYYY-MM-DD)"],
-              ["verified", "Verified purchase?", "select", ["", "yes"]],
-            ], blank: BLANK_REVIEW, label: (r) => `${r.rating || "?"}★ ${r.name || "Anonymous"}`, addText: "Add review" }),
-          );
-          return el("div", { class: "item" + (openSet.has(i) ? " open" : "") }, head, body);
-        })));
-    };
-    draw();
-    return wrap;
-  }
-
   function sectionView(i) {
     const s = content.sections[i];
     const move = (d) => {
@@ -364,9 +327,7 @@
         el("p", { class: "hint" }, "Buyers scan a UPI QR (or copy the UPI ID), then send the UTR through a form. Form endpoint: a Formspree-style URL; leave TODO to receive orders as a pre-filled email."),
         fields((s.payment ??= {}), [["upiId", "UPI ID"], ["payeeName", "Payee name"], ["formEndpoint", "Order form endpoint (URL)"], ["deliveryNote", "Delivery note shown after ordering", "textarea"]]),
       ] : []),
-      (s.layout === "shop"
-        ? shopProductsList((s.items ??= []))
-        : list({ title: "Entries", arr: (s.items ??= []), specs: ITEM_SPECS, blank: BLANK_ITEM, thumb: (it) => it.image || it.images?.[0], addText: "Add entry" })),
+      list({ title: s.layout === "shop" ? "Products" : "Entries", arr: (s.items ??= []), specs: s.layout === "shop" ? SHOP_SPECS : ITEM_SPECS, blank: s.layout === "shop" ? BLANK_PRODUCT : BLANK_ITEM, thumb: (it) => it.image || it.images?.[0], addText: s.layout === "shop" ? "Add product" : "Add entry" }),
       el("div", { class: "danger-zone" },
         el("button", { class: "btn", disabled: i === 0, onclick: () => move(-1) }, "Move section up"), " ",
         el("button", { class: "btn", disabled: i === content.sections.length - 1, onclick: () => move(1) }, "Move section down"), " ",

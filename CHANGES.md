@@ -1,15 +1,3 @@
-
-## asset-bay-v5 (branch only — not live until approved)
-
-Asset Bay catalogue expansion on a separate branch. Other pages unchanged.
-
-- Added 14 ready products (brushes, Blender shaders, Blender add-ons) with prices ₹1,299–₹4,999 and the existing Character Concept Art Brushes priced at ₹1,499. Gumroad link for HV-BRUSH-01 kept.
-- Added 6 “Coming soon” products (NeonDrip, StageWalk, PuppetPose, BeatForge, AutoReframe, CharacterSync) with Notify-me Gmail compose (no buy / no price).
-- Category filters: Brushes / Blender Shaders / Blender Add-ons / Coming soon.
-- UPI deep link and QR include `am=` + `cu=INR` when a price is set; UTR email includes product name, SKU and price.
-- Real reviews only: empty `reviews[]` per item, average stars when present, Write-a-review → Gmail compose for approval. `/admin/` can add/edit/delete approved reviews. schema.org Product/AggregateRating JSON-LD only when real reviews exist.
-- Preview WebPs in `assets/shop/` (no product zips / .abr / .blend shipped).
-
 # v4.1 — crash fix ("A problem repeatedly occurred" in Safari on refresh)
 
 The v4 home page used too much memory, so Safari killed the tab, mostly after a refresh.
