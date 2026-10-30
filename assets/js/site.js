@@ -1767,17 +1767,10 @@
   }
 
   function reveal() {
-    // threshold 0 + expanded bottom margin: cards reveal as they approach the
-    // viewport (old 0.15 / -5% left a long shop grid looking empty until scroll).
     const io = new IntersectionObserver((entries) => {
       entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } });
-    }, { threshold: 0, rootMargin: "0px 0px 20% 0px" });
+    }, { threshold: 0.15, rootMargin: "0px 0px -5% 0px" });
     $$(".reveal").forEach((n, i) => { n.style.setProperty("--d", `${Math.min(i, 8) * 60}ms`); io.observe(n); });
-    // Asset Bay: product cards must never stay at opacity 0 if IO never fires
-    // (full-page captures, filter swaps, reduced-motion). Mark them .in now.
-    if (document.body.dataset.layout === "shop") {
-      $$(".products .product.reveal").forEach((n) => { n.classList.add("in"); io.unobserve(n); });
-    }
   }
 
   // Deter casual saving of media: no "Save image/video as" or copy menu,

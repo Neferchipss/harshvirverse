@@ -804,15 +804,6 @@ img, video, canvas, .tile, .campus-float, .stage {
 }
 
 
-/* Asset Bay v5 — product cards must never stay invisible.
-   Scroll-reveal left below-the-fold cards at opacity:0 until IntersectionObserver
-   fired; full-page screenshots (and long grids) showed empty holes. Products are
-   always readable; filters / how-to keep the normal .reveal treatment. */
-body[data-layout="shop"] .products .product.reveal {
-  opacity: 1;
-  transform: none;
-}
-
 /* Asset Bay v5 — reviews + coming soon */
 .product.coming { border-style: dashed; }
 .product.coming .btn-buy { background: transparent; border: 1px solid var(--faint); color: var(--text); }
