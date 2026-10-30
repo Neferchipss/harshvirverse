@@ -9,6 +9,8 @@ Asset Bay catalogue expansion on a separate branch. Other pages unchanged.
 - UPI deep link and QR include `am=` + `cu=INR` when a price is set; UTR email includes product name, SKU and price.
 - Real reviews only: empty `reviews[]` per item, average stars when present, Write-a-review → Gmail compose for approval. `/admin/` can add/edit/delete approved reviews. schema.org Product/AggregateRating JSON-LD only when real reviews exist.
 - Preview WebPs in `assets/shop/` (no product zips / .abr / .blend shipped).
+- Fix: shop product cards no longer sit at opacity:0 waiting for IntersectionObserver (long grid / full-page screenshots looked empty). Products are always visible; reveal() also marks them `.in` and uses a softer threshold for other shop reveals.
+
 
 # v4.1 — crash fix ("A problem repeatedly occurred" in Safari on refresh)
 
