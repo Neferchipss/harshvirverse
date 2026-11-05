@@ -153,6 +153,10 @@ Admin API extras:
 - Rotate the password by updating `ADMIN_PASSWORD_HASH` and redeploying.
 - Optional hardening later: Custom domain route, Cloudflare Access in front of `/admin/stats/`, or CAPTCHA on `/collect`.
 
+## Password status
+
+Live `ADMIN_PASSWORD_HASH` is stored as a **Cloudflare Worker secret** on `harshvirverse-analytics` (not the git placeholder). Unlock `/admin/stats/` with the password Harshvir set in chat.
+
 ## Publishing policy
 
 This work ships on branch **`analytics-private` only**. Do **not** merge to `main` / publish GitHub Pages until Harshvir explicitly approves.

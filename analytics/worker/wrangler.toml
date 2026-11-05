@@ -15,6 +15,6 @@ preview_id = "fc8c4596a17046fe8ac1a2dd23c6090b"
 ALLOWED_ORIGINS = "https://harshvirverse.com,https://www.harshvirverse.com,http://127.0.0.1:8765,http://localhost:8765"
 # SHA-256 hex of `${ADMIN_SALT}:${password}` — set real password via docs; this hash is the PLACEHOLDER only
 ADMIN_SALT = "hv-analytics-v1"
-ADMIN_PASSWORD_HASH = "a87b9ef19065e8497d82b45798bb9d3ffbeb70f917f956a20a3372208e3f356b"
+ADMIN_PASSWORD_HASH = "SET_VIA_CLOUDFLARE_SECRET"
 # Session lifetime hours
 SESSION_HOURS = "168"
