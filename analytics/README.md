@@ -69,6 +69,8 @@ analytics/worker/               ← Cloudflare Worker source
 
 ## Deploy Cloudflare Worker (required for real multi-visitor stats)
 
+> **Status:** The Worker is already deployed to `https://harshvirverse-analytics.harshvirverse.workers.dev` on Harshvir's Cloudflare account (KV `STATS` id `c4cb4f3c97514347bfe657ac7c204677`, preview `fc8c4596a17046fe8ac1a2dd23c6090b`). `assets/js/analytics-config.js` already points at it. The steps below are for redeploying or rotating the password.
+
 You need a free [Cloudflare](https://dash.cloudflare.com/) account. DNS for harshvirverse.com can stay on Hostinger — the Worker can live on `*.workers.dev`.
 
 ### 1. Install Wrangler and log in

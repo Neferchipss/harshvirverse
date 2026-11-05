@@ -7,8 +7,8 @@ compatibility_date = "2026-10-01"
 [[kv_namespaces]]
 binding = "STATS"
 # Replace with your KV namespace id after: wrangler kv namespace create STATS
-id = "REPLACE_WITH_KV_NAMESPACE_ID"
-preview_id = "REPLACE_WITH_PREVIEW_KV_ID"
+id = "c4cb4f3c97514347bfe657ac7c204677"
+preview_id = "fc8c4596a17046fe8ac1a2dd23c6090b"
 
 [vars]
 # Allowed browser origins that may POST events / call admin APIs
