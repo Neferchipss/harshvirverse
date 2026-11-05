@@ -1254,7 +1254,7 @@
 
   /* ---------- Shop (v2): "Asset Bay" — digital products, paid by UPI ----------
      Payment is a UPI QR code + copyable UPI ID (desktop-first), with an
-     "Open in UPI app" link as a secondary option. After paying, the buyer sends
+     app-specific mobile links as a secondary option. After paying, the buyer sends
      the UTR (UPI transaction reference) through a short form; the files are then
      delivered by email. A static site can't verify payments by itself — every
      order is checked by hand against the UPI app's history. */
@@ -1345,11 +1345,21 @@
     $("#page").replaceChildren(...[h, filters, wrap, empty, how, bigCta(s)].filter(Boolean));
   }
 
-  function upiLink(pay, it, ref) {
-    const q = new URLSearchParams({ pa: pay.upiId, pn: pay.payeeName || siteContent.site.name, cu: "INR", tn: `${it.sku || it.title} ${ref}`.slice(0, 50) });
-    const price = inr(it.price);
-    if (price) q.set("am", price.toFixed(2));
-    return "upi://pay?" + q.toString().replace(/\+/g, "%20").replace(/%40/g, "@");   // UPI apps expect a literal @ in pa=
+  function runDiscountValid(code, it, now = new Date()) {
+    const cfg = window.HV_RUN_CONFIG;
+    if (!cfg || !cfg.code || it.sku !== "HV-BRUSH-01" || inr(it.price) < 500) return false;
+    if (String(code).trim().toUpperCase() !== cfg.code) return false;
+    // Same inclusive UTC calendar-date expiry as Harshvir Run; fail closed on bad config.
+    const exp = cfg.codeExpiresISO;
+    return !exp || (/^\d{4}-\d{2}-\d{2}$/.test(exp) && now.toISOString().slice(0, 10) <= exp);
+  }
+  function paymentNote(it, ref, code = "") {
+    return `${it.sku || it.title} ${ref}${code ? " " + code : ""}`.slice(0, 50);
+  }
+  function upiLink(pay, it, ref, amount = inr(it.price), code = "", scheme = "upi://pay") {
+    const q = new URLSearchParams({ pa: pay.upiId, pn: pay.payeeName || siteContent.site.name, cu: "INR", tn: paymentNote(it, ref, code) });
+    if (amount !== null && Number.isFinite(amount)) q.set("am", amount.toFixed(2));
+    return scheme + "?" + q.toString().replace(/\+/g, "%20").replace(/%40/g, "@");
   }
   function qrSvg(text) {
     if (typeof window.qrcode !== "function") return null;
@@ -1387,19 +1397,80 @@
     const right = el("div", "ls-pay");
     const canPay = !todo(pay.upiId);   // works with or without a price
     if (canPay) {
-      const link = upiLink(pay, it, ref);
+      let discountCode = "";
+      let amountPaid = price;
       right.append(el("p", "eyebrow", "Step 1 · Pay with UPI"));
-      if (price) right.append(el("p", "ls-price", fmtInr(price)));
-      const qr = qrSvg(link);
-      if (qr) right.append(qr);
-      if (price) right.append(el("p", "ls-hint", "Scan with any UPI app — the amount fills in by itself."));
-      else {
-        const hint = el("p", "ls-hint", "Scan with any UPI app and enter the amount. Questions? ");
-        const ask = el("a", "", "Get in touch");
-        ask.href = "page.html?s=contact";
-        hint.append(ask);
-        right.append(hint);
+      const discountForm = el("form", "discount-form");
+      const codeLabel = el("label", "", "Discount code");
+      const codeInput = el("input");
+      Object.assign(codeInput, { name: "discountCode", placeholder: "Enter code", maxLength: 32, autocomplete: "off", spellcheck: false });
+      codeLabel.append(codeInput);
+      const apply = el("button", "btn-copy", "Apply");
+      apply.type = "submit";
+      discountForm.append(codeLabel, apply);
+      const codeStatus = el("p", "ls-hint discount-status");
+      codeStatus.setAttribute("role", "status");
+      const totals = el("dl", "checkout-totals");
+      totals.setAttribute("aria-live", "polite");
+      const qrBox = el("div", "checkout-qr");
+      const note = el("p", "ls-ref");
+      const apps = el("div", "upi-apps");
+      const appLinks = [["Google Pay", "tez://upi/pay"], ["PhonePe", "phonepe://pay"], ["Paytm", "paytmmp://pay"]].map(([name, scheme]) => {
+        const link = el("a", "btn-copy", name);
+        link.addEventListener("click", (e) => {
+          // Revalidate at payment time, too, in case checkout was left open past expiry.
+          if (discountCode && !runDiscountValid(discountCode, it)) {
+            e.preventDefault();
+            discountCode = "";
+            codeStatus.textContent = "This code has expired. Review the updated list price before choosing a payment app again.";
+            updatePayment();
+          }
+          hvTrack("cta", { cta: "upi", label: name, sku: it.sku || "" });
+        });
+        apps.append(link);
+        return { link, scheme };
+      });
+      function updatePayment() {
+        amountPaid = price === null ? null : price - (discountCode ? 500 : 0);
+        totals.replaceChildren();
+        if (price !== null) {
+          [["List price", fmtInr(price)], ["Discount" + (discountCode ? " · " + discountCode : ""), discountCode ? "−₹500" : "₹0"], ["Amount to pay", fmtInr(amountPaid)]].forEach(([label, value]) => {
+            totals.append(el("dt", "", label), el("dd", "", value));
+          });
+        }
+        qrBox.replaceChildren();
+        const qr = qrSvg(upiLink(pay, it, ref, amountPaid, discountCode));
+        if (qr) qrBox.append(qr);
+        note.textContent = "Payment note: " + paymentNote(it, ref, discountCode);
+        appLinks.forEach(({ link, scheme }) => { link.href = upiLink(pay, it, ref, amountPaid, discountCode, scheme); });
       }
+      discountForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const code = codeInput.value.trim().toUpperCase();
+        discountCode = runDiscountValid(code, it) ? code : "";
+        codeInput.value = code;
+        codeStatus.textContent = discountCode ? "Applied — ₹500 off before payment." : code ? "Code invalid, expired, or not available for this product." : "No code applied — list price restored.";
+        updatePayment();
+      });
+      // Editing the input immediately removes any previous discount; Apply validates anew.
+      codeInput.addEventListener("input", () => {
+        discountCode = "";
+        codeStatus.textContent = "Select Apply to use this code.";
+        updatePayment();
+      });
+      try {
+        const saved = JSON.parse(localStorage.getItem("hv_run_code_unlocked") || "null");
+        if (saved && runDiscountValid(saved.code, it)) {
+          codeInput.value = saved.code;
+          discountCode = saved.code;
+          codeStatus.textContent = "Your Harshvir Run code is applied — ₹500 off.";
+        }
+      } catch (_) { /* Checkout works even when storage is blocked or malformed. */ }
+      if (price !== null) right.append(discountForm, codeStatus, totals);
+      right.append(qrBox, el("p", "ls-hint", price !== null
+        ? "Scan this QR with any UPI app — the payable amount fills in automatically."
+        : "Scan with any UPI app and enter the agreed amount."));
+      updatePayment();
       const idRow = el("div", "upi-id");
       idRow.append(el("span", "", "UPI ID"), el("code", "", pay.upiId));
       const copy = el("button", "btn-copy", "Copy");
@@ -1411,17 +1482,13 @@
         setTimeout(() => { copy.textContent = "Copy"; }, 1800);
       });
       idRow.append(copy);
-      right.append(idRow, el("p", "ls-ref", `Payment note: ${it.sku || it.title} ${ref}`));
-      const open = el("a", "link-cta small", "Open in UPI app");
-      open.href = link;
-      open.addEventListener("click", () => hvTrack("cta", { cta: "upi", label: it.sku || it.title || "upi" }));
-      right.append(open);
+      right.append(idRow, note, apps, el("p", "ls-hint", "On mobile, choose your installed app above. On desktop, or if an app does not open, scan the QR from your phone. Check the payee and amount in your app before approving."));
 
       // Step 2: "I've paid" → UTR form
       const paid = el("button", "btn-send", "I've paid");
       paid.type = "button";
       right.append(paid);
-      paid.addEventListener("click", () => right.replaceChildren(...paidForm(s, it, pay, ref, price)));
+      paid.addEventListener("click", () => right.replaceChildren(...paidForm(s, it, pay, ref, price, amountPaid, discountCode)));
     } else {
       right.append(el("p", "eyebrow", "Coming soon"), el("p", "ls-hint", "UPI checkout for this product opens soon."));
     }
@@ -1435,7 +1502,7 @@
     lightbox(frame, it.title);
   }
 
-  function paidForm(s, it, pay, ref, price) {
+  function paidForm(s, it, pay, ref, price, amountPaid = price, discountCode = "") {
     const email = siteContent.site.email || siteContent.contact.email;
     const form = el("form", "utr-form");
     const fld = (name, label, attrs = {}) => {
@@ -1448,7 +1515,7 @@
     const [lName, iName] = fld("name", "Your name", { autocomplete: "name" });
     const [lMail, iMail] = fld("email", "Email for the download link", { type: "email", autocomplete: "email" });
     const [lUtr, iUtr] = fld("utr", "UPI reference (UTR, 12 digits)", { inputMode: "numeric", pattern: "\\d{12}", maxLength: 12, placeholder: "e.g. 412345678901" });
-    const note = el("p", "ls-hint", `Product: ${it.title}${price ? " · " + fmtInr(price) : ""} · Ref ${ref}`);
+    const note = el("p", "ls-hint", `Product: ${it.title}${amountPaid !== null ? " · Paid " + fmtInr(amountPaid) : ""}${discountCode ? " · Code " + discountCode + " (₹500 off)" : ""} · Ref ${ref}`);
     const send = el("button", "btn-send", "Send for delivery");
     send.type = "submit";
     const status = el("p", "ls-status");
@@ -1456,7 +1523,7 @@
     form.append(lName, lMail, lUtr, note, send, status);
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
-      const data = { product: it.title, sku: it.sku || "", price: price ? fmtInr(price) : "", reference: ref, name: iName.value.trim(), email: iMail.value.trim(), utr: iUtr.value.trim() };
+      const data = { product: it.title, sku: it.sku || "", price: price ? fmtInr(price) : "", amountPaid: amountPaid !== null ? amountPaid.toFixed(2) : "", discountCode, reference: ref, name: iName.value.trim(), email: iMail.value.trim(), utr: iUtr.value.trim() };
       const ok = () => form.replaceChildren(el("p", "eyebrow", "Received"), el("h3", "", "Thanks — order received."),
         el("p", "ls-hint", pay.deliveryNote || "Your download link arrives by email once the payment is checked."));
       // TODO(owner): set payment.formEndpoint in content.json (e.g. a Formspree URL).

@@ -1,3 +1,18 @@
+# feature/upi-discount — Asset Bay checkout fix (review branch only)
+
+- HV-BRUSH-01 listing is ₹1,000. HVRUN500 takes ₹500 off before payment (payable ₹500).
+- Checkout accepts a code + Apply, auto-applies a valid saved Harshvir Run unlock, checks the shared config expiry (inclusive UTC date), and resets stale discounts when editing.
+- List/discount/payable totals, regenerated scan-only UPI QR, and Google Pay / PhonePe / Paytm app-specific links all use the same payable amount and code-bearing note.
+- Delivery form includes amountPaid (INR decimal) and discountCode in both endpoint JSON and email fallback; original list price retained.
+- Run perk text now explains the checkout discount. Shared config loaded on page.html; affected asset versions bumped.
+- Manual UTR/payment verification remains required. Client-side code/localStorage is a convenience, not proof of game eligibility or payment. No automatic delivery or payment is performed.
+- Mobile app launching depends on device/browser/app support; desktop fallback is QR scanning. No WhatsApp Pay or generic UPI app-launch button.
+- Validation: `node --test tests/upi-discount.test.cjs` (3 tests), JS syntax checks, and isolated jsdom checkout checks (valid/invalid/expired/saved/malformed codes, QR/app amount consistency, no stacking, and captured delivery payload). No real payment or external form submission.
+- Expiry discovered on an app click stops navigation for review rather than unexpectedly opening a higher payment amount.
+- Not merged or published; main remains unchanged.
+
+---
+
 # feature/run-convert — Harshvir Run conversion layer (not published)
 
 Branch only. Does **not** merge to `main` / live harshvirverse.com until Harshvir says publish.

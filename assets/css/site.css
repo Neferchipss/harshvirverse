@@ -802,3 +802,15 @@ img, video, canvas, .tile, .campus-float, .stage {
   .ls-info { border-right: 0; border-bottom: 1px solid var(--faint); }
   .how { grid-template-columns: 1fr 1fr; }
 }
+
+/* Asset Bay: validate the discount before generating any payment request. */
+.discount-form { display: flex; gap: 8px; align-items: flex-end; width: 100%; }
+.discount-form label { display: grid; gap: 6px; flex: 1; min-width: 0; font-size: 12px; }
+.discount-form input { width: 100%; min-width: 0; box-sizing: border-box; padding: 10px; border: 1px solid #666; border-radius: 6px; background: transparent; color: inherit; font: inherit; font-size: 16px; }
+.discount-form input:focus-visible, .upi-apps a:focus-visible { outline: 2px solid #ffa033; outline-offset: 3px; }
+.checkout-totals { display: grid; grid-template-columns: 1fr auto; gap: 8px 16px; width: 100%; margin: 0; font-size: 13px; }
+.checkout-totals dd { margin: 0; text-align: right; }
+.checkout-totals dt:last-of-type, .checkout-totals dd:last-of-type { border-top: 1px solid #666; padding-top: 10px; font-weight: 700; font-size: 18px; }
+.upi-apps { display: flex; flex-wrap: wrap; gap: 8px; }
+.upi-apps a { text-decoration: none; }
+.checkout-qr { max-width: 100%; }

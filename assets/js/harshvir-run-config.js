@@ -6,9 +6,9 @@
     catName: "Pip",
     unlockScore: 500,
     code: "HVRUN500",
-    /* Honest note shown with the code — no fake checkout. */
+    /* Checkout validates this code and expiry before creating payment links. */
     codeNote:
-      "Mention this code in your Asset Bay / UPI payment note when you buy. Valid while this perk is live.",
+      "Apply this code for ₹500 off Character Concept Art Brushes at Asset Bay checkout (₹1000 → ₹500).",
     /* Optional expiry (ISO date). Empty string = no expiry shown. */
     codeExpiresISO: "2026-12-05",
     challengeScore: 1200,
