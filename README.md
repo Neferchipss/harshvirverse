@@ -16,3 +16,8 @@ So the clip should be him turning from looking left to looking right, with no cu
 ```
 ffmpeg -i in.mp4 -an -c:v libx264 -g 1 -crf 23 -pix_fmt yuv420p -movflags +faststart hero.mp4
 ```
+
+## Private analytics (branch `analytics-private`)
+
+Owner-only stats at `/admin/stats/`. See **[analytics/README.md](analytics/README.md)** for demo mode, Cloudflare Worker deploy, and password setup. Not active on live visitors until the Worker endpoint is configured and this branch is published.
+

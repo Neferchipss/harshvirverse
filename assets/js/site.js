@@ -466,8 +466,12 @@
   const gmailUrl = (to, su, body) =>
     `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(to)}&su=${encodeURIComponent(su)}&body=${encodeURIComponent(body)}`;
   const mailtoUrl = (to, su, body) => `mailto:${to}?subject=${encodeURIComponent(su)}&body=${encodeURIComponent(body)}`;
+  function hvTrack(type, meta) {
+    try { if (window.hvAnalytics) { if (type === 'product_open') window.hvAnalytics.productOpen(meta && meta.sku, meta && meta.title); else if (type === 'cta') window.hvAnalytics.cta(meta && meta.cta, meta && meta.label); else window.hvAnalytics.track(type, meta || {}); } } catch (_) {}
+  }
   function composeMail(to, su, body, after) {
     to = to || DEFAULT_MAIL;
+    hvTrack('cta', { cta: 'gmail', label: (su || 'mail').slice(0, 80) });
     const url = gmailUrl(to, su, body);
     window.hvLastMail = url;                       // for tests
     window.open(url, "_blank", "noopener");
@@ -1361,6 +1365,7 @@
   }
 
   function productBox(s, it, pay) {
+    hvTrack("product_open", { sku: it.sku || "", title: it.title || "" });
     const ref = "HV" + Date.now().toString(36).toUpperCase().slice(-6);
     const price = inr(it.price);
     const frame = el("div", "lightbox-shop");
@@ -1400,6 +1405,7 @@
       const copy = el("button", "btn-copy", "Copy");
       copy.type = "button";
       copy.addEventListener("click", async () => {
+        hvTrack("cta", { cta: "upi_copy", label: it.sku || it.title || "upi" });
         try { await navigator.clipboard.writeText(pay.upiId); copy.textContent = "Copied ✓"; }
         catch (_) { copy.textContent = "Select & copy"; }
         setTimeout(() => { copy.textContent = "Copy"; }, 1800);
@@ -1408,6 +1414,7 @@
       right.append(idRow, el("p", "ls-ref", `Payment note: ${it.sku || it.title} ${ref}`));
       const open = el("a", "link-cta small", "Open in UPI app");
       open.href = link;
+      open.addEventListener("click", () => hvTrack("cta", { cta: "upi", label: it.sku || it.title || "upi" }));
       right.append(open);
 
       // Step 2: "I've paid" → UTR form
@@ -1421,6 +1428,7 @@
     if (it.gumroad || it.link) {
       const g = el("a", "link-cta small", "Or buy on Gumroad");
       external(g, it.gumroad || it.link);
+      g.addEventListener("click", () => hvTrack("cta", { cta: "gumroad", label: it.sku || it.title || "gumroad" }));
       right.append(g);
     }
     frame.append(left, right);

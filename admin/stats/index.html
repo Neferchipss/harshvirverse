@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Private stats — Harshvirverse</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="stats.css?v=1">
+</head>
+<body>
+  <header class="bar">
+    <strong class="logo">HW <span>Private stats</span></strong>
+    <span class="mode" id="mode"></span>
+    <div class="bar-actions" id="bar-actions" hidden>
+      <label class="days">Days
+        <select id="days">
+          <option value="7">7</option>
+          <option value="30" selected>30</option>
+          <option value="90">90</option>
+        </select>
+      </label>
+      <button class="btn" id="btn-refresh">Refresh</button>
+      <button class="btn btn-link" id="btn-logout">Log out</button>
+    </div>
+  </header>
+
+  <section class="login" id="login">
+    <div class="login-card">
+      <h1>Owner only</h1>
+      <p id="login-hint">Enter the analytics password. Reports stay on this page — Neferchipss / GitHub cannot see them.</p>
+      <label>Password<input type="password" id="password" autocomplete="current-password" placeholder="••••••••"></label>
+      <button class="btn btn-primary" id="btn-login">Unlock</button>
+      <p class="err" id="login-err"></p>
+      <p class="hint" id="demo-note"></p>
+    </div>
+  </section>
+
+  <main class="dash" id="dash" hidden>
+    <p class="tz">Times shown in <b>Asia/Calcutta (UTC+5:30)</b>. Stored as UTC.</p>
+    <div class="cards" id="cards"></div>
+    <div class="grid">
+      <section class="panel"><h2>Traffic by day</h2><div id="by-day"></div></section>
+      <section class="panel"><h2>Hours (IST)</h2><div id="by-hour"></div></section>
+      <section class="panel"><h2>Devices</h2><div id="by-device"></div></section>
+      <section class="panel"><h2>Sources</h2><div id="by-source"></div></section>
+      <section class="panel"><h2>Countries</h2><div id="by-country"></div></section>
+      <section class="panel"><h2>Pages / paths</h2><div id="by-path"></div></section>
+      <section class="panel"><h2>Sections</h2><div id="by-section"></div></section>
+      <section class="panel"><h2>Asset Bay product opens</h2><div id="products"></div></section>
+      <section class="panel"><h2>CTA clicks</h2><div id="ctas"></div></section>
+      <section class="panel wide"><h2>Recent activity</h2><div id="recent"></div></section>
+    </div>
+  </main>
+
+  <script src="../../assets/js/analytics-config.js?v=1"></script>
+  <script src="../../assets/js/analytics.js?v=1"></script>
+  <script src="stats.js?v=1"></script>
+</body>
+</html>

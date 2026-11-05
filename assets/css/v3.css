@@ -338,3 +338,7 @@ a.tile:hover h3 { color: var(--accent-2); }
   .cred-names { display: none; }
   .bay-card { grid-template-columns: 1fr; }
 }
+
+/* Private analytics disclosure (analytics-private branch) */
+.privacy-note { max-width: var(--maxw); margin: 0 auto; padding: 0 var(--gutter) 22px; color: var(--muted); font-size: 12px; opacity: .85; }
+.privacy-note a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }

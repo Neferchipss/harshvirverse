@@ -1,0 +1,20 @@
+# Cloudflare Worker for harshvirverse.com private analytics
+# Deploy: see analytics/README.md
+name = "harshvirverse-analytics"
+main = "src/index.js"
+compatibility_date = "2026-10-01"
+
+[[kv_namespaces]]
+binding = "STATS"
+# Replace with your KV namespace id after: wrangler kv namespace create STATS
+id = "REPLACE_WITH_KV_NAMESPACE_ID"
+preview_id = "REPLACE_WITH_PREVIEW_KV_ID"
+
+[vars]
+# Allowed browser origins that may POST events / call admin APIs
+ALLOWED_ORIGINS = "https://harshvirverse.com,https://www.harshvirverse.com,http://127.0.0.1:8765,http://localhost:8765"
+# SHA-256 hex of `${ADMIN_SALT}:${password}` — set real password via docs; this hash is the PLACEHOLDER only
+ADMIN_SALT = "hv-analytics-v1"
+ADMIN_PASSWORD_HASH = "a87b9ef19065e8497d82b45798bb9d3ffbeb70f917f956a20a3372208e3f356b"
+# Session lifetime hours
+SESSION_HOURS = "168"

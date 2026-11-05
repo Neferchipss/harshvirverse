@@ -1,3 +1,15 @@
+# analytics-private — private in-site analytics (not published)
+
+Branch only. Does **not** change Asset Bay products or layout — only light JS hooks for product opens and Buy/UPI/Gmail/class CTAs.
+
+- Tracker: `assets/js/analytics.js` + `analytics-config.js` (ENDPOINT empty = browser demo mode)
+- Dashboard: `/admin/stats/` password gate (placeholder `change-me-hv-stats` in demo)
+- Backend source: `analytics/worker` (Cloudflare Worker + KV). Harshvir must deploy + set password + paste Worker URL into config before live multi-visitor stats work
+- Footer: short privacy note (cookie-free first-party analytics)
+- Docs: `analytics/README.md`
+
+---
+
 # v4.1 — crash fix ("A problem repeatedly occurred" in Safari on refresh)
 
 The v4 home page used too much memory, so Safari killed the tab, mostly after a refresh.
