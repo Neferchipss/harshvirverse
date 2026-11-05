@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="stats.css?v=2">
+  <link rel="stylesheet" href="stats.css?v=3">
 </head>
 <body>
   <header class="bar">
@@ -39,24 +39,65 @@
   </section>
 
   <main class="dash" id="dash" hidden>
-    <p class="tz">Times shown in <b>Asia/Calcutta (UTC+5:30)</b>. Stored as UTC.</p>
+    <p class="tz">Times shown in <b>Asia/Calcutta (UTC+5:30)</b>. Stored as UTC. No keystrokes or form values are recorded.</p>
     <div class="cards" id="cards"></div>
     <div class="grid">
       <section class="panel"><h2>Traffic by day</h2><div id="by-day"></div></section>
       <section class="panel"><h2>Hours (IST)</h2><div id="by-hour"></div></section>
       <section class="panel"><h2>Devices</h2><div id="by-device"></div></section>
+      <section class="panel"><h2>Screen size</h2><div id="by-screen"></div></section>
       <section class="panel"><h2>Sources</h2><div id="by-source"></div></section>
       <section class="panel"><h2>Countries</h2><div id="by-country"></div></section>
+      <section class="panel"><h2>Languages</h2><div id="by-lang"></div></section>
+      <section class="panel"><h2>Scroll depth</h2><div id="scroll-depth"></div></section>
+      <section class="panel"><h2>Landings</h2><div id="landings"></div></section>
+      <section class="panel"><h2>Exits</h2><div id="exits"></div></section>
       <section class="panel"><h2>Pages / paths</h2><div id="by-path"></div></section>
       <section class="panel"><h2>Sections</h2><div id="by-section"></div></section>
+      <section class="panel"><h2>Time on section (avg)</h2><div id="section-time"></div></section>
       <section class="panel"><h2>Asset Bay product opens</h2><div id="products"></div></section>
       <section class="panel"><h2>CTA clicks</h2><div id="ctas"></div></section>
+      <section class="panel wide"><h2>Session paths</h2><div id="session-paths"></div></section>
+      <section class="panel wide">
+        <h2>Click heatmap</h2>
+        <div class="heat-controls">
+          <label>Path
+            <select id="heat-path"></select>
+          </label>
+          <span class="muted" id="heat-count"></span>
+        </div>
+        <div class="heat-wrap"><canvas id="heat-canvas" width="900" height="480"></canvas></div>
+      </section>
+      <section class="panel wide">
+        <h2>Session replay</h2>
+        <p class="muted small">Cursor / scroll / viewport only — schematic player (no DOM snapshots, no typing).</p>
+        <div class="replay-layout">
+          <div class="replay-list" id="replay-list"></div>
+          <div class="replay-stage">
+            <div class="replay-toolbar">
+              <button class="btn" id="replay-play">Play</button>
+              <button class="btn" id="replay-pause">Pause</button>
+              <label class="speed">Speed
+                <select id="replay-speed">
+                  <option value="1">1×</option>
+                  <option value="2" selected>2×</option>
+                  <option value="4">4×</option>
+                  <option value="8">8×</option>
+                </select>
+              </label>
+              <span class="muted" id="replay-meta"></span>
+            </div>
+            <canvas id="replay-canvas" width="900" height="520"></canvas>
+            <input type="range" id="replay-seek" min="0" max="0" value="0">
+          </div>
+        </div>
+      </section>
       <section class="panel wide"><h2>Recent activity</h2><div id="recent"></div></section>
     </div>
   </main>
 
-  <script src="../../assets/js/analytics-config.js?v=1"></script>
-  <script src="../../assets/js/analytics.js?v=1"></script>
-  <script src="stats.js?v=2"></script>
+  <script src="../../assets/js/analytics-config.js?v=2"></script>
+  <script src="../../assets/js/analytics.js?v=3"></script>
+  <script src="stats.js?v=3"></script>
 </body>
 </html>

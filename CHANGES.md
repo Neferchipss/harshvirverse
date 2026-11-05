@@ -1,3 +1,15 @@
+# analytics-private — deep engagement + session replay (not published)
+
+Extends the private in-site analytics on branch `analytics-private` only (main untouched).
+
+- Tracker (`assets/js/analytics.js`): session path, scroll depth 25/50/75/100, time on page/section, landing & exit, screen band + language, new vs returning + bounce, click heatmaps, compact session replay (throttled mouse / clicks / scroll / viewport — **no keystrokes or input values**)
+- Worker: accepts new event types; KV `replay:{sid}` (~14d TTL); `GET /admin/replay?sid=`
+- Dashboard `/admin/stats/`: extra KPI cards, scroll/landing/exit/lang/screen panels, session paths, heatmap canvas, session list + schematic replay player
+- Docs: `analytics/README.md` updated (limits, how to demo-test)
+- Cache-bust: analytics `?v=3`, stats assets `?v=3`
+
+---
+
 # analytics-private — private in-site analytics (not published)
 
 Branch only. Does **not** change Asset Bay products or layout — only light JS hooks for product opens and Buy/UPI/Gmail/class CTAs.
