@@ -69,3 +69,10 @@ html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--te
 table { width: 100%; border-collapse: collapse; font-size: 12px; }
 th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
 th { color: var(--muted); font-weight: 500; }
+
+/* Ensure [hidden] wins over display:grid / display:flex on these panels */
+.login[hidden],
+.dash[hidden],
+.bar-actions[hidden] {
+  display: none !important;
+}

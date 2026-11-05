@@ -21,9 +21,18 @@
   function setToken(t) { try { if (t) sessionStorage.setItem(TOKEN_KEY, t); else sessionStorage.removeItem(TOKEN_KEY); } catch {} }
 
   function showDash(on) {
+    // CSS display:grid/flex can override the native [hidden] rule; set both.
     login.hidden = on;
     dash.hidden = !on;
     actions.hidden = !on;
+    login.style.display = on ? "none" : "";
+    dash.style.display = on ? "" : "none";
+    actions.style.display = on ? "" : "none";
+    if (on) {
+      const pw = $("#password");
+      if (pw) pw.value = "";
+      err.textContent = "";
+    }
   }
 
   function barChart(el, values) {
