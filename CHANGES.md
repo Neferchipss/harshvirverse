@@ -1,3 +1,32 @@
+# feature/harshvir-run — Harshvir Run (not published)
+
+Branch only. Does **not** merge to `main` / live harshvirverse.com until Harshvir says publish.
+Does **not** change Asset Bay products, shop content, UPI, contact email, or analytics Worker password.
+
+## What
+- **Harshvir Run**: original pixel-avatar endless runner (look B) — charcoal `#0b0c0e`, gold + teal accents, Canvas 2D only.
+- Shared module: `assets/js/harshvir-run.js` + `assets/css/harshvir-run.css`.
+- High score key: `localStorage.hv_run_hi` (shared by secret overlay and 404).
+- Obstacles: paintbrushes, teal glitch blocks, striped **404 NOT FOUND** barriers.
+- Controls: Space / click / tap to jump; game over → try again. Silent v1 (no sound required).
+- `prefers-reduced-motion`: calm shell + **Play Harshvir Run** button (no auto frantic start).
+
+## Secret unlock (home)
+- Click the **brand initials** (`HW` / `site.initials` in the top-left `.brand b`) **5 times within 2 seconds**.
+- Opens a modal overlay with the game; **Escape** or **Close** / **Back to site** dismisses it.
+- Chosen so it does **not** fight the existing press-**R** / F12 render-settings easter egg (typing `harsh` / `run` would hit `R`).
+- Script is deferred on `index.html` only; game canvas is created when the overlay opens.
+
+## 404
+- New `404.html` at repo root (GitHub Pages custom 404).
+- Calm “Lost path” copy + the same Harshvir Run embed + link home.
+- Includes the same analytics scripts as other pages (`analytics-config.js` + `analytics.js`).
+
+## Preview
+- Live site stays on `main` until publish. Preview locally: `python3 -m http.server` from the repo root, open `/` (5× initials) and `/404.html`.
+
+---
+
 # analytics-private — deep engagement + session replay (not published)
 
 Extends the private in-site analytics on branch `analytics-private` only (main untouched).

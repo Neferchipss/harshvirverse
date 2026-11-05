@@ -21,3 +21,7 @@ ffmpeg -i in.mp4 -an -c:v libx264 -g 1 -crf 23 -pix_fmt yuv420p -movflags +fasts
 
 Owner-only stats at `/admin/stats/`. See **[analytics/README.md](analytics/README.md)** for demo mode, Cloudflare Worker deploy, and password setup. Not active on live visitors until the Worker endpoint is configured and this branch is published.
 
+## Harshvir Run (branch `feature/harshvir-run`)
+
+Secret + 404 mini-game (pixel runner). **Not live** until this branch is published. Unlock on home: click brand initials **5×** quickly. See **CHANGES.md**.
+

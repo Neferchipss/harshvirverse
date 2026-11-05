@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lost path — Harshvir Run · Harshvir Wankhade</title>
+  <meta name="description" content="This path was not found. Play Harshvir Run, then head back to the portfolio.">
+  <meta name="robots" content="noindex">
+  <link rel="canonical" href="https://harshvirverse.com/404.html">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="assets/favicon-32.png" sizes="32x32" type="image/png">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+  <meta name="theme-color" content="#0b0c0e">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,400..800&family=Inter+Tight:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/harshvir-run.css?v=3">
+</head>
+<body class="hv-run-404">
+  <div class="hv-run-404__wrap">
+    <header class="hv-run-404__intro">
+      <a class="brand-row" href="./" aria-label="Home">
+        <b>HW</b>
+        <span>3D Artist</span>
+      </a>
+      <h1>Lost path</h1>
+      <p>This URL isn’t on the map. While you’re here, try <em>Harshvir Run</em> — same tiny game as the home-page secret — then head back.</p>
+    </header>
+    <div id="hv-run-root"></div>
+  </div>
+
+  <script src="assets/js/analytics-config.js?v=2"></script>
+  <script src="assets/js/analytics.js?v=3"></script>
+  <script src="assets/js/harshvir-run.js?v=2"></script>
+  <script>
+    (function () {
+      var root = document.getElementById("hv-run-root");
+      if (root && window.HarshvirRun) {
+        window.HarshvirRun.mountInline(root, { autoStart: true });
+      }
+    })();
+  </script>
+</body>
+</html>
