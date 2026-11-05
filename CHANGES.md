@@ -1,3 +1,33 @@
+# feature/run-convert — Harshvir Run conversion layer (not published)
+
+Branch only. Does **not** merge to `main` / live harshvirverse.com until Harshvir says publish.
+Does **not** change Asset Bay products, shop content, UPI, contact email, or analytics Worker password.
+
+## Backup
+- `backup/harshvir-run-cozy-v1` — tip of cozy live game (`68a10e0`) before conversion work. Recover with: `git checkout backup/harshvir-run-cozy-v1`.
+
+## What (ideas 1–10)
+Config: `assets/js/harshvir-run-config.js` (CTAs, unlock score/code, lore, themes, challenge score).
+
+1. **Game-over CTA** — DOM card on crash only: one primary CTA + Play again. No mid-play overlays.
+2. **Score → ticket** — score ≥ 500 reveals `HVRUN500` + copy; honest Asset Bay / UPI note; persists in `localStorage.hv_run_code_unlocked`; optional expiry `2026-12-05`.
+3. **Path-aware CTAs** — `secret` (home): Book a 1:1 → `page.html?s=classes`, secondary Asset Bay. `404`: Browse Asset Bay primary, home map + classes.
+4. **Lore** — cat name **Pip**; rotating mentor tips on game-over.
+5. **Share** — Web Share API or X intent with score + “Beat Harshvir: 1200”; optional Save frame (canvas PNG).
+6. **Micro-quest** — up to 5 brush/shader orbs; ≥3 unlocks free tip `tips/run-tip.html`.
+7. **Billboard** — after first game-over in session, soft “1:1 slots” → contact; not on first spawn.
+8. **Analytics** — `hvAnalytics.track` events: `run_unlock`, `run_start`, `run_over`, `run_cta_click`, `run_share`, `run_code_copy`, `run_token_collect` (no-op if missing).
+9. **Reduced motion** — calm Play button; CTA card still available on game-over; Escape closes overlay.
+10. **Seasonal skins** — themes `default` | `diwali` | `packDrop` in config (manual or date windows).
+
+Unlock unchanged: 5× brand initials on home; same game on `404.html`.
+Cache-bust: `harshvir-run.css?v=5`, `harshvir-run-config.js?v=1`, `harshvir-run.js?v=5`.
+
+## Preview
+`python3 -m http.server` from repo root → `/` (5× HW) and `/404.html`. Still not live.
+
+---
+
 # feature/harshvir-run — cozy visual rebuild (not published)
 
 Branch only. Same gameplay / unlock / 404 wiring; **visuals** rebuilt to the approved cozy HD pixel mix (Stardew-warm daylight).

@@ -14,7 +14,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,400..800&family=Inter+Tight:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/css/harshvir-run.css?v=4">
+  <link rel="stylesheet" href="assets/css/harshvir-run.css?v=5">
 </head>
 <body class="hv-run-404">
   <div class="hv-run-404__wrap">
@@ -31,12 +31,16 @@
 
   <script src="assets/js/analytics-config.js?v=2"></script>
   <script src="assets/js/analytics.js?v=3"></script>
-  <script src="assets/js/harshvir-run.js?v=4"></script>
+  <script src="assets/js/harshvir-run-config.js?v=1"></script>
+  <script src="assets/js/harshvir-run.js?v=5"></script>
   <script>
     (function () {
+      try {
+        if (new URLSearchParams(location.search).get("hvrun") === "over") return;
+      } catch (e) {}
       var root = document.getElementById("hv-run-root");
       if (root && window.HarshvirRun) {
-        window.HarshvirRun.mountInline(root, { autoStart: true });
+        window.HarshvirRun.mountInline(root, { source: "404" });
       }
     })();
   </script>
