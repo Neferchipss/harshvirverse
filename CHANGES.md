@@ -1,3 +1,16 @@
+# feature/harshvir-run — cozy visual rebuild (not published)
+
+Branch only. Same gameplay / unlock / 404 wiring; **visuals** rebuilt to the approved cozy HD pixel mix (Stardew-warm daylight).
+
+- Canvas: lime grass garden, sakura + fruit trees, thatched cottage parallax, drifting petals
+- Player: chibi teal-shirt boy + orange tabby companion
+- Obstacles: mossy **404** stones, wooden fence posts, paintbrush, pumpkin, art easel
+- UI chrome: wooden plaques, warm yellow title, cream/wood overlay — **no** dark neon gold/teal cyber HUD
+- Unlock unchanged: click brand initials **5×** within 2s. High score still `localStorage.hv_run_hi`.
+- Cache-bust: `harshvir-run.js?v=4`, `harshvir-run.css?v=4`
+
+---
+
 # feature/harshvir-run — Harshvir Run (not published)
 
 Branch only. Does **not** merge to `main` / live harshvirverse.com until Harshvir says publish.
