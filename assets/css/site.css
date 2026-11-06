@@ -814,3 +814,17 @@ img, video, canvas, .tile, .campus-float, .stage {
 .upi-apps { display: flex; flex-wrap: wrap; gap: 8px; }
 .upi-apps a { text-decoration: none; }
 .checkout-qr { max-width: 100%; }
+
+/* Asset Bay: delivered moment */
+.delivered { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 10px; padding: 28px 24px; border: 1px solid #ffa03355; border-radius: 14px; background: radial-gradient(120% 90% at 0% 0%, #ffa03322, transparent 60%), #0b0c0e; overflow: hidden; animation: dl-rise .6s cubic-bezier(.2,.8,.2,1) both; }
+.delivered h3 { font-size: 26px; margin: 0; }
+.delivered-to b { color: #ffa033; word-break: break-all; }
+.delivered-seal svg { width: 64px; height: 64px; fill: none; stroke: #ffa033; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.delivered-seal circle { stroke-dasharray: 183; stroke-dashoffset: 183; animation: dl-draw .7s .1s ease-out forwards; }
+.delivered-seal path { stroke-dasharray: 40; stroke-dashoffset: 40; animation: dl-draw .4s .7s ease-out forwards; }
+.delivered-burst { position: absolute; left: 56px; top: 60px; pointer-events: none; }
+.delivered-burst i { position: absolute; width: 3px; height: 14px; border-radius: 2px; background: #ffa033; transform: rotate(var(--a)) translateY(0); opacity: 0; animation: dl-burst .9s .8s ease-out forwards; }
+@keyframes dl-draw { to { stroke-dashoffset: 0; } }
+@keyframes dl-rise { from { opacity: 0; transform: translateY(14px) scale(.98); } }
+@keyframes dl-burst { 0% { opacity: 1; transform: rotate(var(--a)) translateY(-10px); } 100% { opacity: 0; transform: rotate(var(--a)) translateY(-70px); } }
+@media (prefers-reduced-motion: reduce) { .delivered, .delivered-seal *, .delivered-burst i { animation: none; stroke-dashoffset: 0; } }

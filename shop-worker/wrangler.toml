@@ -1,0 +1,38 @@
+# Asset Bay delivery Worker (separate from analytics — never stores form values there).
+# NOT deployed yet. See shop-worker/README.md.
+name = "harshvirverse-shop"
+main = "src/index.js"
+compatibility_date = "2026-10-01"
+
+# Cloudflare Email Sending binding. Domain harshvirverse.com must be onboarded first:
+#   npx wrangler email sending enable harshvirverse.com
+[[send_email]]
+name = "EMAIL"
+
+# Private product files. Owner uploads products/HV-BRUSH-01.zip here (never in the public repo).
+[[r2_buckets]]
+binding = "PRODUCTS"
+bucket_name = "harshvirverse-products"
+
+# Remembers SHA-256 hashes of UTRs already used (no raw UTRs / emails stored).
+# Create: npx wrangler kv namespace create USED_UTRS  → paste id below.
+[[kv_namespaces]]
+binding = "USED_UTRS"
+id = "REPLACE_WITH_KV_NAMESPACE_ID"
+
+# Per-IP rate limit: 5 requests / 60 s.
+[[ratelimits]]
+name = "DELIVERY_LIMIT"
+namespace_id = "1001"
+simple = { limit = 5, period = 60 }
+
+[vars]
+ALLOWED_ORIGINS = "https://harshvirverse.com,https://www.harshvirverse.com,http://127.0.0.1:8765,http://localhost:8765"
+FROM_EMAIL = "deliveries@harshvirverse.com"
+FROM_NAME = "Asset Bay · Harshvirverse"
+OWNER_EMAIL = "official.harshvirwankhede@gmail.com"
+# Files above this size are sent as a signed download link instead of an attachment
+# (Email Sending caps a whole message at 25 MiB; base64 adds ~33%).
+MAX_ATTACH_BYTES = "15000000"
+LINK_HOURS = "72"
+# Secret (not here): npx wrangler secret put LINK_SECRET

@@ -37,3 +37,25 @@ test("scan-only QR and all app links use identical discounted payment params", (
  }
  assert.equal(new URLSearchParams(ctx.upiLink(pay, item, "HVTEST").split("?")[1]).get("am"), "1000.00");
 });
+test("paid form asks only UTR + email, posts JSON, never mailto", () => {
+ const pf = source.slice(source.indexOf("  function paidForm("), source.indexOf("  function deliveredScreen("));
+ assert.ok(!/fld\("name"/.test(pf));
+ assert.ok(/fld\("utr"/.test(pf) && /fld\("email"/.test(pf));
+ assert.ok(!/mailto:/.test(pf) && !/location\.href/.test(pf));
+ assert.ok(/fetch\(pay\.formEndpoint/.test(pf) && /out\.ok/.test(pf));
+ assert.ok(pf.includes("Get my file"));
+});
+test("delivery worker validates and fails without file", async () => {
+ const mod = await import(require("node:path").resolve("shop-worker/src/index.js"));
+ const env = { ALLOWED_ORIGINS: "https://harshvirverse.com", PRODUCTS: { get: async () => null }, EMAIL: { send: async () => { throw new Error("should not send"); } } };
+ const call = (b) => mod.default.fetch(new Request("https://w/deliver", { method: "POST", headers: { Origin: "https://harshvirverse.com" }, body: JSON.stringify(b) }), env);
+ assert.equal((await call({ sku: "HV-BRUSH-01", email: "a@b.co", utr: "123" })).status, 400);
+ assert.equal((await call({ sku: "HV-BRUSH-01", email: "bad", utr: "123456789012" })).status, 400);
+ const r = await call({ sku: "HV-BRUSH-01", email: "a@b.co", utr: "123456789012" });
+ assert.equal(r.status, 503); assert.equal((await r.json()).error, "file_missing");
+ let sent; env.PRODUCTS.get = async () => ({ size: 3, arrayBuffer: async () => new Uint8Array([1,2,3]).buffer });
+ env.EMAIL.send = async (m) => { sent = m; return { messageId: "x" }; }; env.OWNER_EMAIL = "o@x.com"; env.FROM_EMAIL = "d@harshvirverse.com";
+ const ok = await call({ sku: "HV-BRUSH-01", email: "a@b.co", utr: "123456789012", discountCode: "HVRUN500" });
+ assert.equal(ok.status, 200); assert.equal(sent.to, "a@b.co"); assert.equal(sent.bcc, "o@x.com"); assert.equal(sent.attachments.length, 1);
+ assert.ok(sent.text.includes("₹500"));
+});

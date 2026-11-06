@@ -1337,8 +1337,8 @@
 
     const how = el("ol", "how reveal");
     [["Pick", "Choose a product and open it."], ["Pay", "Scan the UPI QR with any UPI app (GPay, PhonePe, Paytm…)."],
-     ["Send the UTR", "Paste the 12-digit UPI reference in the short form."],
-     ["Download", pay.deliveryNote || "Your download link arrives by email once the payment is checked."]]
+     ["Enter UTR & email", "Type the 12-digit UPI reference (UTR) and your email."],
+     ["Inbox", pay.deliveryNote || "The file lands straight in your inbox."]]
       .forEach(([t, d], k) => { const li = el("li"); li.append(el("b", "", `0${k + 1} ${t}`), el("span", "", d)); how.append(li); });
 
     $("#page").classList.add("wide");
@@ -1503,7 +1503,6 @@
   }
 
   function paidForm(s, it, pay, ref, price, amountPaid = price, discountCode = "") {
-    const email = siteContent.site.email || siteContent.contact.email;
     const form = el("form", "utr-form");
     const fld = (name, label, attrs = {}) => {
       const l = el("label", "", label);
@@ -1512,35 +1511,46 @@
       l.append(i);
       return [l, i];
     };
-    const [lName, iName] = fld("name", "Your name", { autocomplete: "name" });
-    const [lMail, iMail] = fld("email", "Email for the download link", { type: "email", autocomplete: "email" });
-    const [lUtr, iUtr] = fld("utr", "UPI reference (UTR, 12 digits)", { inputMode: "numeric", pattern: "\\d{12}", maxLength: 12, placeholder: "e.g. 412345678901" });
+    const [lUtr, iUtr] = fld("utr", "UPI reference (UTR) · 12 digits", { inputMode: "numeric", pattern: "\\d{12}", maxLength: 12, placeholder: "e.g. 412345678901" });
+    const [lMail, iMail] = fld("email", "Email — your file goes here", { type: "email", autocomplete: "email", placeholder: "you@example.com" });
     const note = el("p", "ls-hint", `Product: ${it.title}${amountPaid !== null ? " · Paid " + fmtInr(amountPaid) : ""}${discountCode ? " · Code " + discountCode + " (₹500 off)" : ""} · Ref ${ref}`);
-    const send = el("button", "btn-send", "Send for delivery");
+    const send = el("button", "btn-send", "Get my file");
     send.type = "submit";
     const status = el("p", "ls-status");
     status.setAttribute("role", "status");
-    form.append(lName, lMail, lUtr, note, send, status);
+    form.append(lUtr, lMail, note, send, status);
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
-      const data = { product: it.title, sku: it.sku || "", price: price ? fmtInr(price) : "", amountPaid: amountPaid !== null ? amountPaid.toFixed(2) : "", discountCode, reference: ref, name: iName.value.trim(), email: iMail.value.trim(), utr: iUtr.value.trim() };
-      const ok = () => form.replaceChildren(el("p", "eyebrow", "Received"), el("h3", "", "Thanks — order received."),
-        el("p", "ls-hint", pay.deliveryNote || "Your download link arrives by email once the payment is checked."));
-      // TODO(owner): set payment.formEndpoint in content.json (e.g. a Formspree URL).
-      // Until then the order opens as a pre-filled email instead.
-      if (!todo(pay.formEndpoint)) {
-        send.disabled = true; status.textContent = "Sending…";
-        try {
-          const res = await fetch(pay.formEndpoint, { method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json" }, body: JSON.stringify(data) });
-          if (!res.ok) throw new Error(res.status);
-          return ok();
-        } catch (_) { send.disabled = false; status.textContent = "Couldn't send — opening your email app instead."; }
+      const data = { sku: it.sku || "", product: it.title, amountPaid: amountPaid !== null ? amountPaid.toFixed(2) : "", discountCode, reference: ref, email: iMail.value.trim(), utr: iUtr.value.trim() };
+      if (!/^\d{12}$/.test(data.utr)) { status.textContent = "The UPI reference (UTR) is 12 digits — find it in your UPI app's payment details."; return; }
+      // No mailto fallback: if delivery isn't configured we say so honestly.
+      if (todo(pay.formEndpoint)) { status.textContent = "Instant delivery isn't live yet — please email " + (siteContent.site.email || siteContent.contact.email) + " with your UTR."; return; }
+      send.disabled = true; send.textContent = "Sending your pack…"; status.textContent = "";
+      try {
+        const res = await fetch(pay.formEndpoint, { method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json" }, body: JSON.stringify(data) });
+        const out = await res.json().catch(() => ({}));
+        if (!res.ok || !out.ok) throw new Error(out.message || "We couldn't email the file. Please try again.");
+        (form.closest(".ls-pay") || form.parentElement).replaceChildren(deliveredScreen(it, data.email));
+      } catch (err) {
+        send.disabled = false; send.textContent = "Get my file";
+        status.textContent = (err && err.message && !/fetch/i.test(err.message)) ? err.message : "Couldn't reach delivery — check your connection and try again.";
       }
-      const body = Object.entries(data).filter(([, v]) => v).map(([k, v]) => `${k}: ${v}`).join("\n");
-      location.href = `mailto:${email}?subject=${encodeURIComponent(`Order ${ref} — ${it.title}`)}&body=${encodeURIComponent(body)}`;
-      ok();
     });
-    return [el("p", "eyebrow", "Step 2 · Confirm your payment"), form];
+    return [el("p", "eyebrow", "Step 2 · Get your file"), form];
+  }
+
+  function deliveredScreen(it, email) {
+    const box = el("div", "delivered");
+    box.setAttribute("role", "status");
+    const seal = el("div", "delivered-seal");
+    seal.innerHTML = '<svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="29"/><path d="M19 33l9 9 17-19"/></svg>';
+    const burst = el("div", "delivered-burst");
+    for (let k = 0; k < 12; k++) { const sp = el("i"); sp.style.setProperty("--a", k * 30 + "deg"); burst.append(sp); }
+    const to = el("p", "delivered-to"); to.append("Sent to ", el("b", "", email));
+    box.append(burst, seal, el("p", "eyebrow", "Asset Bay · Delivered"), el("h3", "", "It's yours. The pack has landed."),
+      el("p", "", `${it.title} is flying into your inbox right now.`), to,
+      el("p", "ls-hint", "Give it a minute — and peek in Spam or Promotions if it's shy. Reply to that email if anything's off."));
+    return box;
   }
 
   /* ---------- List: plain rows ---------- */

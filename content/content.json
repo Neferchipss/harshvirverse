@@ -74,7 +74,8 @@
         "upiId": "harshvirwankhede-1@oksbi",
         "payeeName": "Harshvir Wankhade",
         "formEndpoint": "",
-        "deliveryNote": "Your download link arrives by email once the payment is checked."
+        "formEndpointNote": "After deploying shop-worker, set formEndpoint to https://harshvirverse-shop.<subdomain>.workers.dev/deliver",
+        "deliveryNote": "The file lands straight in your inbox — check Spam if it hides."
       },
       "items": [
         {
