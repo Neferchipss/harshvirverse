@@ -1,6 +1,7 @@
 # Asset Bay delivery Worker (separate from analytics — never stores form values there).
 # NOT deployed yet. See shop-worker/README.md.
 name = "harshvirverse-shop"
+account_id = "51be426a1162898e79286c63248d3dfe"
 main = "src/index.js"
 compatibility_date = "2026-10-01"
 
@@ -9,16 +10,22 @@ compatibility_date = "2026-10-01"
 [[send_email]]
 name = "EMAIL"
 
-# Private product files. Owner uploads products/HV-BRUSH-01.zip here (never in the public repo).
-[[r2_buckets]]
-binding = "PRODUCTS"
-bucket_name = "harshvirverse-products"
+# Private product files. R2 is not enabled on this account yet, so files live in KV
+# (key products/HV-BRUSH-01.zip, uploaded in chunks #0..#3). Never in the public repo.
+[[kv_namespaces]]
+binding = "PRODUCT_FILES"
+id = "2b7a439c19a940d99d799ec2e8e30262"
+
+# Optional later: once R2 is enabled in the dashboard, uncomment (R2 takes priority).
+# [[r2_buckets]]
+# binding = "PRODUCTS"
+# bucket_name = "harshvirverse-products"
 
 # Remembers SHA-256 hashes of UTRs already used (no raw UTRs / emails stored).
 # Create: npx wrangler kv namespace create USED_UTRS  → paste id below.
 [[kv_namespaces]]
 binding = "USED_UTRS"
-id = "REPLACE_WITH_KV_NAMESPACE_ID"
+id = "8cbba665518a4a249b68eea491cfb193"
 
 # Per-IP rate limit: 5 requests / 60 s.
 [[ratelimits]]

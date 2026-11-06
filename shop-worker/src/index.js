@@ -14,6 +14,20 @@ async function hmac(secret, data) {
   const k = await crypto.subtle.importKey("raw", enc.encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
   return b64url(await crypto.subtle.sign("HMAC", k, enc.encode(data)));
 }
+// Private file store: R2 bucket PRODUCTS if bound, else KV namespace PRODUCT_FILES (≤25 MiB values).
+async function getFile(env, key) {
+  if (env.PRODUCTS) return env.PRODUCTS.get(key);
+  if (env.PRODUCT_FILES) {
+    let buf = await env.PRODUCT_FILES.get(key, "arrayBuffer");
+    if (!buf) { // chunked upload: key#0, key#1, … (API uploads are capped per request)
+      const parts = [];
+      for (let i = 0; i < 20; i++) { const b = await env.PRODUCT_FILES.get(`${key}#${i}`, "arrayBuffer"); if (!b) break; parts.push(new Uint8Array(b)); }
+      if (parts.length) { const out = new Uint8Array(parts.reduce((n, b) => n + b.length, 0)); let o = 0; for (const b of parts) { out.set(b, o); o += b.length; } buf = out.buffer; }
+    }
+    return buf ? { size: buf.byteLength, arrayBuffer: async () => buf, body: buf } : null;
+  }
+  return null;
+}
 async function sha256(s) { return b64url(await crypto.subtle.digest("SHA-256", enc.encode(s))); }
 function toBase64(buf) {
   const b = new Uint8Array(buf); let s = "";
@@ -53,8 +67,8 @@ export default {
     if (!p) return json({ ok: false, error: "unknown_product" }, 400, h);
     const amount = code && p.codes[code] != null ? p.codes[code] : p.price;
 
-    if (!env.PRODUCTS || !env.EMAIL) return json({ ok: false, error: "not_configured", message: "Delivery isn't live yet." }, 503, h);
-    const obj = await env.PRODUCTS.get(p.key);
+    if (!(env.PRODUCTS || env.PRODUCT_FILES) || !env.EMAIL) return json({ ok: false, error: "not_configured", message: "Delivery isn't live yet." }, 503, h);
+    const obj = await getFile(env, p.key);
     if (!obj) return json({ ok: false, error: "file_missing", message: "This pack isn't ready for delivery yet. Your payment is safe — the artist will email you." }, 503, h);
 
     const utrKey = "utr:" + (await sha256(utr));
@@ -99,7 +113,7 @@ async function download(url, env) {
   if (!payload || !sig || !env.LINK_SECRET || sig !== (await hmac(env.LINK_SECRET, payload))) return new Response("Invalid link", { status: 403 });
   let t; try { t = JSON.parse(new TextDecoder().decode(fromB64url(payload))); } catch { return new Response("Invalid link", { status: 403 }); }
   if (!t.e || Date.now() > t.e) return new Response("This link has expired — reply to your delivery email for a fresh one.", { status: 410 });
-  const obj = await env.PRODUCTS.get(t.k);
+  const obj = await getFile(env, t.k);
   if (!obj) return new Response("File not found", { status: 404 });
   return new Response(obj.body, { headers: { "Content-Type": "application/zip", "Content-Disposition": `attachment; filename="${t.k.split("/").pop()}"`, "Cache-Control": "private, no-store" } });
 }

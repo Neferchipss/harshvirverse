@@ -73,8 +73,8 @@
       "payment": {
         "upiId": "harshvirwankhede-1@oksbi",
         "payeeName": "Harshvir Wankhade",
-        "formEndpoint": "",
-        "formEndpointNote": "After deploying shop-worker, set formEndpoint to https://harshvirverse-shop.<subdomain>.workers.dev/deliver",
+        "formEndpoint": "https://harshvirverse-shop.harshvirverse.workers.dev/deliver",
+        "formEndpointNote": "Asset Bay delivery Worker (shop-worker/). Sends only after harshvirverse.com is onboarded to Cloudflare Email Sending.",
         "deliveryNote": "The file lands straight in your inbox — check Spam if it hides."
       },
       "items": [

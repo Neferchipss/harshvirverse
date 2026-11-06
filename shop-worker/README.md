@@ -23,3 +23,14 @@ Separate from `analytics/` — analytics never stores form values. This Worker s
 Files ≤ 15 MB are attached (Email Sending caps a message at 25 MiB incl. base64). Larger files are sent as a signed `/download` link valid `LINK_HOURS` (72 h).
 
 New product: add it to `PRODUCTS` in `src/index.js` and upload `products/<SKU>.zip`.
+
+## Status (6 Nov 2026)
+- Deployed: `https://harshvirverse-shop.harshvirverse.workers.dev` (account 51be426a…, same as analytics).
+- KV `USED_UTRS` = 8cbba665518a4a249b68eea491cfb193; KV `PRODUCT_FILES` = 2b7a439c19a940d99d799ec2e8e30262 holds `products/HV-BRUSH-01.zip` in chunks `#0..#3` (R2 isn't enabled on the account; the Worker uses R2 first if you bind it later).
+- `LINK_SECRET` set as a Worker secret.
+- Owner decision: file is sent automatically on any valid-format, unused UTR (no manual approval).
+- **Blocked:** Email Sending requires harshvirverse.com on Cloudflare DNS. The zone isn't on Cloudflare (DNS at Hostinger), so sends fail with `E_SENDER_DOMAIN_NOT_AVAILABLE` and the site shows an error (no fake success).
+  Fix: Cloudflare dashboard → Add domain harshvirverse.com (Free) → check imported DNS records incl. GitHub Pages A/CNAME + existing MX → change nameservers at Hostinger → then Compute → Email Service → Email Sending → Onboard Domain.
+
+### Replacing the file without R2
+Upload ≤25 MiB as a single KV value: `npx wrangler kv key put "products/HV-BRUSH-01.zip" --path ./HV-BRUSH-01.zip --namespace-id 2b7a439c19a940d99d799ec2e8e30262 --remote` (and delete the old `#0..#3` keys; a single key takes priority).
